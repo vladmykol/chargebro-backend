@@ -105,7 +105,6 @@ public class StationSocketClient {
         synchronized (pendingRequest) {
             pendingRequest.wait(timeout);
             pendingResponse.remove(request.getCommand());
-//            log.debug("try to print request {} and response {}",pendingRequest.request,pendingRequest.response);
             log.trace("Response from station took {}", DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis()));
             return pendingRequest.getResponse();
         }
