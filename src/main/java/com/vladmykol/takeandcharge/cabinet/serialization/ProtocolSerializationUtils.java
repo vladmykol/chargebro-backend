@@ -92,16 +92,31 @@ public class ProtocolSerializationUtils {
         Object value = null;
 
         if (inputStream.available() > 0)
-            value = switch (fieldType) {
-                case BYTE -> (short) inputStream.readUnsignedByte();
-                case UINT16 -> inputStream.readUnsignedShort();
-                case UINT32 -> inputStream.readUnsignedInt();
-                case BYTE8 -> inputStream.readLong();
-                case BYTE8STRING -> inputStream.read8ByteLongString();
-                case DATE -> inputStream.readDate();
-                case STRING -> inputStream.readString();
-                default -> throw new UnsupportedFieldType(fieldType + " is not supported");
-            };
+            switch (fieldType) {
+                case BYTE:
+                    value = (short) inputStream.readUnsignedByte();
+                    break;
+                case UINT16:
+                    value = inputStream.readUnsignedShort();
+                    break;
+                case UINT32:
+                    value = inputStream.readUnsignedInt();
+                    break;
+                case BYTE8:
+                    value = inputStream.readLong();
+                    break;
+                case BYTE8STRING:
+                    value = inputStream.read8ByteLongString();
+                    break;
+                case DATE:
+                    value = inputStream.readDate();
+                    break;
+                case STRING:
+                    value = inputStream.readString();
+                    break;
+                default:
+                    throw new UnsupportedFieldType(fieldType + " is not supported");
+            }
 
         return value;
     }
@@ -110,14 +125,29 @@ public class ProtocolSerializationUtils {
     private static void writeValueByType(CustomDataOutputStream outputStream, DataType fieldType, Object value) throws IOException {
         if (value != null)
             switch (fieldType) {
-                case BYTE -> outputStream.writeByte((short) value);
-                case UINT16 -> outputStream.writeShort((int) value);
-                case UINT32 -> outputStream.writeInt((long) value);
-                case BYTE8 -> outputStream.writeLong((long) value);
-                case BYTE8STRING -> outputStream.write8ByteLongString((String) value);
-                case DATE -> outputStream.writeDate((Instant) value);
-                case STRING -> outputStream.writeString((String) value);
-                default -> throw new UnsupportedFieldType(fieldType + " is not supported");
+                case BYTE:
+                    outputStream.writeByte((short) value);
+                    break;
+                case UINT16:
+                    outputStream.writeShort((int) value);
+                    break;
+                case UINT32:
+                    outputStream.writeInt((long) value);
+                    break;
+                case BYTE8:
+                    outputStream.writeLong((long) value);
+                    break;
+                case BYTE8STRING:
+                    outputStream.write8ByteLongString((String) value);
+                    break;
+                case DATE:
+                    outputStream.writeDate((Instant) value);
+                    break;
+                case STRING:
+                    outputStream.writeString((String) value);
+                    break;
+                default:
+                    throw new UnsupportedFieldType(fieldType + " is not supported");
             }
 
     }

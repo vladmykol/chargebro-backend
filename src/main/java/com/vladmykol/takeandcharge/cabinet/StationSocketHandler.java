@@ -16,7 +16,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -34,7 +33,7 @@ public class StationSocketHandler {
     //    used by @lookup
     public StationSocketHandler(@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") StationSocketClient stationSocketClient) throws IOException {
         this.stationSocketClient = stationSocketClient;
-        this.in = new DataInputStream(new BufferedInputStream(stationSocketClient.getInputStream()));
+        this.in = stationSocketClient.getInputStream();
     }
 
     @Autowired
@@ -47,16 +46,28 @@ public class StationSocketHandler {
             ProtocolEntity<RawMessage> incomingMessage = readIncomingMessage();
             authenticate();
             if (!stationSocketClient.fulfillPendingRequest(incomingMessage)) {
-                stationSocketClient.writeMessage(
-                        switch (incomingMessage.getCommand()) {
-                            case 0x60 -> stationController.singIn(incomingMessage, stationSocketClient.getClientInfo());
-                            case 0x61 -> stationController.heartBeat(incomingMessage);
-                            case 0x66 -> stationController.returnPowerBank(incomingMessage);
-                            default -> throw new UnknownCommand(
-                                    incomingMessage.getCommand() + " cannot map message to any know handler");
-                        });
+                stationSocketClient.writeMessage(dispatch(incomingMessage));
             }
         }
+    }
+
+    private ProtocolEntity<?> dispatch(ProtocolEntity<RawMessage> incomingMessage) {
+        ProtocolEntity<?> value;
+        switch (incomingMessage.getCommand()) {
+            case 0x60:
+                value = stationController.singIn(incomingMessage, stationSocketClient.getClientInfo());
+                break;
+            case 0x61:
+                value = stationController.heartBeat(incomingMessage);
+                break;
+            case 0x66:
+                value = stationController.returnPowerBank(incomingMessage);
+                break;
+            default:
+                throw new UnknownCommand(
+                        incomingMessage.getCommand() + " cannot map message to any know handler");
+        }
+        return value;
     }
 
     // TODO: 6/5/2020 no authentication info in incoming message

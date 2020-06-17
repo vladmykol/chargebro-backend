@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.HEART_BEAT;
 import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.SOFTWARE_VERSION;
 
 
@@ -37,7 +38,7 @@ public class StationSocketClient {
     public StationSocketClient(Socket socket) throws IOException {
         this.socket = socket;
         this.clientInfo = new ClientInfo(socket.getInetAddress());
-        this.out = new DataOutputStream(socket.getOutputStream());
+        this.out = socket.getOutputStream();
         log.debug("Client {} is now connected", clientInfo.getIpAddress());
     }
 
@@ -52,9 +53,14 @@ public class StationSocketClient {
         log.debug("Client {} is now disconnected", clientInfo.getIpAddress(), reason);
     }
 
-    public void ping() {
+    public void ping() throws IOException {
+        ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(HEART_BEAT);
+        writeMessage(softwareVersionRequest);
+    }
+
+    public void check() {
         ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(SOFTWARE_VERSION);
-        communicate(softwareVersionRequest, 10000);
+        communicate(softwareVersionRequest, 30000);
     }
 
     @SneakyThrows
