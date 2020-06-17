@@ -53,7 +53,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(API_AUTH + API_AUTH_SINGUP).permitAll()
                 .antMatchers(API_SOCKET_RENT).permitAll()
                 .anyRequest().authenticated()
-//                .and().httpBasic()
+                .and().httpBasic()
                 .and().logout().logoutUrl(API_AUTH + API_AUTH_LOGOUT).permitAll();
     }
 }

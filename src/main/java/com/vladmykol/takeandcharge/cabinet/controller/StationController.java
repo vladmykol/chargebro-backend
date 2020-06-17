@@ -22,7 +22,7 @@ import java.util.Optional;
 import static com.vladmykol.takeandcharge.cabinet.dto.CommonResult.OK;
 
 @Slf4j
-@Controller
+@Component
 @RequiredArgsConstructor
 public class StationController {
     private final RentService rentService;

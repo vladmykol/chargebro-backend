@@ -38,29 +38,17 @@ public class StationSocketServer {
     public void monitorClients() {
         List<StationSocketClient> inactiveStationSocketClients = stationListener.getInactiveClients(idleTimeoutSeconds);
         inactiveStationSocketClients.forEach(this::tryToWakeUpInactive);
-        List<StationSocketClient> disconnectedStationSocketClients = stationListener.getInactiveClients(idleTimeoutSeconds + 5);
-        disconnectedStationSocketClients.forEach(this::tryToCheckInactive);
     }
 
     public void tryToWakeUpInactive(StationSocketClient stationSocketClient) {
         log.debug("Try to wake up inactive client {}", stationSocketClient.getClientInfo().getIpAddress());
         try {
+            stationListener.removeClient(stationSocketClient);
             stationSocketClient.ping();
-        } catch (Exception e) {
-            stationListener.removeClient(stationSocketClient);
-            if (stationSocketClient.isActive()) {
-                stationSocketClient.shutdown(e);
-            }
-        }
-    }
-
-    public void tryToCheckInactive(StationSocketClient stationSocketClient) {
-        log.debug("Try to check inactive client {}", stationSocketClient.getClientInfo().getIpAddress());
-        try {
-            stationListener.removeClient(stationSocketClient);
             stationSocketClient.check();
             stationListener.registerClient(stationSocketClient);
         } catch (Exception e) {
+            stationListener.removeClient(stationSocketClient);
             if (stationSocketClient.isActive()) {
                 stationSocketClient.shutdown(e);
             }

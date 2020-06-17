@@ -32,8 +32,7 @@ public abstract class StationListener {
 
     public void removeClient(StationSocketClient stationSocketClient) {
         synchronized (registeredStationSocketClients) {
-            if (!registeredStationSocketClients.removeLastOccurrence(stationSocketClient))
-                throw new NoSuchElementException("Client " + stationSocketClient.getClientInfo().getIpAddress() + " is not registered");
+            registeredStationSocketClients.removeLastOccurrence(stationSocketClient);
         }
     }
 
