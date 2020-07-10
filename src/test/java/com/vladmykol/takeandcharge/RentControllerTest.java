@@ -1,40 +1,38 @@
 package com.vladmykol.takeandcharge;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vladmykol.takeandcharge.dto.UserDto;
-import com.vladmykol.takeandcharge.dto.LoginRequest;
-import com.vladmykol.takeandcharge.entity.Station;
 import com.vladmykol.takeandcharge.repository.StationRepository;
 import com.vladmykol.takeandcharge.security.TokenService;
+import com.vladmykol.takeandcharge.service.SmsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.geo.Point;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.io.IOException;
-
-import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
+import static com.vladmykol.takeandcharge.conts.EndpointConst.API_RENT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@WebAppConfiguration
 @AutoConfigureMockMvc
 @TestPropertySource(
         locations = "classpath:application-test.properties")
 //@DataMongoTest
 //@RestClientTest
-class ApiTest {
+class RentControllerTest {
     @Autowired
     private StationRepository stationRepository;
     @Autowired
     private TokenService tokenService;
+    @Autowired
+    private SmsService smsService;
 
     @Autowired
     private MockMvc mvc;
@@ -48,49 +46,22 @@ class ApiTest {
         }
     }
 
-
     @Test
-    void shouldHandleCoupleClients() throws IOException {
-        Station station = Station.builder()
-                .id("STWA312001000005")
-                .location(new Point(50.481952, 30.412420))
-                .build();
-        stationRepository.save(station);
-    }
+    void rent() throws Exception {
+        String token = tokenService.generateAuthToken("5eb3e5279ef2620da98e0a611");
 
-    @Test
-    void singUp() throws Exception {
-        UserDto userDto = UserDto.builder()
-                .firstName("Vlad")
-                .lastName("Drunkula")
-                .password("1111")
-                .build();
-
-        mvc.perform(post(API_AUTH + API_AUTH_SINGUP)
+        mvc.perform(post(API_RENT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body(userDto)))
+                .header("Authorization", token + "1")
+                .param("stationId", "STW"))
                 .andExpect(status().isOk());
 
-
     }
 
-    @Test
-    void logIn() throws Exception {
-        LoginRequest loginRequest = LoginRequest.builder()
-                .username("Admin")
-                .password("Admin").build();
-
-        mvc.perform(post(API_AUTH + API_AUTH_LOGIN)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(body(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isNotEmpty());
-
-    }
 
     @Test
     void getLocation() throws Exception {
-        String token = tokenService.generateJwtToken("5eb3e5279ef2620da98e0a611");
+        String token = tokenService.generateAuthToken("5eb3e5279ef2620da98e0a611");
 
         mvc.perform(get("/rent/location")
                 .header("Authorization", token)

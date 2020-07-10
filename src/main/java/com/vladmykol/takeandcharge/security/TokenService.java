@@ -1,5 +1,6 @@
 package com.vladmykol.takeandcharge.security;
 
+import com.vladmykol.takeandcharge.dto.SmsRegistrationTokenInfo;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 
 @Service
@@ -17,21 +17,40 @@ public class TokenService {
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final String HEADER_WITH_TOKEN = "Authorization";
 
-    @Value("${take-and-charge.api.jwt-secret}")
-    private String jwtSecret;
+    @Value("${take-and-charge.api.auth.token-secret}")
+    private String authSecret;
 
-    @Value("${take-and-charge.api.jwt-expiration}")
-    private int jwtExpirationMs;
+    @Value("${take-and-charge.api.auth.token-expiration}")
+    private int authExpirationMs;
 
-    public String generateJwtToken(String subject) {
+    @Value("${take-and-charge.api.sms.token-secret}")
+    private String smsSecret;
+
+    @Value("${take-and-charge.api.sms.token-expiration.min}")
+    private int smsExpirationMin;
+
+    public String generateAuthToken(String userId) {
         return Jwts
                 .builder()
-                .setId("ApiJwt")
-                .setSubject(subject)
+                .setId("AuthJwt")
+                .setSubject(userId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .setExpiration(new Date(System.currentTimeMillis() + authExpirationMs))
                 .signWith(SignatureAlgorithm.HS512,
-                        jwtSecret.getBytes()).compact();
+                        authSecret.getBytes()).compact();
+    }
+
+    public SmsRegistrationTokenInfo generateSmsToken(String code) {
+        var smsToken = Jwts
+                .builder()
+                .setId("SmSJwt")
+                .setSubject(code)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + smsExpirationMin * 60 * 1000))
+                .signWith(SignatureAlgorithm.HS512,
+                        smsSecret.getBytes()).compact();
+
+        return new SmsRegistrationTokenInfo(smsExpirationMin, code, smsToken);
     }
 
     public String getToken(HttpServletRequest request) {
@@ -40,13 +59,12 @@ public class TokenService {
         else return StringUtils.replace(token, TOKEN_PREFIX, "");
     }
 
-    public void addToken(HttpServletResponse response, String generateJwtToken) {
-        response.addHeader(HEADER_WITH_TOKEN, TOKEN_PREFIX + generateJwtToken);
+    public String parseAuthToken(String token) {
+        return Jwts.parser().setSigningKey(authSecret.getBytes()).parseClaimsJws(token).getBody().getSubject();
     }
 
-    public String validateToken(String token) {
-        return Jwts.parser().setSigningKey(jwtSecret.getBytes()).parseClaimsJws(token).getBody().getSubject();
+    public String parseSmsToken(String token) {
+        return Jwts.parser().setSigningKey(smsSecret.getBytes()).parseClaimsJws(token).getBody().getSubject();
     }
-
 
 }

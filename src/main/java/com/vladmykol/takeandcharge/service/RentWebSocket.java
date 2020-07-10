@@ -87,7 +87,7 @@ public class RentWebSocket extends BinaryWebSocketHandler {
         }
 
         try {
-            String clientId = tokenService.validateToken(tokenBuilder.toString());
+            String clientId = tokenService.parseAuthToken(tokenBuilder.toString());
             synchronized (clientIdAndConnections) {
                 if (clientIdAndConnections.put(clientId, session))
                     log.debug("Client {} is now authenticated", session.getRemoteAddress());

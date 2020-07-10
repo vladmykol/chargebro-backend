@@ -14,8 +14,11 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 
+import static com.vladmykol.takeandcharge.conts.EndpointConst.API_RENT;
+import static com.vladmykol.takeandcharge.conts.EndpointConst.API_RENT_LOCATION;
+
 @RestController
-@RequestMapping("/rent")
+@RequestMapping(API_RENT)
 @RequiredArgsConstructor
 public class RentController {
 
@@ -37,8 +40,8 @@ public class RentController {
         return powerBankId;
     }
 
-    @GetMapping("/location")
-    public List<StationLocation> rentRequest(@RequestParam double x, @RequestParam double y) {
+    @GetMapping(API_RENT_LOCATION)
+    public List<StationLocation> getLocation(@RequestParam double x, @RequestParam double y) {
         return stationService.findStationsNearBy(x, y);
     }
 

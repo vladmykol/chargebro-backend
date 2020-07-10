@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-public class AuthenticationResponse {
+public class SmsRegistrationTokenInfo {
+    private final int validForMin;
+    private final String code;
     private final String token;
 }

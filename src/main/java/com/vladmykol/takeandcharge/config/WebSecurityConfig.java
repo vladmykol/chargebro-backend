@@ -2,7 +2,7 @@ package com.vladmykol.takeandcharge.config;
 
 import com.vladmykol.takeandcharge.security.JwtAuthorizationFilter;
 import com.vladmykol.takeandcharge.security.TokenService;
-import com.vladmykol.takeandcharge.service.CustomUserService;
+import com.vladmykol.takeandcharge.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,12 +21,12 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 @Configuration
 @RequiredArgsConstructor
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    private final CustomUserService customUserService;
+    private final CustomUserDetailsService customUserDetailsService;
     private final TokenService tokenService;
 
     @Override
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
-        authenticationManagerBuilder.userDetailsService(customUserService).passwordEncoder(passwordEncoder());
+        authenticationManagerBuilder.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder());
     }
 
     @Bean
@@ -50,7 +50,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
 //                .antMatchers("/rent/location").permitAll()
                 .antMatchers(API_AUTH + API_AUTH_LOGIN).permitAll()
-                .antMatchers(API_AUTH + API_AUTH_SINGUP).permitAll()
+                .antMatchers(API_AUTH + API_AUTH_REGISTER_INIT).permitAll()
+                .antMatchers(API_AUTH + API_AUTH_REGISTER).permitAll()
+                .antMatchers(API_SMS + API_SMS_CALLBACK).permitAll()
                 .antMatchers(API_SOCKET_RENT).permitAll()
                 .anyRequest().authenticated()
                 .and().httpBasic()

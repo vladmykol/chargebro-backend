@@ -18,13 +18,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StationSocketServer {
     private final StationListener stationListener;
+    @Value("${take-and-charge.socket.server.port}")
+    private int portNumber;
     @Value("${take-and-charge.socket.server.client.idle-timeout-sec}")
     private int idleTimeoutSeconds;
 
     @Async(AsyncConfiguration.serverTaskExecutorName)
-    public void start(int port) throws IOException {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            log.info("Socket server started on port: {}", port);
+    public void start() throws IOException {
+        try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
+            log.info("Socket server started on port: {}", portNumber);
             while (!Thread.currentThread().isInterrupted()) {
                 Socket socket = serverSocket.accept();
                 StationSocketClient stationSocketClient = new StationSocketClient(socket);
