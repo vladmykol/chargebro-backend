@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.*;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Email;
@@ -17,23 +18,23 @@ import java.util.Date;
 @Data
 @Document
 @Builder
-public class RentHistory {
+public class UserWallet {
+    @EqualsAndHashCode.Exclude
     @Id
     private String id;
 
-    @NotBlank
-    @Indexed
-    private String powerBankId;
-
     @CreatedBy
     @NonNull
+    @Indexed
     private String userId;
+
+    @NotBlank
+    @Size(max = 20)
+    private String card_token;
 
     @CreatedDate
     @NonNull
-    private Date rentAt;
-
-    private Date returnedAt;
+    private Date createAt;
 
     @Version
     private Long version;
@@ -43,4 +44,7 @@ public class RentHistory {
 
     @LastModifiedBy
     private String lastModifiedBy;
+
+    @DBRef
+    private LiqPayHistory liqPayHistory;
 }

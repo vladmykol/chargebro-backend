@@ -65,7 +65,7 @@ public class RegisterUserService {
         }
 
         var validationCode = String.format("%04d", new Random().nextInt(10000));
-//        smsService.sendValidationSms(validationCode, userName);
+        smsService.sendValidationSms(validationCode, userName);
 
         return validationCode;
     }

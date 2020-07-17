@@ -49,10 +49,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests()
 //                .antMatchers("/rent/location").permitAll()
+//                not authorized user can access this links
                 .antMatchers(API_AUTH + API_AUTH_LOGIN).permitAll()
                 .antMatchers(API_AUTH + API_AUTH_REGISTER_INIT).permitAll()
                 .antMatchers(API_AUTH + API_AUTH_REGISTER).permitAll()
+//                payment callback is authorized by signature from liqpay
+                .antMatchers(API_PAY + API_PAY_CALLBACK).permitAll()
+//                call back for SMS Gateway
                 .antMatchers(API_SMS + API_SMS_CALLBACK).permitAll()
+//                manual authorization for socket clients
                 .antMatchers(API_SOCKET_RENT).permitAll()
                 .anyRequest().authenticated()
                 .and().httpBasic()
