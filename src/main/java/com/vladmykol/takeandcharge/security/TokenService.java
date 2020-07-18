@@ -17,16 +17,16 @@ public class TokenService {
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final String HEADER_WITH_TOKEN = "Authorization";
 
-    @Value("${take-and-charge.api.auth.token-secret}")
+    @Value("${takeandcharge.api.auth.token-secret}")
     private String authSecret;
 
-    @Value("${take-and-charge.api.auth.token-expiration}")
-    private int authExpirationMs;
+    @Value("${takeandcharge.api.auth.token-expiration.min}")
+    private int authExpirationMin;
 
-    @Value("${take-and-charge.api.sms.token-secret}")
+    @Value("${takeandcharge.api.sms.token-secret}")
     private String smsSecret;
 
-    @Value("${take-and-charge.api.sms.token-expiration.min}")
+    @Value("${takeandcharge.api.sms.token-expiration.min}")
     private int smsExpirationMin;
 
     public String generateAuthToken(String userId) {
@@ -35,7 +35,7 @@ public class TokenService {
                 .setId("AuthJwt")
                 .setSubject(userId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + authExpirationMs))
+                .setExpiration(new Date(System.currentTimeMillis() + authExpirationMin * 60 * 1000))
                 .signWith(SignatureAlgorithm.HS512,
                         authSecret.getBytes()).compact();
     }

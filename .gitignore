@@ -30,3 +30,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### for local run only ###
+application-default.properties

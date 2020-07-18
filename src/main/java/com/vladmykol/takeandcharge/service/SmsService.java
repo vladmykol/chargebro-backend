@@ -19,13 +19,13 @@ import java.util.Collections;
 @RequiredArgsConstructor
 @Slf4j
 public class SmsService {
-    @Value("${sms.gateway.uri}")
+    @Value("${takeandcharge.sms.gateway.uri}")
     private String gatewayUri;
 
-    @Value("${sms.gateway.send}")
+    @Value("${takeandcharge.sms.gateway.send}")
     private String sendCommand;
 
-    @Value("${sms.gateway.token}")
+    @Value("${takeandcharge.sms.gateway.token}")
     private String authToken;
 
     public void sendValidationSms(String validationCode, String phone) {

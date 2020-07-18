@@ -23,7 +23,7 @@ public class RegisterUserService {
     private final PasswordEncoder passwordEncoder;
     private final SmsService smsService;
 
-    @Value("${take-and-charge.api.sms.token-expiration.min}")
+    @Value("${takeandcharge.api.sms.token-expiration.min}")
     private int smsExpirationMin;
 
 

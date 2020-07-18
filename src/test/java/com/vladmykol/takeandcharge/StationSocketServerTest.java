@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.hasSize;
 @TestPropertySource(
         locations = "classpath:application-test.properties")
 class StationSocketServerTest {
-    @Value("${take-and-charge.socket.server.port}")
+    @Value("${takeandcharge.socket.server.port}")
     private int portNumber;
 
     @Autowired

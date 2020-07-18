@@ -29,38 +29,36 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.API_PAY_CHECKOUT;
 @RequestMapping(EndpointConst.API_PAY)
 @RequiredArgsConstructor
 public class PaymentController {
-    private final String PRIVATE_KEY = "sandbox_eEPZJtlITBq1CZP8k6SrzFd6WtDVFS3rt5fCiVOM";
-    private final String PUBLIC_KEY = "sandbox_i85026641584";
     private final PaymentService paymentService;
-    @Value("${take-and-charge.api.domain}")
-    private String domainName;
-    @Value("${server.port}")
-    private String serverPort;
-    @Value("${server.ssl.enabled}")
-    private boolean sslEnabled;
+    @Value("${takeandcharge.pay.link}")
+    private String checkoutLink;
+    @Value("${takeandcharge.pay.pass}")
+    private String privateKey;
+    @Value("${takeandcharge.pay.user}")
+    private String publicKey;
+    @Value("${takeandcharge.api.domain}")
+    private String callbackUri;
 
     @GetMapping(API_PAY_CHECKOUT)
     public String sendPayment(Principal principal) {
-        String baseAddress = "http" + (sslEnabled ? "s" : "") + "://" + domainName + ":" + serverPort;
 
         Map<String, String> params = new HashMap();
         params.put("action", "auth");
         params.put("amount", "1");
         params.put("currency", "UAH");
-        params.put("result_url", baseAddress);
+        params.put("result_url", callbackUri);
         params.put("description", "Authorization");
         params.put("customer", principal.getName());
         params.put("language", "ua");
         params.put("recurringbytoken", "1");
-        params.put("server_url", baseAddress + "/pay/callback");
+        params.put("server_url", callbackUri + "/pay/callback");
         params.put("sandbox", "1"); // enable the testing environment and card will NOT charged. If not set will be used property isCnbSandbox()
-        LiqPay liqpay = new LiqPay(PUBLIC_KEY, PRIVATE_KEY);
+        LiqPay liqpay = new LiqPay(publicKey, privateKey);
         String html = liqpay.cnb_form(params);
         var data = StringUtils.substringBetween(html, "name=\"data\" value=\"", "\" />");
         var signature = StringUtils.substringBetween(html, "name=\"signature\" value=\"", "\" />");
 
-        String str = String.format("https://www.liqpay.ua/api/3/checkout?data=%s&signature=%s",
-                data, signature);
+        String str = String.format(checkoutLink, data, signature);
 
         return str;
     }
@@ -68,9 +66,9 @@ public class PaymentController {
     @PostMapping(API_PAY_CALLBACK)
     @ResponseStatus(HttpStatus.OK)
     public void callback(@RequestParam String data, @RequestParam String signature) throws JsonProcessingException {
-        var sign = LiqPayUtil.base64_encode(LiqPayUtil.sha1(PRIVATE_KEY +
+        var sign = LiqPayUtil.base64_encode(LiqPayUtil.sha1(privateKey +
                 data +
-                PRIVATE_KEY));
+                privateKey));
         if (!sign.equals(signature)) {
             throw new BadCredentialsException("request signature is invalid");
         }

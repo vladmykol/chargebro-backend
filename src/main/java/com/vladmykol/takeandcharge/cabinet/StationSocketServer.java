@@ -18,9 +18,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StationSocketServer {
     private final StationListener stationListener;
-    @Value("${take-and-charge.socket.server.port}")
+    @Value("${takeandcharge.socket.server.port}")
     private int portNumber;
-    @Value("${take-and-charge.socket.server.client.idle-timeout-sec}")
+    @Value("${takeandcharge.socket.server.client.idle-timeout-sec}")
     private int idleTimeoutSeconds;
 
     @Async(AsyncConfiguration.serverTaskExecutorName)
