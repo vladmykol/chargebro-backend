@@ -8,7 +8,10 @@ public class EndpointConst {
     public static final String API_AUTH_REGISTER = "/singup";
     public static final String API_AUTH_LOGOUT = "/logout";
     public static final String API_RENT = "/rent";
-    public static final String API_RENT_LOCATION = "/location";
+    public static final String API_STATIONS = "/stations";
+    public static final String API_ID = "/{id}";
+    public static final String API_STATIONS_CAPACITY = API_ID + "/capacity";
+    public static final String API_STATIONS_NEARBY = "/nearby";
     public static final String API_PAY_CHECKOUT = "/checkout";
     public static final String API_PAY_CALLBACK = "/callback";
     public static final String API_SOCKET_RENT = "/socket/rent";

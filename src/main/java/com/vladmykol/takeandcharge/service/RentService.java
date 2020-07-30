@@ -4,7 +4,7 @@ import com.vladmykol.takeandcharge.cabinet.StationListener;
 import com.vladmykol.takeandcharge.cabinet.StationSocketClient;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
-import com.vladmykol.takeandcharge.cabinet.dto.client.ChargingStationInfo;
+import com.vladmykol.takeandcharge.cabinet.dto.client.ChargingStationInventory;
 import com.vladmykol.takeandcharge.cabinet.dto.client.PowerBankInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.client.TakePowerBankResponse;
 import com.vladmykol.takeandcharge.cabinet.dto.server.TakePowerBankRequest;
@@ -16,6 +16,7 @@ import com.vladmykol.takeandcharge.exceptions.NotSuccessesRent;
 import com.vladmykol.takeandcharge.repository.RentHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -32,32 +33,34 @@ public class RentService {
     private final StationListener stationListener;
     private final RentHistoryRepository rentHistoryRepository;
     private final RentWebSocket rentWebSocket;
+    private final ModelMapper stationInfoMapper;
 
-    public ArrayList<PowerBankInfo> getAvailablePowerBanks(String cabinetId) {
+    public ChargingStationInventory getStationInventory(String cabinetId) {
         ProtocolEntity<?> stockRequest = new ProtocolEntity<>(CABINET_STOCK);
 
         StationSocketClient stationSocketClient = stationListener.getClient(cabinetId);
         ProtocolEntity<RawMessage> messageFromClient = stationSocketClient.communicate(stockRequest);
 
-        ChargingStationInfo chargingStationInfo = messageFromClient.getBody().readTo(new ChargingStationInfo());
-        ArrayList<PowerBankInfo> powerBankInfoList = new ArrayList<>();
-        for (int i = 0; i < chargingStationInfo.getRemainingPowerBanks(); i++) {
-            powerBankInfoList.add(messageFromClient.getBody().readTo(new PowerBankInfo()));
+        ChargingStationInventory chargingStationInventory = messageFromClient.getBody().readTo(new ChargingStationInventory());
+        for (int i = 0; i < chargingStationInventory.getRemainingPowerBanks(); i++) {
+            chargingStationInventory.getPowerBankList().add(messageFromClient.getBody().readTo(new PowerBankInfo()));
         }
 
-        log.info("Power Bank inventory request {} and {}", messageFromClient.getHeader(), powerBankInfoList);
+        log.info("Power Bank inventory request {} and {}", messageFromClient.getHeader(), chargingStationInventory);
 
-        return powerBankInfoList;
+        return chargingStationInventory;
     }
 
     public String rent(String cabinetId) {
-        ArrayList<PowerBankInfo> availablePowerBanks = getAvailablePowerBanks(cabinetId);
+        ChargingStationInventory chargingStationInventory = getStationInventory(cabinetId);
 
-        if (availablePowerBanks.isEmpty()) {
+        if (chargingStationInventory.getPowerBankList().isEmpty()) {
             throw new NoPowerBanksLeft();
         }
 
-        Optional<PowerBankInfo> maxChargedPowerBank = availablePowerBanks.stream().max(Comparator.comparing(PowerBankInfo::getPowerLevel));
+        Optional<PowerBankInfo> maxChargedPowerBank = chargingStationInventory.getPowerBankList()
+                .stream()
+                .max(Comparator.comparing(PowerBankInfo::getPowerLevel));
 
         ProtocolEntity<TakePowerBankRequest> powerBankRequest = new ProtocolEntity<>(TAKE_POWER_BANK,
                 new TakePowerBankRequest(maxChargedPowerBank.get().getSlotNumber()));
@@ -101,7 +104,7 @@ public class RentService {
         }
         if (!CollectionUtils.isEmpty(rentedPowerBanks)) {
             rentedPowerBanks.forEach(rentedPowerBank -> {
-                long returnedAt = rentedPowerBank.getReturnedAt()==null?System.currentTimeMillis():rentedPowerBank.getReturnedAt().getTime();
+                long returnedAt = rentedPowerBank.getReturnedAt() == null ? System.currentTimeMillis() : rentedPowerBank.getReturnedAt().getTime();
                 long rentPeriodMs = Math.abs(returnedAt - rentedPowerBank.getRentAt().getTime());
                 rentHistoryResponse.add(
                         RentHistoryDto.builder()
@@ -113,5 +116,9 @@ public class RentService {
             });
         }
         return rentHistoryResponse;
+    }
+
+    public int getRemainingPowerBanks(String cabinetId) {
+        return getStationInventory(cabinetId).getRemainingPowerBanks();
     }
 }

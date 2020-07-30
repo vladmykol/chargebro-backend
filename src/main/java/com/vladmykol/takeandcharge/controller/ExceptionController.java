@@ -1,5 +1,7 @@
 package com.vladmykol.takeandcharge.controller;
 
+import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
+import com.vladmykol.takeandcharge.exceptions.NoPowerBanksLeft;
 import com.vladmykol.takeandcharge.exceptions.NotSuccessesRent;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,5 +33,14 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
         response.sendError(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
     }
 
+    @ExceptionHandler({CabinetIsOffline.class})
+    public void cabinetIsOffline(Exception ex, HttpServletResponse response) throws IOException {
+        response.sendError(HttpStatus.PRECONDITION_FAILED.value(), "Station is offline");
+    }
+
+    @ExceptionHandler({NoPowerBanksLeft.class})
+    public void noPowerBanksLeft(Exception ex, HttpServletResponse response) throws IOException {
+        response.sendError(HttpStatus.PRECONDITION_FAILED.value(), "No available power banks");
+    }
 
 }

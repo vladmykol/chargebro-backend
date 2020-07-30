@@ -1,6 +1,6 @@
 package com.vladmykol.takeandcharge.cabinet;
 
-import com.vladmykol.takeandcharge.cabinet.controller.StationController;
+import com.vladmykol.takeandcharge.cabinet.controller.CabinetController;
 import com.vladmykol.takeandcharge.cabinet.dto.MessageHeader;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 public class StationSocketHandler {
     private final DataInputStream in;
     private final StationSocketClient stationSocketClient;
-    private StationController stationController;
+    private CabinetController cabinetController;
 
     //    used by @lookup
     public StationSocketHandler(@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") StationSocketClient stationSocketClient) throws IOException {
@@ -37,8 +37,8 @@ public class StationSocketHandler {
     }
 
     @Autowired
-    public void setStationController(StationController stationController) {
-        this.stationController = stationController;
+    public void setCabinetController(CabinetController cabinetController) {
+        this.cabinetController = cabinetController;
     }
 
     public void handle() throws IOException {
@@ -55,13 +55,13 @@ public class StationSocketHandler {
         ProtocolEntity<?> value;
         switch (incomingMessage.getCommand()) {
             case 0x60:
-                value = stationController.singIn(incomingMessage, stationSocketClient.getClientInfo());
+                value = cabinetController.singIn(incomingMessage, stationSocketClient.getClientInfo());
                 break;
             case 0x61:
-                value = stationController.heartBeat(incomingMessage);
+                value = cabinetController.heartBeat(incomingMessage);
                 break;
             case 0x66:
-                value = stationController.returnPowerBank(incomingMessage);
+                value = cabinetController.returnPowerBank(incomingMessage);
                 break;
             default:
                 throw new UnknownCommand(

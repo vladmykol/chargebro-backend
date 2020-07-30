@@ -50,15 +50,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
 //                .antMatchers("/rent/location").permitAll()
 //                not authorized user can access this links
-                .antMatchers(API_AUTH + API_AUTH_LOGIN).permitAll()
-                .antMatchers(API_AUTH + API_AUTH_REGISTER_INIT).permitAll()
-                .antMatchers(API_AUTH + API_AUTH_REGISTER).permitAll()
+                .antMatchers(API_AUTH + API_AUTH_LOGIN,
+                        API_AUTH + API_AUTH_REGISTER_INIT,
+                        API_AUTH + API_AUTH_REGISTER,
+                        //   all can fetch stations locations
+                        API_STATIONS + API_STATIONS_NEARBY,
 //                payment callback is authorized by signature from liqpay
-                .antMatchers(API_PAY + API_PAY_CALLBACK).permitAll()
+                        API_PAY + API_PAY_CALLBACK,
 //                call back for SMS Gateway
-                .antMatchers(API_SMS + API_SMS_CALLBACK).permitAll()
+                        API_SMS + API_SMS_CALLBACK,
 //                manual authorization for socket clients
-                .antMatchers(API_SOCKET_RENT).permitAll()
+                        API_SOCKET_RENT).permitAll()
+                .antMatchers("/actuator/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated()
                 .and().httpBasic()
                 .and().logout().logoutUrl(API_AUTH + API_AUTH_LOGOUT).permitAll();

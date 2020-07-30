@@ -24,7 +24,7 @@ import static com.vladmykol.takeandcharge.cabinet.dto.CommonResult.OK;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class StationController {
+public class CabinetController {
     private final RentService rentService;
 
     public  ProtocolEntity<Object> heartBeat(ProtocolEntity<RawMessage> request) {

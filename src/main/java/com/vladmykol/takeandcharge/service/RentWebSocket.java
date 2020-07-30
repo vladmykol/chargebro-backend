@@ -92,6 +92,12 @@ public class RentWebSocket extends BinaryWebSocketHandler {
                 if (clientIdAndConnections.put(clientId, session))
                     log.debug("Client {} is now authenticated", session.getRemoteAddress());
             }
+            final var successAuth = BaseMessage.builder()
+                    .messageType(MESSAGE_TYPE_AUTH)
+                    .messageCode(MESSAGE_CODE_OK)
+                    .message("all good")
+                    .build();
+            sendMessage(session, successAuth);
         } catch (Exception e) {
             final var invalidToken = BaseMessage.builder()
                     .messageType(MESSAGE_TYPE_AUTH)
