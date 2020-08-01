@@ -45,12 +45,17 @@ public class User {
 
     private Date passwordDate;
 
-    private userStatus userStatus;
+    private String smsId;
 
-    public enum userStatus {
+    private String registerCode;
+
+    private UserStatus userStatus;
+
+    public enum UserStatus {
         INITIALIZED,
         RE_INITIALIZED,
+        RE_INITIALIZED_VIBER,
         REGISTERED,
-        BLOCKED
+        MAX_REGISTER_ATTEMPS_REACHED
     }
 }

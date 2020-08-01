@@ -11,4 +11,5 @@ import java.util.List;
 public class SendSmsRequestDto {
     private List<String> recipients;
     private SendSmsBodyDto sms;
+    private SendSmsBodyDto viber;
 }

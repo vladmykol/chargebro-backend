@@ -2,6 +2,7 @@ package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.conts.EndpointConst;
 import com.vladmykol.takeandcharge.dto.*;
+import com.vladmykol.takeandcharge.exceptions.SmsSendingError;
 import com.vladmykol.takeandcharge.exceptions.UserAlreadyExist;
 import com.vladmykol.takeandcharge.exceptions.UserIsBlocked;
 import com.vladmykol.takeandcharge.exceptions.UserIsFrozen;
@@ -25,11 +26,9 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-
     private final RegisterUserService registerUserService;
     private final TokenService tokenService;
     private final AuthenticationManager authenticationManager;
-
 
     @PostMapping(API_AUTH_LOGIN)
     public AuthenticationResponse login(@Valid @RequestBody LoginRequest loginRequest) {
@@ -49,18 +48,21 @@ public class AuthController {
 
     @PostMapping(API_AUTH_REGISTER_INIT)
     public SmsRegistrationTokenInfo preRegisterStep(@RequestParam String phone, HttpServletResponse response) throws IOException {
+        SmsRegistrationTokenInfo result = null;
         try {
-            var validationCode = registerUserService.preSingUp(phone);
-            return tokenService.generateSmsToken(validationCode);
-
+            result = registerUserService.preSingUp(phone);
+            tokenService.generateSmsToken(result);
         } catch (UserIsFrozen e) {
-            response.sendError(HttpServletResponse.SC_EXPECTATION_FAILED, "User is frozen for some time");
+            response.sendError(HttpServletResponse.SC_EXPECTATION_FAILED, "Too many request. User is frozen for some time");
         } catch (UserIsBlocked e) {
             response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED, "User is blocked");
         } catch (UserAlreadyExist e) {
             response.sendError(HttpServletResponse.SC_CONFLICT, "User already exists");
+        } catch (SmsSendingError e) {
+            response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED, e.getMessage());
         }
-        return null;
+
+        return result;
     }
 
     @PostMapping(API_AUTH_REGISTER)

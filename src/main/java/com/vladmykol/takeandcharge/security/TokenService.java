@@ -40,17 +40,19 @@ public class TokenService {
                         authSecret.getBytes()).compact();
     }
 
-    public SmsRegistrationTokenInfo generateSmsToken(String code) {
+    public void generateSmsToken(SmsRegistrationTokenInfo regInfo) {
+        regInfo.setValidForMin(smsExpirationMin);
+
         var smsToken = Jwts
                 .builder()
                 .setId("SmSJwt")
-                .setSubject(code)
+                .setSubject(regInfo.getCode())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + smsExpirationMin * 60 * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + regInfo.getValidForMin() * 60 * 1000))
                 .signWith(SignatureAlgorithm.HS512,
                         smsSecret.getBytes()).compact();
 
-        return new SmsRegistrationTokenInfo(smsExpirationMin, code, smsToken);
+        regInfo.setToken(smsToken);
     }
 
     public String getToken(HttpServletRequest request) {

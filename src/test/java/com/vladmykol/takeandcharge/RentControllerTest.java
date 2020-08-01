@@ -1,7 +1,6 @@
 package com.vladmykol.takeandcharge;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vladmykol.takeandcharge.entity.Station;
 import com.vladmykol.takeandcharge.repository.StationRepository;
 import com.vladmykol.takeandcharge.security.TokenService;
 import com.vladmykol.takeandcharge.service.SmsService;
@@ -13,8 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.List;
 
 import static com.vladmykol.takeandcharge.conts.EndpointConst.API_RENT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -76,13 +73,7 @@ class RentControllerTest {
 
     @Test
     void saveTemp() throws Exception {
-        var all = stationRepository.findAll();
-        all.forEach(station -> {
-            station.setMaxCapacity(6);
-            station.setPlaceName("Cafe");
-            station.setMapUrl("Url");
-        });
-        stationRepository.saveAll(all);
+        smsService.checkIfSmsSend("e23d9572-5f23-a2b5-a024-82de067cbcb7");
     }
 
 }

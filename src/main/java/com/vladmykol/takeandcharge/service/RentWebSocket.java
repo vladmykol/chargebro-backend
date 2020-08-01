@@ -105,6 +105,7 @@ public class RentWebSocket extends BinaryWebSocketHandler {
                     .message("Invalid token")
                     .build();
             sendMessage(session, invalidToken);
+            session.close();
         }
     }
 

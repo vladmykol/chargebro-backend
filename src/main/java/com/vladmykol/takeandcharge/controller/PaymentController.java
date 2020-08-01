@@ -42,7 +42,7 @@ public class PaymentController {
     @GetMapping(API_PAY_CHECKOUT)
     public String sendPayment(Principal principal) {
 
-        Map<String, String> params = new HashMap();
+        Map<String, String> params = new HashMap<>();
         params.put("action", "auth");
         params.put("amount", "1");
         params.put("currency", "UAH");
@@ -58,9 +58,7 @@ public class PaymentController {
         var data = StringUtils.substringBetween(html, "name=\"data\" value=\"", "\" />");
         var signature = StringUtils.substringBetween(html, "name=\"signature\" value=\"", "\" />");
 
-        String str = String.format(checkoutLink, data, signature);
-
-        return str;
+        return String.format(checkoutLink, data, signature);
     }
 
     @PostMapping(API_PAY_CALLBACK)
@@ -75,6 +73,7 @@ public class PaymentController {
 
         var jsonData = new String(new Base64().decode(data));
         LiqPayHistory liqPayCallback;
+
         try {
             liqPayCallback = new ObjectMapper().readValue(jsonData, LiqPayHistory.class);
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(liqPayCallback.getCustomer(), null);
@@ -82,7 +81,10 @@ public class PaymentController {
 
             paymentService.savePaymentCallback(liqPayCallback);
         } catch (IOException e) {
-            // TODO: 7/17/2020 reaction on parsing error
+            liqPayCallback = new LiqPayHistory();
+            liqPayCallback.setStatus("Fail to parse data");
+            liqPayCallback.setAction(jsonData);
+            paymentService.savePaymentCallback(liqPayCallback);
             throw e;
         }
     }

@@ -1,10 +1,10 @@
 package com.vladmykol.takeandcharge.service;
 
 import com.vladmykol.takeandcharge.dto.SingUpDto;
+import com.vladmykol.takeandcharge.dto.SmsRegistrationTokenInfo;
 import com.vladmykol.takeandcharge.entity.User;
+import com.vladmykol.takeandcharge.exceptions.SmsSendingError;
 import com.vladmykol.takeandcharge.exceptions.UserAlreadyExist;
-import com.vladmykol.takeandcharge.exceptions.UserIsBlocked;
-import com.vladmykol.takeandcharge.exceptions.UserIsFrozen;
 import com.vladmykol.takeandcharge.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
+
+import static com.vladmykol.takeandcharge.entity.User.UserStatus.*;
 
 @RequiredArgsConstructor
 @Service
@@ -32,45 +34,85 @@ public class RegisterUserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
     }
 
-    public String preSingUp(String userName) {
-        Optional<User> existingUser = userRepository.findByUserName(userName);
+    public SmsRegistrationTokenInfo preSingUp(String userName) {
+        var regToken = new SmsRegistrationTokenInfo();
+        Optional<User> userByUserName = userRepository.findByUserName(userName);
 
-        if (existingUser.isPresent()) {
-            switch (existingUser.get().getUserStatus()) {
+        User user;
+        if (userByUserName.isPresent()) {
+            user = userByUserName.get();
+
+            switch (user.getUserStatus()) {
                 case INITIALIZED:
-                    existingUser.get().setPasswordDate(new Date());
-                    existingUser.get().setUserStatus(User.userStatus.RE_INITIALIZED);
-                    break;
-                case RE_INITIALIZED:
-                    if (ifLastRequestExpired(existingUser.get().getPasswordDate())) {
-                        existingUser.get().setPasswordDate(new Date());
+                    if (user.getSmsId() != null) {
+                        if (smsService.checkIfSmsSend(user.getSmsId())) {
+                            if (ifLastRequestExpired(user.getPasswordDate())) {
+                                sendChangePasswordSms(user, MAX_REGISTER_ATTEMPS_REACHED);
+                            } else {
+                                regToken.setWarningMessage("SMS is on the way. Please wait couple more minutes");
+                            }
+                        } else {
+                            sendChangePasswordSms(user, RE_INITIALIZED_VIBER);
+                            regToken.setWarningMessage("Please check Viber for PIN code");
+                        }
                     } else {
-                        throw new UserIsFrozen(10);
+                        throw new SmsSendingError();
                     }
                     break;
-                case BLOCKED:
-                    throw new UserIsBlocked();
+                case RE_INITIALIZED_VIBER:
+                    if (user.getSmsId() != null) {
+                        if (smsService.checkIfSmsSend(user.getSmsId())) {
+                            if (ifLastRequestExpired(user.getPasswordDate())) {
+                                throw new SmsSendingError("Too many PIN code requests");
+                            } else {
+                                regToken.setWarningMessage("Message is on the way. Please check Viber");
+                            }
+                        } else {
+                            throw new SmsSendingError();
+                        }
+                    } else {
+                        throw new SmsSendingError();
+                    }
+                    break;
+                case MAX_REGISTER_ATTEMPS_REACHED:
+                    throw new SmsSendingError("This number is blocked for too many requests");
                 case REGISTERED:
                     throw new UserAlreadyExist();
             }
-            userRepository.save(existingUser.get());
         } else {
-            User newUser = User.builder()
+            user = User.builder()
                     .userName(userName)
-                    .userStatus(User.userStatus.INITIALIZED)
-                    .passwordDate(new Date())
                     .build();
 
-            userRepository.save(newUser);
+            sendChangePasswordSms(user, INITIALIZED);
         }
 
-        var validationCode = String.format("%04d", new Random().nextInt(10000));
-        smsService.sendValidationSms(validationCode, userName);
+        userRepository.save(user);
 
-        return validationCode;
+        regToken.setCode(user.getRegisterCode());
+        return regToken;
+    }
+
+    private String generateRegisterCode() {
+        return String.format("%04d", new Random().nextInt(10000));
+    }
+
+    private void sendChangePasswordSms(User user, User.UserStatus status) {
+        user.setPasswordDate(new Date());
+        user.setRegisterCode(generateRegisterCode());
+        user.setUserStatus(status);
+
+        try {
+            var smsId = smsService.sendValidationSms(user.getRegisterCode(), user.getUserName(), (status == RE_INITIALIZED_VIBER));
+            user.setSmsId(smsId);
+        } catch (Exception e) {
+            userRepository.save(user);
+            throw e;
+        }
     }
 
     private boolean ifLastRequestExpired(Date lastRequestDate) {
+        if (lastRequestDate == null) return true;
         long diff = new Date().getTime() - lastRequestDate.getTime();
         return diff > smsExpirationMin * 60 * 1000;
     }
@@ -80,7 +122,7 @@ public class RegisterUserService {
 
         existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         existingUser.setPasswordDate(new Date());
-        existingUser.setUserStatus(User.userStatus.REGISTERED);
+        existingUser.setUserStatus(REGISTERED);
 
         return userRepository.save(existingUser).getId();
     }
