@@ -61,8 +61,6 @@ public class SmsService {
         HttpEntity<SmsStatusRequestDto> request = new HttpEntity<>(requestBody, getHttpHeaders());
         var responseDto = postForObject(request, statusCommand, SendSmsResponseDto.class);
 
-        System.out.println(responseDto);
-
         if (responseDto.getResponse_result().isEmpty()) {
             return false;
         } else {
@@ -84,7 +82,7 @@ public class SmsService {
     }
 
     private void validateSendSmsResponse(SendSmsResponseDto response) {
-        if ((response != null ? response.getResponse_code() : 0) != 801) {
+        if (response == null || response.getResponse_code() != 801) {
             log.error("Sms was not send: {}", response);
             throw new SmsSendingError();
         }

@@ -63,7 +63,7 @@ public class RegisterUserService {
                     if (user.getSmsId() != null) {
                         if (smsService.checkIfSmsSend(user.getSmsId())) {
                             if (ifLastRequestExpired(user.getPasswordDate())) {
-                                throw new SmsSendingError("Too many PIN code requests");
+                                throw new SmsSendingError("This number is blocked for too many requests");
                             } else {
                                 regToken.setWarningMessage("Message is on the way. Please check Viber");
                             }
