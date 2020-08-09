@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.liqpay.LiqPay;
 import com.liqpay.LiqPayUtil;
 import com.vladmykol.takeandcharge.conts.EndpointConst;
+import com.vladmykol.takeandcharge.dto.CustomUserDetails;
 import com.vladmykol.takeandcharge.entity.LiqPayHistory;
 import com.vladmykol.takeandcharge.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -14,16 +15,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static com.vladmykol.takeandcharge.conts.EndpointConst.API_PAY_CALLBACK;
-import static com.vladmykol.takeandcharge.conts.EndpointConst.API_PAY_CHECKOUT;
+import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 
 @RestController
 @RequestMapping(EndpointConst.API_PAY)
@@ -40,7 +41,7 @@ public class PaymentController {
     private String callbackUri;
 
     @GetMapping(API_PAY_CHECKOUT)
-    public String sendPayment(Principal principal) {
+    public String sendPayment(@AuthenticationPrincipal CustomUserDetails activeUser) {
 
         Map<String, String> params = new HashMap<>();
         params.put("action", "auth");
@@ -48,7 +49,7 @@ public class PaymentController {
         params.put("currency", "UAH");
         params.put("result_url", callbackUri);
         params.put("description", "Authorization");
-        params.put("customer", principal.getName());
+        params.put("customer", activeUser.getId());
         params.put("language", "ua");
         params.put("recurringbytoken", "1");
         params.put("server_url", callbackUri + "/pay/callback");
@@ -87,6 +88,12 @@ public class PaymentController {
             paymentService.savePaymentCallback(liqPayCallback);
             throw e;
         }
+    }
+
+
+    @GetMapping(API_PAY_HISTORY)
+    public List<LiqPayHistory> getAllPaymentHistory() {
+        return paymentService.getAllPaymentHistory();
     }
 
 }
