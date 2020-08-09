@@ -49,7 +49,7 @@ public class PaymentController {
         params.put("currency", "UAH");
         params.put("result_url", callbackUri);
         params.put("description", "Authorization");
-        params.put("customer", activeUser.getId());
+        params.put("customer", activeUser.getUsername());
         params.put("language", "ua");
         params.put("recurringbytoken", "1");
         params.put("server_url", callbackUri + "/pay/callback");

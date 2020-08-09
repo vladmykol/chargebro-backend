@@ -46,14 +46,19 @@ public class SmsService {
         }
 
         HttpEntity<SendSmsRequestDto> request = new HttpEntity<>(requestBody, getHttpHeaders());
-        SendSmsResponseDto response = postForObject(request, sendCommand, SendSmsResponseDto.class);
-
-        validateSendSmsResponse(response);
-
-        return getMessageId(response);
+        if (gatewayUri.contains("localhost")) {
+            log.info("Validation code was not send in SMS as running on localhost: " + validationCode);
+            return validationCode;
+        } else {
+            SendSmsResponseDto response = postForObject(request, sendCommand, SendSmsResponseDto.class);
+            validateSendSmsResponse(response);
+            return getMessageId(response);
+        }
     }
 
     public boolean checkIfSmsSend(String messageId) {
+        if (gatewayUri.contains("localhost")) return true;
+
         var invalidStatuses = Arrays.asList("Rejected", "Failed", "Cancelled");
 
         var requestBody = new SmsStatusRequestDto(messageId);
@@ -73,6 +78,7 @@ public class SmsService {
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.postForObject(gatewayUri + destination, request, responseType);
     }
+
 
     private HttpHeaders getHttpHeaders() {
         HttpHeaders headers = new HttpHeaders();

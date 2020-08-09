@@ -37,9 +37,9 @@ public class RentController {
     public List<RentHistoryDto> getRentHistory(@RequestParam(required = false) String filter,
                                                @AuthenticationPrincipal CustomUserDetails activeUser,
                                                HttpServletResponse response) throws IOException {
-        List<RentHistoryDto> rentHistory = rentService.getRentHistory(activeUser.getId(), "current".equals(filter));
+        List<RentHistoryDto> rentHistory = rentService.getRentHistory(activeUser.getUsername(), "current".equals(filter));
         if (rentHistory.isEmpty())
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "not rent history");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "no rent history");
         return rentHistory;
     }
 

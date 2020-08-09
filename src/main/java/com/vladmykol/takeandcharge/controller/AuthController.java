@@ -36,7 +36,7 @@ public class AuthController {
 //        SecurityContextHolder.getContext().setAuthentication(authentication);
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        return generateAuthResponse(userDetails.getId());
+        return generateAuthResponse(userDetails.getUsername());
     }
 
     private AuthenticationResponse generateAuthResponse(String userId) {
