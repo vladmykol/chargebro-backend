@@ -17,4 +17,5 @@ public class EndpointConst {
     public static final String API_SOCKET_RENT = "/socket/rent";
     public static final String API_SMS = "/sms";
     public static final String API_SMS_CALLBACK = "/callback";
+    public static final String API_USERS = "/users";
 }

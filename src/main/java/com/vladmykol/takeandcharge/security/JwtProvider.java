@@ -13,7 +13,7 @@ import java.util.Date;
 
 @Service
 @Slf4j
-public class TokenService {
+public class JwtProvider {
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final String HEADER_WITH_TOKEN = "Authorization";
 

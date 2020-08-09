@@ -1,14 +1,15 @@
 package com.vladmykol.takeandcharge.controller;
 
+import com.vladmykol.takeandcharge.dto.CustomUserDetails;
 import com.vladmykol.takeandcharge.dto.RentHistoryDto;
 import com.vladmykol.takeandcharge.exceptions.NoPowerBanksLeft;
 import com.vladmykol.takeandcharge.service.RentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.Principal;
 import java.util.List;
 
 import static com.vladmykol.takeandcharge.conts.EndpointConst.API_RENT;
@@ -33,8 +34,10 @@ public class RentController {
     }
 
     @GetMapping("/history")
-    public List<RentHistoryDto> getRentHistory(@RequestParam(required = false) String filter, Principal principal, HttpServletResponse response) throws IOException {
-        List<RentHistoryDto> rentHistory = rentService.getRentHistory(principal.getName(), "current".equals(filter));
+    public List<RentHistoryDto> getRentHistory(@RequestParam(required = false) String filter,
+                                               @AuthenticationPrincipal CustomUserDetails activeUser,
+                                               HttpServletResponse response) throws IOException {
+        List<RentHistoryDto> rentHistory = rentService.getRentHistory(activeUser.getId(), "current".equals(filter));
         if (rentHistory.isEmpty())
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "not rent history");
         return rentHistory;

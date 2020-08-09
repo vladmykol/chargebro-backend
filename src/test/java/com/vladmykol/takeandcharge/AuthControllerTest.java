@@ -5,7 +5,7 @@ import com.vladmykol.takeandcharge.dto.LoginRequest;
 import com.vladmykol.takeandcharge.dto.SingUpDto;
 import com.vladmykol.takeandcharge.dto.SmsRegistrationTokenInfo;
 import com.vladmykol.takeandcharge.repository.StationRepository;
-import com.vladmykol.takeandcharge.security.TokenService;
+import com.vladmykol.takeandcharge.security.JwtProvider;
 import com.vladmykol.takeandcharge.service.SmsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ class AuthControllerTest {
     @Autowired
     private StationRepository stationRepository;
     @Autowired
-    private TokenService tokenService;
+    private JwtProvider jwtProvider;
     @Autowired
     private SmsService smsService;
 

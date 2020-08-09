@@ -1,7 +1,8 @@
 package com.vladmykol.takeandcharge.config;
 
+import com.vladmykol.takeandcharge.conts.RoleEnum;
 import com.vladmykol.takeandcharge.security.JwtAuthorizationFilter;
-import com.vladmykol.takeandcharge.security.TokenService;
+import com.vladmykol.takeandcharge.security.JwtProvider;
 import com.vladmykol.takeandcharge.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +23,7 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 @RequiredArgsConstructor
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final CustomUserDetailsService customUserDetailsService;
-    private final TokenService tokenService;
+    private final JwtProvider jwtProvider;
 
     @Override
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
@@ -44,9 +45,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .csrf().disable()
-                .addFilter(new JwtAuthorizationFilter(tokenService, authenticationManager()))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtProvider, customUserDetailsService))
 //                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
                 .authorizeRequests()
 //                .antMatchers("/rent/location").permitAll()
 //                not authorized user can access this links
@@ -61,7 +63,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         API_SMS + API_SMS_CALLBACK,
 //                manual authorization for socket clients
                         API_SOCKET_RENT).permitAll()
-                .antMatchers("/actuator/**").hasAuthority("ADMIN")
+                .antMatchers("/actuator/**").hasRole(RoleEnum.ADMIN.name())
+//                .antMatchers("/swagger-ui/**").hasRole(RoleEnum.ADMIN.name())
                 .anyRequest().authenticated()
                 .and().httpBasic()
                 .and().logout().logoutUrl(API_AUTH + API_AUTH_LOGOUT).permitAll();

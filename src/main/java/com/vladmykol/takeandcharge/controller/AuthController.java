@@ -6,13 +6,12 @@ import com.vladmykol.takeandcharge.exceptions.SmsSendingError;
 import com.vladmykol.takeandcharge.exceptions.UserAlreadyExist;
 import com.vladmykol.takeandcharge.exceptions.UserIsBlocked;
 import com.vladmykol.takeandcharge.exceptions.UserIsFrozen;
-import com.vladmykol.takeandcharge.security.TokenService;
+import com.vladmykol.takeandcharge.security.JwtProvider;
 import com.vladmykol.takeandcharge.service.RegisterUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -27,21 +26,21 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 public class AuthController {
 
     private final RegisterUserService registerUserService;
-    private final TokenService tokenService;
+    private final JwtProvider jwtProvider;
     private final AuthenticationManager authenticationManager;
 
     @PostMapping(API_AUTH_LOGIN)
     public AuthenticationResponse login(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+//        SecurityContextHolder.getContext().setAuthentication(authentication);
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         return generateAuthResponse(userDetails.getId());
     }
 
     private AuthenticationResponse generateAuthResponse(String userId) {
-        String generateJwtToken = tokenService.generateAuthToken(userId);
+        String generateJwtToken = jwtProvider.generateAuthToken(userId);
 
         return new AuthenticationResponse(generateJwtToken);
     }
@@ -51,7 +50,7 @@ public class AuthController {
         SmsRegistrationTokenInfo result = null;
         try {
             result = registerUserService.preSingUp(phone);
-            tokenService.generateSmsToken(result);
+            jwtProvider.generateSmsToken(result);
         } catch (UserIsFrozen e) {
             response.sendError(HttpServletResponse.SC_EXPECTATION_FAILED, "Too many request. User is frozen for some time");
         } catch (UserIsBlocked e) {
@@ -67,7 +66,7 @@ public class AuthController {
 
     @PostMapping(API_AUTH_REGISTER)
     public AuthenticationResponse singUp(@Valid @RequestBody SingUpDto singUpDto, HttpServletResponse response) throws IOException {
-        var smsCode = tokenService.parseSmsToken(singUpDto.getToken());
+        var smsCode = jwtProvider.parseSmsToken(singUpDto.getToken());
 
         if (smsCode.equals(singUpDto.getSmsCode())) {
             var userId = registerUserService.saveUser(singUpDto);

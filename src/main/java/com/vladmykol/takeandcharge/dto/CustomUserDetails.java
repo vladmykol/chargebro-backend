@@ -1,41 +1,51 @@
 package com.vladmykol.takeandcharge.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.vladmykol.takeandcharge.entity.Role;
 import com.vladmykol.takeandcharge.entity.User;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@EqualsAndHashCode
+@ToString
 public class CustomUserDetails implements UserDetails {
-    private String id;
 
-    private String username;
+    private final List<SimpleGrantedAuthority> simpleGrantedAuthorities = new ArrayList<>();
+    private final User user;
 
-    private String email;
-
-    @JsonIgnore
-    private String password;
-
-    public static CustomUserDetails build(User user) {
-
-        return new CustomUserDetails(
-                user.getId(),
-                user.getUserName(),
-                user.getEmail(),
-                user.getPassword());
+    public CustomUserDetails(User user) {
+        this.user = user;
+        for (Role role : user.getRoles()) {
+            var authority = new SimpleGrantedAuthority("ROLE_" + role.getRole().name());
+            simpleGrantedAuthorities.add(authority);
+        }
     }
 
+    public String getId() {
+        return user.getId();
+    }
+
+    @Override
+    public String getUsername() {
+        return user.getUserName();
+    }
+
+    @Override
+    @JsonIgnore
+    public String getPassword() {
+        return user.getPassword();
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return simpleGrantedAuthorities;
     }
 
     @Override

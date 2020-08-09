@@ -1,7 +1,7 @@
 package com.vladmykol.takeandcharge.service;
 
 
-import com.vladmykol.takeandcharge.security.TokenService;
+import com.vladmykol.takeandcharge.security.JwtProvider;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class RentWebSocket extends BinaryWebSocketHandler {
     private static final short MESSAGE_CODE_OK = 200;
     private static final short MESSAGE_CODE_UNAUTHORIZED = 401;
     private static final MultiValuedMap<String, WebSocketSession> clientIdAndConnections = new HashSetValuedHashMap<>();
-    private final TokenService tokenService;
+    private final JwtProvider jwtProvider;
 
 
     public void sendPowerBankReturnedMessage(String clientId, String powerBankId) {
@@ -87,7 +87,7 @@ public class RentWebSocket extends BinaryWebSocketHandler {
         }
 
         try {
-            String clientId = tokenService.parseAuthToken(tokenBuilder.toString());
+            String clientId = jwtProvider.parseAuthToken(tokenBuilder.toString());
             synchronized (clientIdAndConnections) {
                 if (clientIdAndConnections.put(clientId, session))
                     log.debug("Client {} is now authenticated", session.getRemoteAddress());

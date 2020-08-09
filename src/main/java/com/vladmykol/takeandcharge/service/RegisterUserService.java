@@ -1,10 +1,13 @@
 package com.vladmykol.takeandcharge.service;
 
+import com.vladmykol.takeandcharge.conts.RoleEnum;
 import com.vladmykol.takeandcharge.dto.SingUpDto;
 import com.vladmykol.takeandcharge.dto.SmsRegistrationTokenInfo;
+import com.vladmykol.takeandcharge.entity.Role;
 import com.vladmykol.takeandcharge.entity.User;
 import com.vladmykol.takeandcharge.exceptions.SmsSendingError;
 import com.vladmykol.takeandcharge.exceptions.UserAlreadyExist;
+import com.vladmykol.takeandcharge.repository.RoleRepository;
 import com.vladmykol.takeandcharge.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +15,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 import static com.vladmykol.takeandcharge.entity.User.UserStatus.*;
 
@@ -22,6 +23,7 @@ import static com.vladmykol.takeandcharge.entity.User.UserStatus.*;
 @Service
 public class RegisterUserService {
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final SmsService smsService;
 
@@ -80,8 +82,10 @@ public class RegisterUserService {
                     throw new UserAlreadyExist();
             }
         } else {
+            Role userRole = roleRepository.findByRole(RoleEnum.USER);
             user = User.builder()
                     .userName(userName)
+                    .roles(Collections.singleton(userRole))
                     .build();
 
             sendChangePasswordSms(user, INITIALIZED);
@@ -126,5 +130,20 @@ public class RegisterUserService {
 
         return userRepository.save(existingUser).getId();
     }
+
+    public void saveUser(User user) {
+        user.getRoles().forEach(role -> {
+            var roleDocument = roleRepository.findByRole(role.getRole());
+            role.setId(roleDocument.getId());
+        });
+//
+        userRepository.save(user);
+    }
+
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+
 
 }

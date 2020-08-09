@@ -2,7 +2,7 @@ package com.vladmykol.takeandcharge;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vladmykol.takeandcharge.repository.StationRepository;
-import com.vladmykol.takeandcharge.security.TokenService;
+import com.vladmykol.takeandcharge.security.JwtProvider;
 import com.vladmykol.takeandcharge.service.SmsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ class RentControllerTest {
     @Autowired
     private StationRepository stationRepository;
     @Autowired
-    private TokenService tokenService;
+    private JwtProvider jwtProvider;
     @Autowired
     private SmsService smsService;
 
@@ -48,7 +48,7 @@ class RentControllerTest {
 
     @Test
     void rent() throws Exception {
-        String token = tokenService.generateAuthToken("5eb3e5279ef2620da98e0a611");
+        String token = jwtProvider.generateAuthToken("5eb3e5279ef2620da98e0a611");
 
         mvc.perform(post(API_RENT)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -61,7 +61,7 @@ class RentControllerTest {
 
     @Test
     void getLocation() throws Exception {
-        String token = tokenService.generateAuthToken("5eb3e5279ef2620da98e0a611");
+        String token = jwtProvider.generateAuthToken("5eb3e5279ef2620da98e0a611");
 
         mvc.perform(get("/rent/location")
                 .header("Authorization", token)

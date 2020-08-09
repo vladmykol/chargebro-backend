@@ -1,31 +1,34 @@
 package com.vladmykol.takeandcharge.config;
 
+import com.vladmykol.takeandcharge.conts.RoleEnum;
+import com.vladmykol.takeandcharge.entity.Role;
+import com.vladmykol.takeandcharge.entity.User;
+import com.vladmykol.takeandcharge.repository.RoleRepository;
+import com.vladmykol.takeandcharge.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
-import org.springframework.data.mongodb.core.index.IndexOperations;
-import org.springframework.data.mongodb.core.index.IndexResolver;
 import org.springframework.data.mongodb.core.index.MongoPersistentEntityIndexResolver;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
-import org.springframework.data.mongodb.core.mapping.MongoPersistentEntity;
-import org.springframework.data.mongodb.core.mapping.MongoPersistentProperty;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
 @EnableMongoAuditing
-public class MongoConfig {
+public class MongoDbConfig {
     private final MongoTemplate mongoTemplate;
     private final MongoConverter mongoConverter;
 
@@ -44,5 +47,26 @@ public class MongoConfig {
                 });
         Duration timeElapsed = Duration.between(start, Instant.now());
         log.info("Mongo DB index creation on startup took: {}", DurationFormatUtils.formatDurationHMS(timeElapsed.toMillis()));
+    }
+
+    @Bean
+    CommandLineRunner presetRoles(RoleRepository roleRepository, UserRepository userRepository) {
+        return args -> {
+            for (RoleEnum roleEnum : RoleEnum.values()) {
+                Role existingRole = roleRepository.findByRole(roleEnum);
+                if (existingRole == null) {
+                    Role newRole = new Role();
+                    newRole.setRole(roleEnum);
+                    roleRepository.save(newRole);
+                }
+            }
+
+            userRepository.findAll().forEach((user)->{
+                Role userRole = roleRepository.findByRole(RoleEnum.USER);
+                user.setRoles(Collections.singleton(userRole));
+                userRepository.save(user);
+            });
+
+        };
     }
 }
