@@ -121,4 +121,5 @@ public class RentService {
     public int getRemainingPowerBanks(String cabinetId) {
         return getStationInventory(cabinetId).getRemainingPowerBanks();
     }
+
 }

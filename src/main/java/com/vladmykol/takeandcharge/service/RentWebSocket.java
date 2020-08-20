@@ -18,8 +18,9 @@ import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.Collection;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +33,19 @@ public class RentWebSocket extends BinaryWebSocketHandler {
     private static final MultiValuedMap<String, WebSocketSession> clientIdAndConnections = new HashSetValuedHashMap<>();
     private final JwtProvider jwtProvider;
 
+    public Map<String, List<String>> listConnectedClients() {
+        Map<String, List<String>> result = new HashMap<>();
+
+        clientIdAndConnections.entries().forEach(entry -> {
+            var resultSessions = result.get(entry.getKey());
+            if (resultSessions == null) {
+                resultSessions = new ArrayList<>();
+                result.putIfAbsent(entry.getKey(), resultSessions);
+            }
+            resultSessions.add(entry.getValue().getRemoteAddress().getAddress().toString());
+        });
+        return result;
+    }
 
     public void sendPowerBankReturnedMessage(String clientId, String powerBankId) {
         final var returnedPowerBank = BaseMessage.builder()

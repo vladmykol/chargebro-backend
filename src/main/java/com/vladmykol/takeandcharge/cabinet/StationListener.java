@@ -1,5 +1,6 @@
 package com.vladmykol.takeandcharge.cabinet;
 
+import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
 import com.vladmykol.takeandcharge.config.AsyncConfiguration;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import lombok.RequiredArgsConstructor;
@@ -8,11 +9,10 @@ import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -21,6 +21,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public abstract class StationListener {
     private final LinkedList<StationSocketClient> registeredStationSocketClients = new LinkedList<>();
+
+    public List<ClientInfo> listConnectedClients() {
+        List<ClientInfo> result = new ArrayList<>();
+        registeredStationSocketClients.forEach(stationSocketClient -> {
+            result.add(stationSocketClient.getClientInfo());
+        });
+        return result;
+    }
 
     public StationSocketClient getClient(String clientId) {
         synchronized (registeredStationSocketClients) {

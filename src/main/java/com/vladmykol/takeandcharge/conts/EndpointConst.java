@@ -14,9 +14,13 @@ public class EndpointConst {
     public static final String API_STATIONS_NEARBY = "/nearby";
     public static final String API_PAY_CHECKOUT = "/checkout";
     public static final String API_PAY_CALLBACK = "/callback";
-    public static final String API_PAY_HISTORY = "/history";
     public static final String API_SOCKET_RENT = "/socket/rent";
     public static final String API_SMS = "/sms";
     public static final String API_SMS_CALLBACK = "/callback";
-    public static final String API_USERS = "/users";
+    public static final String API_ADMIN_USERS = "/users";
+    public static final String API_ADMIN_SOCKET_CLIENTS = "/socket";
+    public static final String API_ADMIN = "/admin";
+    public static final String API_ADMIN_HISTORY = "/history";
+    public static final String API_ADMIN_STATION_OPTIONS = API_STATIONS + API_ID + "/options";
+    ;
 }

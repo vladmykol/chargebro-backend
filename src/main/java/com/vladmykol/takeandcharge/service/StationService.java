@@ -1,5 +1,12 @@
 package com.vladmykol.takeandcharge.service;
 
+import com.vladmykol.takeandcharge.cabinet.StationListener;
+import com.vladmykol.takeandcharge.cabinet.StationSocketClient;
+import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
+import com.vladmykol.takeandcharge.cabinet.dto.MessageHeader;
+import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
+import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
+import com.vladmykol.takeandcharge.cabinet.dto.server.ChangeServerAddressRequest;
 import com.vladmykol.takeandcharge.dto.StationInfoDto;
 import com.vladmykol.takeandcharge.entity.Station;
 import com.vladmykol.takeandcharge.repository.StationRepository;
@@ -13,9 +20,12 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.SET_SERVER_ADDRESS;
+
 @Service
 @RequiredArgsConstructor
 public class StationService {
+    private final StationListener stationListener;
     private final StationRepository stationRepository;
     private final ModelMapper stationInfoMapper;
 
@@ -50,4 +60,33 @@ public class StationService {
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
+
+    public List<ClientInfo> getConnectedStations() {
+        return stationListener.listConnectedClients();
+    }
+
+
+    public MessageHeader setServerAddress(String cabinetId, String serverAddress, String port, short pingSec) {
+        var changeServerAddressRequest = ChangeServerAddressRequest.builder()
+                .serverAddress(serverAddress)
+                .serverPort(port)
+                .heartbeatIntervalSec(pingSec).build();
+
+        ProtocolEntity<?> setServerAddressRequest = new ProtocolEntity<>(SET_SERVER_ADDRESS, changeServerAddressRequest);
+
+        StationSocketClient stationSocketClient = stationListener.getClient(cabinetId);
+        ProtocolEntity<RawMessage> messageFromClient = stationSocketClient.communicate(setServerAddressRequest);
+
+        return messageFromClient.getHeader();
+    }
+
+    public MessageHeader remoteRestart(String cabinetId) {
+        ProtocolEntity<?> setServerAddressRequest = new ProtocolEntity<>(SET_SERVER_ADDRESS);
+
+        StationSocketClient stationSocketClient = stationListener.getClient(cabinetId);
+        ProtocolEntity<RawMessage> messageFromClient = stationSocketClient.communicate(setServerAddressRequest);
+
+        return messageFromClient.getHeader();
+    }
+
 }

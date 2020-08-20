@@ -29,19 +29,9 @@ public class Cabinet {
 
     public byte[] communicate(byte[] message) throws IOException {
         out.write(message);
+        out.flush();
 
-        short length = in.readShort();
-        if (length > 0) {
-            byte[] response = new byte[length];
-            in.readFully(response, 0, response.length);
-
-            ByteBuffer buffer = ByteBuffer.allocate(2 + length);
-            buffer.putShort(length);
-            buffer.put(response);
-            return buffer.array();
-        }
-
-        return null;
+        return readInputStream();
     }
 
     public void writeMessage(ProtocolEntity<?> protocolEntity) throws IOException {

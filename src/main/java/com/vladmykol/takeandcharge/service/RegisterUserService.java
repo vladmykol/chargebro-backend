@@ -136,14 +136,12 @@ public class RegisterUserService {
             var roleDocument = roleRepository.findByRole(role.getRole());
             role.setId(roleDocument.getId());
         });
-//
         userRepository.save(user);
     }
 
     public List<User> findAll() {
         return userRepository.findAll();
     }
-
 
 
 }

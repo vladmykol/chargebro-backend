@@ -21,10 +21,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
+import static com.vladmykol.takeandcharge.conts.EndpointConst.API_PAY_CALLBACK;
+import static com.vladmykol.takeandcharge.conts.EndpointConst.API_PAY_CHECKOUT;
 
 @RestController
 @RequestMapping(EndpointConst.API_PAY)
@@ -88,12 +88,6 @@ public class PaymentController {
             paymentService.savePaymentCallback(liqPayCallback);
             throw e;
         }
-    }
-
-
-    @GetMapping(API_PAY_HISTORY)
-    public List<LiqPayHistory> getAllPaymentHistory() {
-        return paymentService.getAllPaymentHistory();
     }
 
 }
