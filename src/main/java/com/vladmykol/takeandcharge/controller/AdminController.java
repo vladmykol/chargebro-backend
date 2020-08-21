@@ -32,6 +32,11 @@ public class AdminController {
         registerUserService.saveUser(user);
     }
 
+    @DeleteMapping(API_ADMIN_USERS)
+    public void deleteUser(@RequestParam String id) {
+        registerUserService.deleteUser(id);
+    }
+
     @GetMapping(API_ADMIN_USERS)
     public List<User> findAll() {
         return registerUserService.findAll();

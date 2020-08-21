@@ -64,8 +64,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 //                manual authorization for socket clients
                         API_SOCKET_RENT).permitAll()
                 .antMatchers("/actuator/**").hasRole(RoleEnum.ADMIN.name())
-//                .antMatchers("/swagger-ui/**").hasRole(RoleEnum.ADMIN.name())
-//                .antMatchers(API_ADMIN + "/**").hasRole(RoleEnum.ADMIN.name())
+                .antMatchers("/swagger-ui/**").hasRole(RoleEnum.ADMIN.name())
+                .antMatchers(API_ADMIN + "/**").hasRole(RoleEnum.ADMIN.name())
                 .anyRequest().authenticated()
                 .and().httpBasic()
                 .and().logout().logoutUrl(API_AUTH + API_AUTH_LOGOUT).permitAll();
