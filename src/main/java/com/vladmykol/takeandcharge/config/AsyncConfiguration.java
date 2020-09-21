@@ -4,7 +4,6 @@ package com.vladmykol.takeandcharge.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -17,11 +16,12 @@ import java.util.concurrent.Executor;
 @EnableScheduling
 @Slf4j
 public class AsyncConfiguration {
-    public static final String clientTaskExecutorName = "clientTaskExecutor";
-    public static final String serverTaskExecutorName = "serverTaskExecutor";
-    public static final String returnRentTaskExecutorName = "returnRentTaskExecutor";
+    public static final String ONLINE_WEB_SOCKET_CLIENTS_TASK_EXECUTOR = "onlineWebSocketClientsTaskExecutor";
+    public static final String STATION_SERVER_TASK_EXECUTOR = "stationServerTaskExecutor";
+    public static final String RETURN_POWER_BANK_TASK_EXECUTOR = "returnPowerBankTaskExecutor";
+    public static final String PAYMENT_CALLBACK_TASK_EXECUTOR = "paymentCallbackTaskExecutor";
 
-    @Bean(name = serverTaskExecutorName)
+    @Bean(name = STATION_SERVER_TASK_EXECUTOR)
     public Executor serverTaskExecutor() {
         log.debug("Creating Async Task Executor for Server");
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -33,26 +33,38 @@ public class AsyncConfiguration {
         return executor;
     }
 
-    @Bean(name = clientTaskExecutorName)
+    @Bean(name = ONLINE_WEB_SOCKET_CLIENTS_TASK_EXECUTOR)
     public Executor clientTaskExecutor() {
-        log.debug("Creating Async Task Executor for Clients");
+        log.debug("Creating Async Task Executor for Active socket clients");
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(3);
-        executor.setMaxPoolSize(5);
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(50);
         executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("client-");
+        executor.setThreadNamePrefix("web-socket-");
         executor.initialize();
         return executor;
     }
 
-    @Bean(name = returnRentTaskExecutorName)
-    public Executor returnRentTaskExecutor() {
-        log.debug("Creating Async Task Executor for returning rent requests");
+    @Bean(name = RETURN_POWER_BANK_TASK_EXECUTOR)
+    public Executor rentReturnTaskExecutor() {
+        log.debug("Creating Async Task Executor for a returning rent requests from station");
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(3);
         executor.setMaxPoolSize(5);
         executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("rent-return-");
+        executor.setThreadNamePrefix("pb-return-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean(name = PAYMENT_CALLBACK_TASK_EXECUTOR)
+    public Executor rentStartTaskExecutor() {
+        log.debug("Creating Async Task Executor for payment callbacks");
+        final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(5);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("payment-callback-");
         executor.initialize();
         return executor;
     }

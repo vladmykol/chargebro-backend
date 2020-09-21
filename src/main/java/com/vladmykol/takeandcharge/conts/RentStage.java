@@ -1,0 +1,13 @@
+package com.vladmykol.takeandcharge.conts;
+
+public enum RentStage {
+    INIT,
+    HOLD_MONEY,
+    WAIT_HOLD_MONEY_CALLBACK,
+    UNLOCK_POWERBANK,
+    REVERSE_MONEY,
+    WAIT_REVERSE_MONEY_CALLBACK,
+    CHARGE_MONEY,
+    WAIT_CHARGE_MONEY_CALLBACK,
+    SUCCESSFULLY_FINISHED;
+}

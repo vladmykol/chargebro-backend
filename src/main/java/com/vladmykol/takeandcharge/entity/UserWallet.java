@@ -6,12 +6,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.*;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.util.Date;
 
 
@@ -28,9 +24,16 @@ public class UserWallet {
     @Indexed
     private String userId;
 
-    @NotBlank
-    @Size(max = 20)
-    private String card_token;
+    private String paymentId;
+
+    @NonNull
+    private String cardToken;
+
+    @NonNull
+    private String cardType;
+
+    @NonNull
+    private String maskedCard;
 
     @CreatedDate
     @NonNull
@@ -45,6 +48,5 @@ public class UserWallet {
     @LastModifiedBy
     private String lastModifiedBy;
 
-    @DBRef
-    private LiqPayHistory liqPayHistory;
+
 }

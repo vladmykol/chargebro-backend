@@ -2,6 +2,7 @@ package com.vladmykol.takeandcharge.service;
 
 
 import com.vladmykol.takeandcharge.security.JwtProvider;
+import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -18,22 +19,25 @@ import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class RentWebSocket extends BinaryWebSocketHandler {
+public class WebSocketServer extends BinaryWebSocketHandler {
     private static final short MESSAGE_TYPE_AUTH = 1;
-    private static final short MESSAGE_TYPE_UPDATE = 2;
+    private static final short MESSAGE_TYPE_RENT_START = 2;
+    private static final short MESSAGE_TYPE_RENT_END = 3;
+    private static final short MESSAGE_TYPE_ERROR = 4;
     private static final short MESSAGE_CODE_OK = 200;
+    private static final short MESSAGE_CODE_PAYMENT_ERROR = 402;
     private static final short MESSAGE_CODE_UNAUTHORIZED = 401;
+    private static final short MESSAGE_CODE_GENERAL_ERROR = 500;
     private static final MultiValuedMap<String, WebSocketSession> clientIdAndConnections = new HashSetValuedHashMap<>();
     private final JwtProvider jwtProvider;
 
-    public Map<String, List<String>> listConnectedClients() {
+    public Map<String, List<String>> getConnectedClients() {
         Map<String, List<String>> result = new HashMap<>();
 
         clientIdAndConnections.entries().forEach(entry -> {
@@ -47,18 +51,53 @@ public class RentWebSocket extends BinaryWebSocketHandler {
         return result;
     }
 
-    public void sendPowerBankReturnedMessage(String clientId, String powerBankId) {
-        final var returnedPowerBank = BaseMessage.builder()
-                .messageType(MESSAGE_TYPE_UPDATE)
+    public void sendRentStartMessage(String powerBankId) {
+        final var baseMessage = BaseMessage.builder()
+                .messageType(MESSAGE_TYPE_RENT_START)
                 .messageCode(MESSAGE_CODE_OK)
                 .message(powerBankId)
                 .build();
 
-        Collection<WebSocketSession> webSocketSessions = clientIdAndConnections.get(clientId);
+        sendBaseMassage(baseMessage);
+    }
+
+    public void sendRentEndMessage(String powerBankId) {
+        final var baseMessage = BaseMessage.builder()
+                .messageType(MESSAGE_TYPE_RENT_END)
+                .messageCode(MESSAGE_CODE_OK)
+                .message(powerBankId)
+                .build();
+
+        sendBaseMassage(baseMessage);
+    }
+
+    public void sendPaymentErrorMessage(String errorMessage) {
+        final var baseMessage = BaseMessage.builder()
+                .messageType(MESSAGE_TYPE_ERROR)
+                .messageCode(MESSAGE_CODE_PAYMENT_ERROR)
+                .message(errorMessage)
+                .build();
+
+        sendBaseMassage(baseMessage);
+    }
+
+    public void sendGeneralErrorMessage(String errorMessage) {
+        final var baseMessage = BaseMessage.builder()
+                .messageType(MESSAGE_TYPE_ERROR)
+                .messageCode(MESSAGE_CODE_GENERAL_ERROR)
+                .message(errorMessage)
+                .build();
+
+        sendBaseMassage(baseMessage);
+    }
+
+    private void sendBaseMassage(BaseMessage baseMessage) {
+        var currentUserId = SecurityUtil.getUser();
+        Collection<WebSocketSession> webSocketSessions = clientIdAndConnections.get(currentUserId);
         if (webSocketSessions != null) {
             webSocketSessions.forEach(webSocketSession -> {
                 try {
-                    sendMessage(webSocketSession, returnedPowerBank);
+                    sendMessage(webSocketSession, baseMessage);
                     log.debug("Sent rent update to web socket client {}", webSocketSession.getRemoteAddress());
                 } catch (IOException e) {
                     log.error("Cannon send rent update to web socket client {}", webSocketSession.getRemoteAddress(), e);

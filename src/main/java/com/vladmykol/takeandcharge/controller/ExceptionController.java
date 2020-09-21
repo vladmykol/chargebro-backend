@@ -3,9 +3,11 @@ package com.vladmykol.takeandcharge.controller;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.NoPowerBanksLeft;
 import com.vladmykol.takeandcharge.exceptions.NotSuccessesRent;
+import com.vladmykol.takeandcharge.exceptions.RentIsNotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
@@ -18,7 +20,7 @@ import java.io.IOException;
 public class ExceptionController extends ResponseEntityExceptionHandler {
     @ExceptionHandler({BadCredentialsException.class})
     public void handleBadCredentials(
-            Exception ex, WebRequest request, HttpServletResponse response) throws IOException {
+            Exception ex,HttpServletResponse response) throws IOException {
         response.sendError(HttpStatus.FORBIDDEN.value(), "User or password is incorrect");
     }
 
@@ -27,7 +29,7 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
         response.sendError(HttpStatus.EXPECTATION_FAILED.value(), "Station cannot give powerbank");
     }
 
-    @ExceptionHandler({AuthenticationException.class})
+    @ExceptionHandler({AuthenticationException.class, UsernameNotFoundException.class})
     public void authIssue(
             Exception ex, HttpServletResponse response) throws IOException {
         response.sendError(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
@@ -42,5 +44,11 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
     public void noPowerBanksLeft(Exception ex, HttpServletResponse response) throws IOException {
         response.sendError(HttpStatus.PRECONDITION_FAILED.value(), "No available power banks");
     }
+
+    @ExceptionHandler({RentIsNotFound.class})
+    public void notFoundRent(Exception ex, HttpServletResponse response) throws IOException {
+        response.sendError(HttpStatus.PRECONDITION_FAILED.value(), "No rent request found");
+    }
+
 
 }

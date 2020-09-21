@@ -1,4 +1,4 @@
 package com.vladmykol.takeandcharge.exceptions;
 
-public class CabinetIsOffline extends RuntimeException {
+public class CabinetIsOffline extends ChargingStationException {
 }

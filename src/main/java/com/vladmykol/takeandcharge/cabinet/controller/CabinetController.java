@@ -7,17 +7,12 @@ import com.vladmykol.takeandcharge.cabinet.dto.client.LoginRequest;
 import com.vladmykol.takeandcharge.cabinet.dto.client.ReturnPowerBankRequest;
 import com.vladmykol.takeandcharge.cabinet.dto.server.LoginResponse;
 import com.vladmykol.takeandcharge.cabinet.dto.server.ReturnPowerBankResponse;
-import com.vladmykol.takeandcharge.entity.RentHistory;
-import com.vladmykol.takeandcharge.repository.RentHistoryRepository;
 import com.vladmykol.takeandcharge.service.RentService;
-import com.vladmykol.takeandcharge.service.RentWebSocket;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
 
 import java.time.Instant;
-import java.util.Optional;
 
 import static com.vladmykol.takeandcharge.cabinet.dto.CommonResult.OK;
 
@@ -44,7 +39,7 @@ public class CabinetController {
         return new ProtocolEntity<>(request.getHeader(), loginResponse);
     }
 
-    public ProtocolEntity<ReturnPowerBankResponse> returnPowerBank(ProtocolEntity<RawMessage> request) {
+    public ProtocolEntity<ReturnPowerBankResponse> returnPowerBank(ProtocolEntity<RawMessage> request, String cabinetId) {
         ReturnPowerBankRequest requestBody = request.getBody().readFullyTo(new ReturnPowerBankRequest());
         log.debug("Power Bank return request {} and {}", request.getHeader(), requestBody);
 
@@ -53,7 +48,7 @@ public class CabinetController {
                 .result(OK)
                 .build();
 
-        rentService.returnRent(requestBody.getPowerBankId());
+        rentService.prepareForRentFinish(requestBody.getPowerBankId(), cabinetId);
 
         return new ProtocolEntity<>(request.getHeader(), returnPowerBankResponse);
     }

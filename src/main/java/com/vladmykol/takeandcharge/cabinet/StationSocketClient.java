@@ -9,7 +9,10 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -60,12 +63,12 @@ public class StationSocketClient {
 
     public void check() {
         ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(SOFTWARE_VERSION);
-        communicate(softwareVersionRequest, 33000);
+        communicate(softwareVersionRequest, 5000);
     }
 
     @SneakyThrows
     public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request) {
-        return communicate(request, 60000);
+        return communicate(request, 30000);
     }
 
     @SneakyThrows

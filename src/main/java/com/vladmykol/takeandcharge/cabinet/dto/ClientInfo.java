@@ -14,5 +14,5 @@ public class ClientInfo {
 
     private String cabinetId;
 
-    private Instant lastSeen = Instant.now();
+    private Instant lastSeen = Instant.now().minusSeconds(25);
 }

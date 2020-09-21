@@ -55,13 +55,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(API_AUTH + API_AUTH_LOGIN,
                         API_AUTH + API_AUTH_REGISTER_INIT,
                         API_AUTH + API_AUTH_REGISTER,
-                        //   all can fetch stations locations
+                        //   anyone can fetch stations locations
                         API_STATIONS + API_STATIONS_NEARBY,
-//                payment callback is authorized by signature from liqpay
-                        API_PAY + API_PAY_CALLBACK,
-//                call back for SMS Gateway
+//                payment callbacks are authorized by signature
+                        API_PAY + API_PAY_CALLBACK + "/**",
+//                call back for SMS Gateway not secured
                         API_SMS + API_SMS_CALLBACK,
-//                manual authorization for socket clients
+//                socket clients (stations) are not authorized yet
                         API_SOCKET_RENT).permitAll()
                 .antMatchers("/actuator/**").hasRole(RoleEnum.ADMIN.name())
                 .antMatchers("/swagger-ui/**").hasRole(RoleEnum.ADMIN.name())

@@ -23,7 +23,7 @@ public class StationSocketServer {
     @Value("${takeandcharge.socket.server.client.idle-timeout-sec}")
     private int idleTimeoutSeconds;
 
-    @Async(AsyncConfiguration.serverTaskExecutorName)
+    @Async(AsyncConfiguration.STATION_SERVER_TASK_EXECUTOR)
     public void start() throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
             log.info("Socket server started on port: {}", portNumber);
@@ -36,7 +36,7 @@ public class StationSocketServer {
         }
     }
 
-    @Scheduled(fixedRate = 10000, initialDelay = 30000)
+    @Scheduled(fixedRate = 5000, initialDelay = 30000)
     public void monitorClients() {
         List<StationSocketClient> inactiveStationSocketClients = stationListener.getInactiveClients(idleTimeoutSeconds);
         inactiveStationSocketClients.forEach(this::tryToWakeUpInactive);

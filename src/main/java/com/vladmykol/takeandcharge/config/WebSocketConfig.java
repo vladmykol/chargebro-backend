@@ -1,6 +1,6 @@
 package com.vladmykol.takeandcharge.config;
 
-import com.vladmykol.takeandcharge.service.RentWebSocket;
+import com.vladmykol.takeandcharge.service.WebSocketServer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -13,10 +13,10 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.API_SOCKET_RENT;
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
-    private final RentWebSocket rentWebSocket;
+    private final WebSocketServer webSocketServer;
 
-    public WebSocketConfig(RentWebSocket rentWebSocket) {
-        this.rentWebSocket = rentWebSocket;
+    public WebSocketConfig(WebSocketServer webSocketServer) {
+        this.webSocketServer = webSocketServer;
     }
 
     @Bean
@@ -29,7 +29,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(rentWebSocket, API_SOCKET_RENT);
+        registry.addHandler(webSocketServer, API_SOCKET_RENT);
     }
 
 }

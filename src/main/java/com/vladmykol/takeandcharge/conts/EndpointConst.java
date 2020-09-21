@@ -2,7 +2,6 @@ package com.vladmykol.takeandcharge.conts;
 
 public class EndpointConst {
     public static final String API_AUTH = "/auth";
-    public static final String API_PAY = "/pay";
     public static final String API_AUTH_LOGIN = "/login";
     public static final String API_AUTH_REGISTER_INIT = "/register";
     public static final String API_AUTH_REGISTER = "/singup";
@@ -12,15 +11,19 @@ public class EndpointConst {
     public static final String API_ID = "/{id}";
     public static final String API_STATIONS_CAPACITY = API_ID + "/capacity";
     public static final String API_STATIONS_NEARBY = "/nearby";
+    public static final String API_PAY = "/pay";
     public static final String API_PAY_CHECKOUT = "/checkout";
     public static final String API_PAY_CALLBACK = "/callback";
+    public static final String API_PAY_CALLBACK_AUTH = API_PAY_CALLBACK + "/auth";
+    public static final String API_PAY_CALLBACK_HOLD = API_PAY_CALLBACK + "/hold";
     public static final String API_SOCKET_RENT = "/socket/rent";
     public static final String API_SMS = "/sms";
     public static final String API_SMS_CALLBACK = "/callback";
-    public static final String API_ADMIN_USERS = "/users";
-    public static final String API_ADMIN_SOCKET_CLIENTS = "/socket";
+    public static final String API_ADMIN_USER = "/user";
+    public static final String API_ADMIN_ONLINE_CLIENT = "/online-client";
     public static final String API_ADMIN = "/admin";
-    public static final String API_ADMIN_HISTORY = "/history";
-    public static final String API_ADMIN_STATION_OPTIONS = API_STATIONS + API_ID + "/options";
+    public static final String API_ADMIN_PAYMENT = "/payment";
+    public static final String API_ADMIN_RENT_REPORT = "/rent/report";
+    public static final String API_ADMIN_STATION_OPTIONS = API_STATIONS + API_ID + "/option";
     ;
 }

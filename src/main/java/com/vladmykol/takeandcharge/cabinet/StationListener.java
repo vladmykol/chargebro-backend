@@ -56,7 +56,7 @@ public abstract class StationListener {
                 .collect(Collectors.toList());
     }
 
-    @Async(AsyncConfiguration.clientTaskExecutorName)
+    @Async(AsyncConfiguration.ONLINE_WEB_SOCKET_CLIENTS_TASK_EXECUTOR)
     public void listen(StationSocketClient stationSocketClient) {
         try {
             newStationSocketHandler(stationSocketClient).handle();

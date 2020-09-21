@@ -61,7 +61,7 @@ public class StationSocketHandler {
                 value = cabinetController.heartBeat(incomingMessage);
                 break;
             case 0x66:
-                value = cabinetController.returnPowerBank(incomingMessage);
+                value = cabinetController.returnPowerBank(incomingMessage, stationSocketClient.getClientInfo().getCabinetId());
                 break;
             default:
                 throw new UnknownCommand(

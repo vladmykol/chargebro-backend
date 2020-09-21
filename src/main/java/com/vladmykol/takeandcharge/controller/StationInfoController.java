@@ -15,7 +15,6 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 @RequiredArgsConstructor
 public class StationInfoController {
     private final StationService stationService;
-    private final RentService rentService;
 
     @GetMapping()
     public List<StationInfoDto> getStations() {
@@ -30,7 +29,7 @@ public class StationInfoController {
 
     @GetMapping(API_STATIONS_CAPACITY)
     public int getRemainingPowerBanks(@PathVariable String id) {
-        return rentService.getRemainingPowerBanks(id);
+        return stationService.getRemainingPowerBanks(id);
     }
 
     @PostMapping()
