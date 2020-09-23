@@ -148,6 +148,7 @@ public class FondyService {
         if (StringUtils.isNotBlank(errorMessage)) {
             throw new PaymentGatewayException(errorMessage);
         }
+
     }
 
 
@@ -158,14 +159,14 @@ public class FondyService {
     }
 
     private String extractErrorMessage(FondyResponse response) {
-        if (!"success".equalsIgnoreCase(response.getResponse_status())) {
-            var message = response.getError_message();
-            if (StringUtils.isNotBlank(response.getResponse_description())) {
-                message = message + " " + response.getResponse_description();
-            }
-            return message;
+        String message = "";
+        if (StringUtils.isNotBlank(response.getError_message())) {
+            message = response.getError_message();
         }
-        return null;
+        if (StringUtils.isNotBlank(response.getResponse_description())) {
+            message = response.getResponse_description() + ". " + message;
+        }
+        return message;
     }
 
 

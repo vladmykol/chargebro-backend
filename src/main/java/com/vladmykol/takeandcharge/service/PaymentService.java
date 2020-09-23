@@ -3,7 +3,6 @@ package com.vladmykol.takeandcharge.service;
 import com.vladmykol.takeandcharge.conts.PaymentType;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
 import com.vladmykol.takeandcharge.entity.Payment;
-import com.vladmykol.takeandcharge.exceptions.PaymentGatewayException;
 import com.vladmykol.takeandcharge.repository.PaymentRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -49,35 +48,36 @@ public class PaymentService {
         // TODO: 9/15/2020 get valid card from wallet
         final var validPaymentMethodsOrdered = userWalletService.getValidPaymentMethodsOrdered();
 
-        String paymentId = "";
-        final var iterator = validPaymentMethodsOrdered.iterator();
-        while (iterator.hasNext()) {
-            final var userWallet = iterator.next();
-            final var newPayment = paymentRepository.save(
-                    Payment.builder()
-                            .type(isDeposit ? PaymentType.DEPOSIT : PaymentType.CHARGE)
-                            .rentId(rentId)
-                            .amount(amount)
-                            .build()
-            );
-
-            try {
-                paymentGateway.holdMoneyByToken(userWallet.getCardToken(), newPayment);
-                paymentId = newPayment.getId();
-
-                break;
-            } catch (PaymentGatewayException e) {
-                if (!iterator.hasNext()) {
-                    throw e;
-                }
-            } finally {
-                paymentRepository.save(newPayment);
-            }
-        }
-
-        if (paymentId.isEmpty()) {
+        if (validPaymentMethodsOrdered == null || validPaymentMethodsOrdered.isEmpty()) {
             throw new RuntimeException("Please add at least one valid credit card");
         }
+
+        String paymentId = "";
+//        final var iterator = validPaymentMethodsOrdered.iterator();
+//        while (iterator.hasNext()) {
+//            final var userWallet = iterator.next();
+        final var userWallet = validPaymentMethodsOrdered.get(0);
+        final var newPayment = paymentRepository.save(
+                Payment.builder()
+                        .type(isDeposit ? PaymentType.DEPOSIT : PaymentType.CHARGE)
+                        .rentId(rentId)
+                        .amount(amount)
+                        .build()
+        );
+
+        try {
+            paymentGateway.holdMoneyByToken(userWallet.getCardToken(), newPayment);
+            paymentId = newPayment.getId();
+
+//            break;
+//        } catch (PaymentGatewayException e) {
+//            if (!iterator.hasNext()) {
+//                throw e;
+//            }
+        } finally {
+            paymentRepository.save(newPayment);
+        }
+//        }
 
         return paymentId;
     }
