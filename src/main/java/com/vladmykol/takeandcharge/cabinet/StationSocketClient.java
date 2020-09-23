@@ -63,7 +63,7 @@ public class StationSocketClient {
 
     public void check() {
         ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(SOFTWARE_VERSION);
-        communicate(softwareVersionRequest, 5000);
+        communicate(softwareVersionRequest, 10000);
     }
 
     @SneakyThrows

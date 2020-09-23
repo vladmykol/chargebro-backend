@@ -5,6 +5,7 @@ import com.vladmykol.takeandcharge.entity.UserWallet;
 import com.vladmykol.takeandcharge.repository.UserWalletRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,16 +15,17 @@ import java.util.List;
 public class UserWalletService {
     private final UserWalletRepository userWalletRepository;
 
-    public void saveCard(String paymentId, FondyResponse callbackDto) {
-        if (callbackDto.getRectoken() == null) {
+    public void saveCard(FondyResponse callback) {
+
+        if (callback == null || StringUtils.isBlank(callback.getRectoken())) {
             throw new RuntimeException("Card token is missing");
         }
 
         var userWallet = UserWallet.builder()
-                .paymentId(paymentId)
-                .cardToken(callbackDto.getRectoken())
-                .cardType(callbackDto.getCard_type())
-                .maskedCard(callbackDto.getMasked_card())
+                .paymentId(callback.getOrder_id())
+                .cardToken(callback.getRectoken())
+                .cardType(callback.getCard_type())
+                .maskedCard(callback.getMasked_card())
                 .build();
         userWalletRepository.save(userWallet);
     }

@@ -1,5 +1,6 @@
 package com.vladmykol.takeandcharge.service;
 
+import com.vladmykol.takeandcharge.conts.PaymentType;
 import com.vladmykol.takeandcharge.dto.FondyCallbackRespDto;
 import com.vladmykol.takeandcharge.dto.FondyRequest;
 import com.vladmykol.takeandcharge.dto.FondyRequestWrapper;
@@ -42,13 +43,12 @@ public class FondyService {
         var request = FondyRequest.builder()
                 .amount(payment.getAmount())
                 .currency("UAH")
-                .order_id(payment.getOrderId())
+                .order_id(payment.getId())
                 .verification("Y")
                 .required_rectoken("Y")
                 .order_desc("Verify user payment method")
 //        params.put("lang", "uk");
                 .server_callback_url(callbackUrl + API_PAY + API_PAY_CALLBACK_AUTH)
-                .merchant_data(payment.getId())
                 .build();
 
         payment.setRequest(request);
@@ -65,15 +65,18 @@ public class FondyService {
         final var request = FondyRequest.builder()
                 .amount(payment.getAmount())
                 .currency("UAH")
-                .order_id(payment.getOrderId())
-                .preauth("Y")
-                .order_desc("Block money before rent")
+                .order_id(payment.getId())
+                .order_desc("Charge for renting a power bank")
                 //        params.put("lang", "uk");
                 .server_callback_url(callbackUrl + API_PAY + API_PAY_CALLBACK_HOLD)
                 .merchant_data(payment.getId())
                 .rectoken(token)
                 .build();
 
+        if (payment.getType() == PaymentType.DEPOSIT) {
+            request.setPreauth("Y");
+            request.setOrder_desc("Deposit before rent");
+        }
         payment.setRequest(request);
         final var response = postForResponse(request, WITH_TOKEN_URI);
         payment.setResponse(response);
@@ -85,7 +88,7 @@ public class FondyService {
         final var request = FondyRequest.builder()
                 .amount(payment.getAmount())
                 .currency("UAH")
-                .order_id(payment.getOrderId())
+                .order_id(payment.getId())
                 //        params.put("lang", "uk");
                 .build();
 
@@ -100,13 +103,11 @@ public class FondyService {
         final var request = FondyRequest.builder()
                 .amount(payment.getAmount())
                 .currency("UAH")
-                .order_id(payment.getOrderId())
-                .comment("User did not take a powerbank or returned withing free rent period")
+                .order_id(payment.getId())
+                .comment("Returning a deposit as user returned a powerbank")
                 .build();
 
-        payment.setRequest(request);
         final var response = postForResponse(request, REVERSE_URI);
-        payment.setResponse(response);
 
         validateResponse(response, false);
     }

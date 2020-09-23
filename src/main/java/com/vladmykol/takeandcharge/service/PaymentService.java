@@ -3,15 +3,15 @@ package com.vladmykol.takeandcharge.service;
 import com.vladmykol.takeandcharge.conts.PaymentType;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
 import com.vladmykol.takeandcharge.entity.Payment;
-import com.vladmykol.takeandcharge.entity.Rent;
 import com.vladmykol.takeandcharge.exceptions.PaymentGatewayException;
 import com.vladmykol.takeandcharge.repository.PaymentRepository;
+import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +30,6 @@ public class PaymentService {
         final var newPayment = paymentRepository.save(
                 Payment.builder()
                         .type(PaymentType.CARD_AUTH)
-                        .orderId(UUID.randomUUID().toString())
                         .amount(MINIMAL_AMOUNT)
                         .build()
         );
@@ -38,7 +37,6 @@ public class PaymentService {
         String url;
         try {
             url = paymentGateway.getCheckoutUrlWithTokenForCardAuth(newPayment);
-            newPayment.setSuccesses(true);
         } finally {
             paymentRepository.save(newPayment);
         }
@@ -47,7 +45,7 @@ public class PaymentService {
     }
 
 
-    public String holdMoney(String rentId) {
+    public String holdMoney(String rentId, boolean isDeposit, int amount) {
         // TODO: 9/15/2020 get valid card from wallet
         final var validPaymentMethodsOrdered = userWalletService.getValidPaymentMethodsOrdered();
 
@@ -57,18 +55,16 @@ public class PaymentService {
             final var userWallet = iterator.next();
             final var newPayment = paymentRepository.save(
                     Payment.builder()
-                            .type(PaymentType.HOLD)
-                            .orderId(rentId)
-                            .amount(getHoldAmount())
+                            .type(isDeposit ? PaymentType.DEPOSIT : PaymentType.CHARGE)
+                            .rentId(rentId)
+                            .amount(amount)
                             .build()
             );
 
             try {
                 paymentGateway.holdMoneyByToken(userWallet.getCardToken(), newPayment);
-                newPayment.setSuccesses(true);
-                final var savedPayment = paymentRepository.save(newPayment);
+                paymentId = newPayment.getId();
 
-                paymentId = savedPayment.getId();
                 break;
             } catch (PaymentGatewayException e) {
                 if (!iterator.hasNext()) {
@@ -86,64 +82,38 @@ public class PaymentService {
         return paymentId;
     }
 
-
-    public void captureMoneyForRent(Rent rent) {
-        var holdPayment = getPaymentById(rent.getHoldMoneyPaymentId());
-
-        final var newPayment = paymentRepository.save(
-                Payment.builder()
-                        .type(PaymentType.CAPTURE_HOLD)
-                        .orderId(holdPayment.getOrderId())
-                        .amount(rent.getPrice())
-                        .build()
-        );
+    public void reversePayment(String paymentId) {
+        var holdPayment = getPaymentById(paymentId);
 
         try {
-            paymentGateway.captureMoney(newPayment);
-            newPayment.setSuccesses(true);
+            paymentGateway.reverseMoney(holdPayment);
         } finally {
-            paymentRepository.save(newPayment);
-        }
-    }
-
-    public void reverseMoney(Rent rent) {
-        var holdPayment = getPaymentById(rent.getHoldMoneyPaymentId());
-
-        final var newPayment = Payment.builder()
-                .type(PaymentType.REVERSE)
-                .orderId(holdPayment.getOrderId())
-                .amount(holdPayment.getAmount())
-                .build();
-
-        try {
-            paymentGateway.reverseMoney(newPayment);
-            newPayment.setSuccesses(true);
-        } finally {
-            paymentRepository.save(newPayment);
+            paymentRepository.save(holdPayment);
         }
     }
 
 
     public Payment processCallback(FondyResponse callbackDto) {
-        final var existingPayment = paymentRepository.findById(callbackDto.getMerchant_data());
+        final var existingPayment = paymentRepository.findById(callbackDto.getOrder_id());
         Payment payment;
 
         if (existingPayment.isEmpty()) {
             payment = Payment.builder()
                     .type(PaymentType.UNEXPECTED_CALLBACK)
-                    .orderId(callbackDto.getOrder_id())
                     .amount(callbackDto.getAmount())
-                    .callback(callbackDto)
+                    .orderStatus(callbackDto.getOrder_status())
+                    .callbacks(Collections.singletonList(callbackDto))
                     .build();
         } else {
             payment = existingPayment.get();
-            payment.setCallback(callbackDto);
-            payment.setSuccesses(false);
+            SecurityUtil.setUser(payment.getUserId());
+
+            payment.setOrderStatus(callbackDto.getOrder_status());
+            payment.getCallbacks().add(callbackDto);
         }
 
         try {
             paymentGateway.validateResponse(callbackDto, true);
-            payment.setSuccesses(true);
         } finally {
             paymentRepository.save(payment);
         }
@@ -151,19 +121,19 @@ public class PaymentService {
         return payment;
     }
 
-    public void calcRentPrice(Rent rent) {
+    public int getRentPriceAmount(long rentTimeMs) {
 //       < 1min
-        if (rent.getRentTime() < 60000) {
-            rent.setPrice(0);
+        if (rentTimeMs < 60000) {
+            return 0;
 //           < 5min
-        } else if (rent.getRentTime() < 300000) {
-            rent.setPrice(100);
+        } else if (rentTimeMs < 300000) {
+            return 100;
         } else {
-            rent.setPrice(200);
+            return 200;
         }
     }
 
-    int getHoldAmount() {
+    public int getHoldAmount() {
         return 200;
     }
 

@@ -1,19 +1,19 @@
 package com.vladmykol.takeandcharge.service;
 
-import com.vladmykol.takeandcharge.config.AsyncConfiguration;
+import com.vladmykol.takeandcharge.conts.PaymentType;
 import com.vladmykol.takeandcharge.conts.RentStage;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
 import com.vladmykol.takeandcharge.dto.RentConfirmationDto;
 import com.vladmykol.takeandcharge.dto.RentHistoryDto;
 import com.vladmykol.takeandcharge.dto.RentReportDto;
+import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.entity.Rent;
+import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.ChargingStationException;
-import com.vladmykol.takeandcharge.exceptions.RentIsNotFound;
 import com.vladmykol.takeandcharge.repository.RentRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -62,7 +62,27 @@ public class RentService {
         }
     }
 
-    @Async(AsyncConfiguration.RETURN_POWER_BANK_TASK_EXECUTOR)
+
+    public void rentUpdateWithPaymentCallback(FondyResponse callbackDto) {
+        Optional<Rent> rent = Optional.empty();
+        try {
+            final var payment = paymentService.processCallback(callbackDto);
+
+            rent = rentRepository.findById(payment.getRentId());
+            if (rent.isEmpty()) {
+                log.error("Rent with id {} is not found", payment.getRentId());
+                return;
+            }
+
+            processRentUpdate(payment, rent.get());
+        } catch (Exception e) {
+            rent.ifPresent(value -> value.setErrorCause(e.toString()));
+        } finally {
+            rent.ifPresent(rentRepository::save);
+        }
+    }
+
+    //    @Async(AsyncConfiguration.RETURN_POWER_BANK_TASK_EXECUTOR)
     public void prepareForRentFinish(String powerBankId, String stationId) {
         Optional<Rent> rent = rentRepository.findByPowerBankIdAndReturnedAtIsNullAndIsActiveRentTrue(powerBankId);
 
@@ -72,65 +92,45 @@ public class RentService {
         SecurityUtil.setUser(rent.get().getUserId());
 
         rent.get().markPbReturned(stationId);
+        rentRepository.save(rent.get());
         try {
-            paymentService.calcRentPrice(rent.get());
 
-            if (rent.get().getPrice() > 0) {
-                captureMoney(rent.get());
+            final var rentPriceAmount = paymentService.getRentPriceAmount(rent.get().getRentTime());
+            rent.get().setPrice(rentPriceAmount);
+
+            reversePayment(rent.get().getDepositPaymentId());
+            if (rentPriceAmount > 0) {
+                chargeMoneyAfterRent(rent.get());
             } else {
-                reverseMoney(rent.get());
+                finishRent(rent.get());
             }
+
         } catch (Exception e) {
             rent.get().setErrorCause(e.toString());
             webSocketServer.sendPaymentErrorMessage(e.getMessage());
-            throw e;
         } finally {
             rentRepository.save(rent.get());
         }
     }
 
-    @Async(AsyncConfiguration.PAYMENT_CALLBACK_TASK_EXECUTOR)
-    public void rentUpdateWithPaymentCallback(FondyResponse callbackDto) {
-        final var rent = rentRepository.findById(callbackDto.getOrder_id());
-
-        if (rent.isEmpty()) {
-            throw new RentIsNotFound();
-        }
-        SecurityUtil.setUser(rent.get().getUserId());
-
-        try {
-            processRentUpdate(callbackDto, rent.get());
-        } catch (Exception e) {
-            rent.get().setErrorCause(e.toString());
-            throw e;
-        } finally {
-            rentRepository.save(rent.get());
-        }
-    }
-
-    private void processRentUpdate(FondyResponse callbackDto, Rent rent) {
-        try {
-            paymentService.processCallback(callbackDto);
-        } catch (Exception e) {
-            webSocketServer.sendPaymentErrorMessage("Payment issue");
-            throw e;
-        }
-
-        if (rent.getStage() == RentStage.WAIT_HOLD_MONEY_CALLBACK) {
+    private void processRentUpdate(Payment payment, Rent rent) {
+        if (payment.getType() == PaymentType.DEPOSIT && rent.getStage() == RentStage.WAIT_HOLD_DEPOSIT_CALLBACK) {
             try {
                 tryToUnlockPowerBank(rent);
             } catch (Exception e) {
-                reverseMoney(rent);
-                webSocketServer.sendGeneralErrorMessage(rent.getPowerBankId());
+                reversePayment(rent.getDepositPaymentId());
+                webSocketServer.sendGeneralErrorMessage("Was not able to unlock a powerbank. Please try again later");
                 throw e;
             }
             webSocketServer.sendRentStartMessage(rent.getPowerBankId());
-        } else if (rent.getStage() == RentStage.WAIT_CHARGE_MONEY_CALLBACK ||
-                rent.getStage() == RentStage.WAIT_REVERSE_MONEY_CALLBACK) {
-
-            rent.markRentFinished();
-            webSocketServer.sendRentEndMessage(rent.getPowerBankId());
+        } else if ((rent.getStage() == RentStage.WAIT_CHARGE_MONEY_CALLBACK && payment.getType() == PaymentType.CHARGE)) {
+            finishRent(rent);
         }
+    }
+
+    private void finishRent(Rent rent) {
+        rent.markRentFinished();
+        webSocketServer.sendRentEndMessage(rent.getPowerBankId());
     }
 
 
@@ -141,23 +141,27 @@ public class RentService {
     }
 
     private void holdMoneyBeforeRent(Rent rent) {
-        rent.setStage(RentStage.HOLD_MONEY);
-        String holdMoneyPaymentId = paymentService.holdMoney(rent.getId());
-        rent.setHoldMoneyPaymentId(holdMoneyPaymentId);
-        rent.setStage(RentStage.WAIT_HOLD_MONEY_CALLBACK);
+        rent.setStage(RentStage.HOLD_DEPOSIT);
+        rentRepository.save(rent);
+        String holdMoneyPaymentId = paymentService.holdMoney(rent.getId(),
+                true, paymentService.getHoldAmount());
+        rent.setDepositPaymentId(holdMoneyPaymentId);
+        rent.setStage(RentStage.WAIT_HOLD_DEPOSIT_CALLBACK);
+        rentRepository.save(rent);
     }
 
-    private void captureMoney(Rent rent) {
+    private void chargeMoneyAfterRent(Rent rent) {
         rent.setStage(RentStage.CHARGE_MONEY);
-        paymentService.captureMoneyForRent(rent);
+        rentRepository.save(rent);
+        String paymentId = paymentService.holdMoney(rent.getId(),
+                false, rent.getPrice());
+        rent.setChargePaymentId(paymentId);
         rent.setStage(RentStage.WAIT_CHARGE_MONEY_CALLBACK);
+        rentRepository.save(rent);
     }
 
-
-    private void reverseMoney(Rent rent) {
-        rent.setStage(RentStage.REVERSE_MONEY);
-        paymentService.reverseMoney(rent);
-        rent.setStage(RentStage.WAIT_REVERSE_MONEY_CALLBACK);
+    private void reversePayment(String paymentId) {
+        paymentService.reversePayment(paymentId);
     }
 
     private void checkAvailablePowerBanks(Rent rent) {
@@ -169,6 +173,9 @@ public class RentService {
     private void tryToUnlockPowerBank(Rent rent) {
         rent.setStage(RentStage.UNLOCK_POWERBANK);
         try {
+            checkAvailablePowerBanks(rent);
+            unlockPowerBank(rent);
+        } catch (CabinetIsOffline e) {
             checkAvailablePowerBanks(rent);
             unlockPowerBank(rent);
         } catch (ChargingStationException e) {

@@ -12,7 +12,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Document
@@ -20,20 +22,22 @@ import java.util.Date;
 public class Payment {
     @Id
     private String id;
-    @Indexed
-    private String orderId;
+
+    @NonNull
+    private String rentId;
 
     private int amount;
 
     private PaymentType type;
 
-    private boolean isSuccesses;
+    private String orderStatus;
 
     private FondyRequest request;
 
     private FondyResponse response;
 
-    private FondyResponse callback;
+    @Builder.Default
+    private List<FondyResponse> callbacks = new ArrayList<>();
 
     @CreatedBy
     @Indexed

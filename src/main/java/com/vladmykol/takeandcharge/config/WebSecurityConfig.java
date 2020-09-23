@@ -57,6 +57,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         API_AUTH + API_AUTH_REGISTER,
                         //   anyone can fetch stations locations
                         API_STATIONS + API_STATIONS_NEARBY,
+                        //   redirect to mobile version is available for all
+                        API_APP + "/**",
 //                payment callbacks are authorized by signature
                         API_PAY + API_PAY_CALLBACK + "/**",
 //                call back for SMS Gateway not secured

@@ -32,7 +32,9 @@ public class Rent {
 
     private RentStage stage;
 
-    private String holdMoneyPaymentId;
+    private String depositPaymentId;
+
+    private String chargePaymentId;
 
     private int price;
 

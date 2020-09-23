@@ -31,11 +31,27 @@ public abstract class StationListener {
     }
 
     public StationSocketClient getClient(String clientId) {
-        synchronized (registeredStationSocketClients) {
-            Optional<StationSocketClient> optionalClient = registeredStationSocketClients.stream().filter(client -> clientId.equals(client.getClientInfo().getCabinetId())).findFirst();
-            if (optionalClient.isEmpty()) throw new CabinetIsOffline();
-            return optionalClient.get();
+        Optional<StationSocketClient> optionalClient = registeredStationSocketClients.stream().filter(client -> clientId.equals(client.getClientInfo().getCabinetId())).findFirst();
+        if (optionalClient.isEmpty()) {
+            synchronized (registeredStationSocketClients) {
+                final var waitTimeSec = 60;
+                try {
+                    log.debug("Station ID {} is offline so trying to wait for next connected for {} sec", clientId, waitTimeSec);
+                    registeredStationSocketClients.wait(waitTimeSec * 1000);
+                    // TODO: 9/23/2020 need smth else to wait before stations is authenticated after connection
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            optionalClient = registeredStationSocketClients.stream().filter(client -> clientId.equals(client.getClientInfo().getCabinetId())).findFirst();
         }
+
+        if (optionalClient.isEmpty()) {
+            throw new CabinetIsOffline();
+        }
+
+        return optionalClient.get();
     }
 
     public void removeClient(StationSocketClient stationSocketClient) {
@@ -47,6 +63,7 @@ public abstract class StationListener {
     public void registerClient(StationSocketClient stationSocketClient) {
         synchronized (registeredStationSocketClients) {
             registeredStationSocketClients.addFirst(stationSocketClient);
+            registeredStationSocketClients.notify();
         }
     }
 

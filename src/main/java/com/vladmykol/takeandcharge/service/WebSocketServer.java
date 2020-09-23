@@ -6,6 +6,7 @@ import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -98,7 +99,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
             webSocketSessions.forEach(webSocketSession -> {
                 try {
                     sendMessage(webSocketSession, baseMessage);
-                    log.debug("Sent rent update to web socket client {}", webSocketSession.getRemoteAddress());
+                    log.debug("Send rent update {} to web socket client {}", baseMessage, webSocketSession.getRemoteAddress());
                 } catch (IOException e) {
                     log.error("Cannon send rent update to web socket client {}", webSocketSession.getRemoteAddress(), e);
                 }
@@ -198,6 +199,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
 
     @Builder
     @Getter
+    @ToString
     private static class BaseMessage {
         private final short messageType;
         private final short messageCode;

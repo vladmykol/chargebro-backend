@@ -12,6 +12,7 @@ public class EndpointConst {
     public static final String API_STATIONS_CAPACITY = API_ID + "/capacity";
     public static final String API_STATIONS_NEARBY = "/nearby";
     public static final String API_PAY = "/pay";
+    public static final String API_APP = "/app";
     public static final String API_PAY_CHECKOUT = "/checkout";
     public static final String API_PAY_CALLBACK = "/callback";
     public static final String API_PAY_CALLBACK_AUTH = API_PAY_CALLBACK + "/auth";
