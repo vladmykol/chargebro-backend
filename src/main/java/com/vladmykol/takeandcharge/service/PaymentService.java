@@ -3,6 +3,7 @@ package com.vladmykol.takeandcharge.service;
 import com.vladmykol.takeandcharge.conts.PaymentType;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
 import com.vladmykol.takeandcharge.entity.Payment;
+import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.repository.PaymentRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,18 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final UserWalletService userWalletService;
     private final FondyService paymentGateway;
+
+    public int getRentPriceAmount(long rentTimeMs) {
+//       < 5min
+        if (rentTimeMs < 300000) {
+            return 0;
+//           < 5min
+        } else {
+            final var trueRentTime = rentTimeMs - 300000;
+            final var min = (int) Math.ceil((double) trueRentTime / 60000);
+            return min * 100;
+        }
+    }
 
     public List<Payment> getAllPaymentHistory() {
         return paymentRepository.findAll();
@@ -43,13 +56,12 @@ public class PaymentService {
         return url;
     }
 
-
     public String holdMoney(String rentId, boolean isDeposit, int amount) {
         // TODO: 9/15/2020 get valid card from wallet
         final var validPaymentMethodsOrdered = userWalletService.getValidPaymentMethodsOrdered();
 
         if (validPaymentMethodsOrdered == null || validPaymentMethodsOrdered.isEmpty()) {
-            throw new RuntimeException("Please add at least one valid credit card");
+            throw new PaymentException("Please add at least one valid credit card");
         }
 
         String paymentId = "";
@@ -92,7 +104,6 @@ public class PaymentService {
         }
     }
 
-
     public Payment processCallback(FondyResponse callbackDto) {
         final var existingPayment = paymentRepository.findById(callbackDto.getOrder_id());
         Payment payment;
@@ -119,18 +130,6 @@ public class PaymentService {
         }
 
         return payment;
-    }
-
-    public int getRentPriceAmount(long rentTimeMs) {
-//       < 1min
-        if (rentTimeMs < 60000) {
-            return 0;
-//           < 5min
-        } else if (rentTimeMs < 300000) {
-            return 100;
-        } else {
-            return 200;
-        }
     }
 
     public int getHoldAmount() {

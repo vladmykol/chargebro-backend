@@ -10,6 +10,8 @@ import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.entity.Rent;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.ChargingStationException;
+import com.vladmykol.takeandcharge.exceptions.PaymentException;
+import com.vladmykol.takeandcharge.exceptions.PaymentGatewayException;
 import com.vladmykol.takeandcharge.repository.RentRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +77,9 @@ public class RentService {
             }
 
             processRentUpdate(payment, rent.get());
+        } catch (PaymentException e) {
+            rent.ifPresent(value -> value.setErrorCause(e.toString()));
+            webSocketServer.sendPaymentErrorMessage(e.getMessage());
         } catch (Exception e) {
             rent.ifPresent(value -> value.setErrorCause(e.toString()));
         } finally {
@@ -105,9 +110,12 @@ public class RentService {
                 finishRent(rent.get());
             }
 
-        } catch (Exception e) {
+        } catch (PaymentException e) {
             rent.get().setErrorCause(e.toString());
             webSocketServer.sendPaymentErrorMessage(e.getMessage());
+        } catch (Exception e) {
+            rent.get().setErrorCause(e.toString());
+            webSocketServer.sendGeneralErrorMessage(e.getMessage());
         } finally {
             rentRepository.save(rent.get());
         }

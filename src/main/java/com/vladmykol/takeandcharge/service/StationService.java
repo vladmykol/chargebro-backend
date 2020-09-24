@@ -74,10 +74,17 @@ public class StationService {
     public List<StationInfoDto> findStationsNearBy(double x, double y) {
         Distance distance = new Distance(100, Metrics.KILOMETERS);
         Point point = new Point(x, y);
-        var nearByStations = stationRepository.findByLocationNear(point, distance);
-        return nearByStations.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        // TODO: 9/24/2020 resolve mongo db Legacy point is out of bounds for spherical query
+        try {
+            var nearByStations = stationRepository.findByLocationNear(point, distance);
+
+            return nearByStations.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private StationInfoDto convertToDto(Station station) {

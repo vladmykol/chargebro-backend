@@ -7,6 +7,8 @@ import com.vladmykol.takeandcharge.dto.RentReportDto;
 import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.entity.User;
 import com.vladmykol.takeandcharge.service.*;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,8 +64,10 @@ public class AdminController {
     }
 
     @PostMapping(API_ADMIN_STATION_OPTIONS)
-    public MessageHeader setStationOptions(@PathVariable(name = "id") String stationId,
-                                           @RequestParam String serverAddress,
+    @ApiOperation(value = "Set parameters for charging station if it is connected and restart. localhost - is a debug server")
+    public MessageHeader setStationOptions(@ApiParam(defaultValue = "STWA312001000005") @PathVariable(name = "id") String stationId,
+                                           @ApiParam(allowableValues = "localhost, REDACTED_SERVER_IP", required = true)
+                                           @RequestParam(defaultValue = "localhost") String serverAddress,
                                            @RequestParam(defaultValue = "10382") String serverPort,
                                            @RequestParam(defaultValue = "30") short interval
     ) {

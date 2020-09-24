@@ -1,16 +1,12 @@
 package com.vladmykol.takeandcharge.controller;
 
-import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
-import com.vladmykol.takeandcharge.exceptions.NoPowerBanksLeft;
-import com.vladmykol.takeandcharge.exceptions.NotSuccessesRent;
-import com.vladmykol.takeandcharge.exceptions.RentIsNotFound;
+import com.vladmykol.takeandcharge.exceptions.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletResponse;
@@ -20,7 +16,7 @@ import java.io.IOException;
 public class ExceptionController extends ResponseEntityExceptionHandler {
     @ExceptionHandler({BadCredentialsException.class})
     public void handleBadCredentials(
-            Exception ex,HttpServletResponse response) throws IOException {
+            Exception ex, HttpServletResponse response) throws IOException {
         response.sendError(HttpStatus.FORBIDDEN.value(), "User or password is incorrect");
     }
 
@@ -48,6 +44,11 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
     @ExceptionHandler({RentIsNotFound.class})
     public void notFoundRent(Exception ex, HttpServletResponse response) throws IOException {
         response.sendError(HttpStatus.PRECONDITION_FAILED.value(), "No rent request found");
+    }
+
+    @ExceptionHandler({PaymentException.class})
+    public void paymentIssue(Exception ex, HttpServletResponse response) throws IOException {
+        response.sendError(HttpStatus.PAYMENT_REQUIRED.value(), ex.getMessage());
     }
 
 

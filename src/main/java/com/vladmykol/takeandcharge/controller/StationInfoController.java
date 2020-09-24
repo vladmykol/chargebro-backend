@@ -1,10 +1,11 @@
 package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.dto.StationInfoDto;
-import com.vladmykol.takeandcharge.service.RentService;
 import com.vladmykol.takeandcharge.service.StationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -24,7 +25,11 @@ public class StationInfoController {
     @GetMapping(API_STATIONS_NEARBY)
     public List<StationInfoDto> getStations(@RequestParam double x,
                                             @RequestParam double y) {
-        return stationService.findStationsNearBy(x, y);
+        final var stationsNearBy = stationService.findStationsNearBy(x, y);
+        if (stationsNearBy == null || stationsNearBy.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no stations in this area");
+        }
+        return stationsNearBy;
     }
 
     @GetMapping(API_STATIONS_CAPACITY)
