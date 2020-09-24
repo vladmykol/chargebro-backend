@@ -41,6 +41,4 @@ public class StationInfoController {
     public void updateStationsInfo(@RequestBody StationInfoDto stationInfoDto) {
         stationService.update(stationInfoDto);
     }
-
-
 }

@@ -113,10 +113,10 @@ public class RentService {
         } catch (PaymentException e) {
             rent.get().setErrorCause(e.toString());
             webSocketServer.sendPaymentErrorMessage(e.getMessage());
+            rentRepository.save(rent.get());
         } catch (Exception e) {
             rent.get().setErrorCause(e.toString());
             webSocketServer.sendGeneralErrorMessage(e.getMessage());
-        } finally {
             rentRepository.save(rent.get());
         }
     }
@@ -139,6 +139,7 @@ public class RentService {
     private void finishRent(Rent rent) {
         rent.markRentFinished();
         webSocketServer.sendRentEndMessage(rent.getPowerBankId());
+        rentRepository.save(rent);
     }
 
 
