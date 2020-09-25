@@ -63,12 +63,12 @@ public class StationSocketClient {
 
     public void check() {
         ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(SOFTWARE_VERSION);
-        communicate(softwareVersionRequest, 20000);
+        communicate(softwareVersionRequest, 30000);
     }
 
     @SneakyThrows
     public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request) {
-        return communicate(request, 30000);
+        return communicate(request, 60000);
     }
 
     @SneakyThrows
