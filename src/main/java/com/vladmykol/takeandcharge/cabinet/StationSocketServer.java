@@ -46,7 +46,8 @@ public class StationSocketServer {
         log.debug("Try to wake up inactive client {}", stationSocketClient.getClientInfo().getIpAddress());
         try {
             stationListener.removeClient(stationSocketClient);
-//            stationSocketClient.ping();
+            stationSocketClient.ping();
+            stationSocketClient.ping();
             stationSocketClient.check();
             stationListener.registerClient(stationSocketClient);
         } catch (Exception e) {

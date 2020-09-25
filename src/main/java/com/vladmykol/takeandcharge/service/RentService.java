@@ -137,27 +137,23 @@ public class RentService {
     private void finishRent(Rent rent) {
         reversePayment(rent.getDepositPaymentId());
         rent.markRentFinished();
-        webSocketServer.sendRentEndMessage(rent.getPowerBankId());
         rentRepository.save(rent);
+        webSocketServer.sendRentEndMessage(rent.getPowerBankId());
     }
 
 
     private void holdMoneyBeforeRent(Rent rent) {
-        rent.setStage(RentStage.HOLD_DEPOSIT);
-        rentRepository.save(rent);
+        rent.setStage(RentStage.WAIT_HOLD_DEPOSIT_CALLBACK);
         String holdMoneyPaymentId = paymentService.holdMoney(rent.getId(),
                 true, paymentService.getHoldAmount());
         rent.setDepositPaymentId(holdMoneyPaymentId);
-        rent.setStage(RentStage.WAIT_HOLD_DEPOSIT_CALLBACK);
-        rentRepository.save(rent);
     }
 
     private void chargeMoneyAfterRent(Rent rent) {
-        rent.setStage(RentStage.CHARGE_MONEY);
+        rent.setStage(RentStage.WAIT_CHARGE_MONEY_CALLBACK);
         String paymentId = paymentService.holdMoney(rent.getId(),
                 false, rent.getPrice());
         rent.setChargePaymentId(paymentId);
-        rent.setStage(RentStage.WAIT_CHARGE_MONEY_CALLBACK);
     }
 
     private void reversePayment(String paymentId) {
