@@ -11,7 +11,6 @@ import com.vladmykol.takeandcharge.entity.Rent;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.ChargingStationException;
 import com.vladmykol.takeandcharge.exceptions.PaymentException;
-import com.vladmykol.takeandcharge.exceptions.PaymentGatewayException;
 import com.vladmykol.takeandcharge.repository.RentRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -198,9 +197,11 @@ public class RentService {
         List<Rent> rentedPowerBanks;
         if (onlyInRent != null && onlyInRent) {
             rentedPowerBanks = rentRepository.findByUserIdAndIsActiveRentTrue(SecurityUtil.getUser());
+// TODO: 9/25/2020     if is active, check if it is present in station
         } else {
             rentedPowerBanks = rentRepository.findByUserId(SecurityUtil.getUser());
         }
+
         if (!CollectionUtils.isEmpty(rentedPowerBanks)) {
             rentedPowerBanks.forEach(rentedPowerBank -> {
                 rentHistoryResponse.add(
