@@ -8,7 +8,6 @@ import com.vladmykol.takeandcharge.dto.RentHistoryDto;
 import com.vladmykol.takeandcharge.dto.RentReportDto;
 import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.entity.Rent;
-import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.ChargingStationException;
 import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.repository.RentRepository;
@@ -54,6 +53,7 @@ public class RentService {
 
         try {
             checkAvailablePowerBanks(rent);
+
             holdMoneyBeforeRent(rent);
         } catch (Exception e) {
             rent.setErrorCause(e.toString());
@@ -102,7 +102,6 @@ public class RentService {
             final var rentPriceAmount = paymentService.getRentPriceAmount(rent.get().getRentTime());
             rent.get().setPrice(rentPriceAmount);
 
-            reversePayment(rent.get().getDepositPaymentId());
             if (rentPriceAmount > 0) {
                 chargeMoneyAfterRent(rent.get());
             } else {
@@ -112,10 +111,10 @@ public class RentService {
         } catch (PaymentException e) {
             rent.get().setErrorCause(e.toString());
             webSocketServer.sendPaymentErrorMessage(e.getMessage());
-            rentRepository.save(rent.get());
         } catch (Exception e) {
             rent.get().setErrorCause(e.toString());
             webSocketServer.sendGeneralErrorMessage(e.getMessage());
+        } finally {
             rentRepository.save(rent.get());
         }
     }
@@ -136,17 +135,12 @@ public class RentService {
     }
 
     private void finishRent(Rent rent) {
+        reversePayment(rent.getDepositPaymentId());
         rent.markRentFinished();
         webSocketServer.sendRentEndMessage(rent.getPowerBankId());
         rentRepository.save(rent);
     }
 
-
-    private void unlockPowerBank(Rent rent) {
-        String rentedPowerBankId = stationService.unlockPowerBank(rent.getPowerBankSlot(),
-                rent.getTakenInStationId());
-        rent.markRentStart(rentedPowerBankId);
-    }
 
     private void holdMoneyBeforeRent(Rent rent) {
         rent.setStage(RentStage.HOLD_DEPOSIT);
@@ -160,12 +154,10 @@ public class RentService {
 
     private void chargeMoneyAfterRent(Rent rent) {
         rent.setStage(RentStage.CHARGE_MONEY);
-        rentRepository.save(rent);
         String paymentId = paymentService.holdMoney(rent.getId(),
                 false, rent.getPrice());
         rent.setChargePaymentId(paymentId);
         rent.setStage(RentStage.WAIT_CHARGE_MONEY_CALLBACK);
-        rentRepository.save(rent);
     }
 
     private void reversePayment(String paymentId) {
@@ -173,23 +165,32 @@ public class RentService {
     }
 
     private void checkAvailablePowerBanks(Rent rent) {
-        final var powerBankSlot = stationService.findMaxChargedPowerBank(rent.getTakenInStationId()).getSlotNumber();
-        rent.setPowerBankSlot(powerBankSlot);
+        try {
+            final var powerBankSlot = stationService.findMaxChargedPowerBank(rent.getTakenInStationId()).getSlotNumber();
+            rent.setPowerBankSlot(powerBankSlot);
+        } catch (ChargingStationException e) {
+            final var powerBankSlot = stationService.findMaxChargedPowerBank(rent.getTakenInStationId()).getSlotNumber();
+            rent.setPowerBankSlot(powerBankSlot);
+        }
+    }
+
+    private void unlockPowerBank(Rent rent) {
+        try {
+            String rentedPowerBankId = stationService.unlockPowerBank(rent.getPowerBankSlot(),
+                    rent.getTakenInStationId());
+            rent.markRentStart(rentedPowerBankId);
+        } catch (ChargingStationException e) {
+            String rentedPowerBankId = stationService.unlockPowerBank(rent.getPowerBankSlot(),
+                    rent.getTakenInStationId());
+            rent.markRentStart(rentedPowerBankId);
+        }
     }
 
 
     private void tryToUnlockPowerBank(Rent rent) {
         rent.setStage(RentStage.UNLOCK_POWERBANK);
-        try {
-            checkAvailablePowerBanks(rent);
-            unlockPowerBank(rent);
-        } catch (CabinetIsOffline e) {
-            checkAvailablePowerBanks(rent);
-            unlockPowerBank(rent);
-        } catch (ChargingStationException e) {
-            checkAvailablePowerBanks(rent);
-            unlockPowerBank(rent);
-        }
+        checkAvailablePowerBanks(rent);
+        unlockPowerBank(rent);
     }
 
     public List<RentHistoryDto> getRentHistory(Boolean onlyInRent) {
