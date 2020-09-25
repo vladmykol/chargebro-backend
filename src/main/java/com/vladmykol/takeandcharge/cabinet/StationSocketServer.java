@@ -47,7 +47,6 @@ public class StationSocketServer {
         try {
             stationListener.removeClient(stationSocketClient);
             stationSocketClient.ping();
-            stationSocketClient.ping();
             stationSocketClient.check();
             stationListener.registerClient(stationSocketClient);
         } catch (Exception e) {

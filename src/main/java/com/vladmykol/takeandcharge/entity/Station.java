@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.NotNull;
+import java.util.Date;
 
 @Data
 @Document
@@ -24,4 +25,6 @@ public class Station {
     private String address;
 
     private String mapUrl;
+
+    private Date lastSeen;
 }

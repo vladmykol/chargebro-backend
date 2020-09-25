@@ -8,6 +8,7 @@ import com.vladmykol.takeandcharge.dto.RentHistoryDto;
 import com.vladmykol.takeandcharge.dto.RentReportDto;
 import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.entity.Rent;
+import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.ChargingStationException;
 import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.repository.RentRepository;
@@ -18,8 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +36,18 @@ public class RentService {
     private final UserService userService;
 
     public RentConfirmationDto getBeforeRentInfo(String stationId) {
+        final var serviceById = stationService.getById(stationId);
+
+        if (serviceById.getLastSeen() != null) {
+            long diffInMillies = Math.abs(new Date().getTime() - serviceById.getLastSeen().getTime());
+            final var lastSeenMinBefore = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS);
+            if (lastSeenMinBefore > 3) {
+                throw new CabinetIsOffline();
+            }
+        } else {
+            throw new CabinetIsOffline();
+        }
+
         final var powerBankInfo = stationService.findMaxChargedPowerBank(stationId);
 
         return RentConfirmationDto.builder()
@@ -96,7 +111,6 @@ public class RentService {
         SecurityUtil.setUser(rent.get().getUserId());
 
         rent.get().markPbReturned(stationId);
-        rentRepository.save(rent.get());
         try {
 
             final var rentPriceAmount = paymentService.getRentPriceAmount(rent.get().getRentTime());
@@ -137,7 +151,6 @@ public class RentService {
     private void finishRent(Rent rent) {
         reversePayment(rent.getDepositPaymentId());
         rent.markRentFinished();
-        rentRepository.save(rent);
         webSocketServer.sendRentEndMessage(rent.getPowerBankId());
     }
 

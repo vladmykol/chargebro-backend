@@ -8,6 +8,7 @@ import com.vladmykol.takeandcharge.cabinet.dto.client.ReturnPowerBankRequest;
 import com.vladmykol.takeandcharge.cabinet.dto.server.LoginResponse;
 import com.vladmykol.takeandcharge.cabinet.dto.server.ReturnPowerBankResponse;
 import com.vladmykol.takeandcharge.service.RentService;
+import com.vladmykol.takeandcharge.service.StationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import static com.vladmykol.takeandcharge.cabinet.dto.CommonResult.OK;
 @RequiredArgsConstructor
 public class CabinetController {
     private final RentService rentService;
+    private final StationService stationService;
 
     public  ProtocolEntity<Object> heartBeat(ProtocolEntity<RawMessage> request) {
         return new ProtocolEntity<>(request.getHeader(), null);
@@ -32,8 +34,9 @@ public class CabinetController {
         request.getHeader().setCheckSum((short) 7);
         request.getHeader().setTime(Instant.now());
 
-        clientInfo.setCabinetId(loginRequest.getBoxId());
+        stationService.saveSingInRequest(loginRequest);
 
+        clientInfo.setCabinetId(loginRequest.getBoxId());
         LoginResponse loginResponse = new LoginResponse(OK);
 
         return new ProtocolEntity<>(request.getHeader(), loginResponse);

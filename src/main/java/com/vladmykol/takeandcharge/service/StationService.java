@@ -7,6 +7,7 @@ import com.vladmykol.takeandcharge.cabinet.dto.MessageHeader;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.cabinet.dto.client.ChargingStationInventory;
+import com.vladmykol.takeandcharge.cabinet.dto.client.LoginRequest;
 import com.vladmykol.takeandcharge.cabinet.dto.client.PowerBankInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.client.TakePowerBankResponse;
 import com.vladmykol.takeandcharge.cabinet.dto.server.ChangeServerAddressRequest;
@@ -25,6 +26,7 @@ import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -157,4 +159,12 @@ public class StationService {
         return optionalStation.orElseGet(Station::new);
     }
 
+    public void saveSingInRequest(LoginRequest loginRequest) {
+        final var optionalStation = stationRepository.findById(loginRequest.getBoxId());
+        if (optionalStation.isPresent()) {
+            optionalStation.get().setLastSeen(new Date());
+        } else {
+            throw new RuntimeException("Not existing station - " + loginRequest.getBoxId());
+        }
+    }
 }

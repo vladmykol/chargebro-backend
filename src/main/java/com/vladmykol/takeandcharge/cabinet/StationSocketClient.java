@@ -43,6 +43,7 @@ public class StationSocketClient {
         this.clientInfo = new ClientInfo(socket.getInetAddress());
         this.out = socket.getOutputStream();
         log.debug("Client {} is now connected", clientInfo.getIpAddress());
+        ping();
     }
 
     public static void putUnsignedShort(ByteBuffer bb, int value) {
