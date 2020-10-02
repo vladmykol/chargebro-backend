@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class RentConfirmationDto {
+    private String stationId;
     private int holdAmount;
     private int bonusAmount;
     private int powerLevel;

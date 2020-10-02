@@ -7,8 +7,8 @@ public class RentException extends RuntimeException {
     @Getter
     private final HttpStatus status;
 
-    public RentException(HttpStatus status, String message) {
-        super(message);
+    public RentException(HttpStatus status, Exception e) {
+        super(e);
         this.status = status;
     }
 }

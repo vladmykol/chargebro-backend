@@ -1,6 +1,7 @@
 package com.vladmykol.takeandcharge.service;
 
 
+import com.vladmykol.takeandcharge.exceptions.RentException;
 import com.vladmykol.takeandcharge.security.JwtProvider;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.Builder;
@@ -71,6 +72,10 @@ public class WebSocketServer extends BinaryWebSocketHandler {
                 .build();
 
         sendBaseMassage(baseMessage);
+    }
+
+    public void sendErrorMessage(RentException rentException) {
+        sendErrorMessage(rentException.getStatus().value(), rentException.getMessage());
     }
 
     public void sendErrorMessage(int errorCode, String errorMessage) {

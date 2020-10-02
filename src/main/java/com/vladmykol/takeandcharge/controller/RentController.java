@@ -2,6 +2,7 @@ package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.dto.RentConfirmationDto;
 import com.vladmykol.takeandcharge.dto.RentHistoryDto;
+import com.vladmykol.takeandcharge.exceptions.RentException;
 import com.vladmykol.takeandcharge.service.RentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,22 +1,27 @@
 package com.vladmykol.takeandcharge.dto;
 
 import com.vladmykol.takeandcharge.exceptions.RentException;
-import lombok.Data;
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-@Data
+@Getter
 public class ErrorResponse {
-    private int status;
-    private String error;
-    private String message;
+    private final int status;
+    private final String error;
+    private final String message;
 
     public ErrorResponse(RentException ex) {
         this.status = ex.getStatus().value();
         this.error = ex.getStatus().name();
-        this.message = ex.getMessage();
+        if (ex.getCause().getMessage() != null) {
+            this.message = ex.getCause().getMessage();
+        } else {
+            this.message = ex.getCause().getClass().getSimpleName();
+        }
+
     }
 
-    public ErrorResponse(HttpStatus status, String message) {
+    public ErrorResponse(HttpStatus status, String message, Exception e) {
         this.status = status.value();
         this.error = status.name();
         this.message = message;

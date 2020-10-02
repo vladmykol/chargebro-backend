@@ -19,15 +19,15 @@ import java.util.function.Predicate;
 @EnableSwagger2
 public class SwaggerConfig {
     public static final Contact DEFAULT_CONTACT = new Contact(
-            "Vlad Mykol", null, "your-email@example.com");
+            "ChargeBro Team", null, "info@chargebro.com");
 
     public static final ApiInfo BUSINESS_API_INFO = new ApiInfo(
-            "Take&Charge API", "PowerBank renting solution", "1.0",
-            "http://your-domain.example.com/policy", DEFAULT_CONTACT,
+            "ChargeBro API", "PowerBank renting solution", "1.0",
+            "https://chargebro.com/policy", DEFAULT_CONTACT,
             null, null, Arrays.asList());
 
     public static final ApiInfo SERVICE_API_INFO = new ApiInfo(
-            "Take&Charge service API", "Service control", "1.0",
+            "ChargeBro service API", "Service control", "1.0",
             null, DEFAULT_CONTACT,
             null, null, Arrays.asList());
 

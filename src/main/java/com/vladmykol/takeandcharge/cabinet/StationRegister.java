@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,15 +58,22 @@ public class StationRegister {
         if (stationSocketClientWrapper.getSocketClient().isActive()) {
             return stationSocketClientWrapper.getSocketClient();
         } else {
-            synchronized (stationSocketClientWrapper) {
-                final var waitTimeSec = 60;
-                try {
-                    log.debug("Station ID {} is offline so trying to wait {} sec for reconnection", clientId, waitTimeSec);
-                    stationSocketClientWrapper.wait(waitTimeSec * 1000);
+
+            final var lastSeenMinBefore = stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen().until(Instant.now(), ChronoUnit.MINUTES);
+            if (lastSeenMinBefore > 3) {
+                throw new CabinetIsOffline();
+            } else {
+
+                synchronized (stationSocketClientWrapper) {
+                    final var waitTimeSec = 60;
+                    try {
+                        log.debug("Station ID {} is offline so trying to wait {} sec for reconnection", clientId, waitTimeSec);
+                        stationSocketClientWrapper.wait(waitTimeSec * 1000);
 //                    sleep before working with station after connection. Station needs some time to check available powerbanks
-                    Thread.sleep(7000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                        Thread.sleep(7000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
             }
         }

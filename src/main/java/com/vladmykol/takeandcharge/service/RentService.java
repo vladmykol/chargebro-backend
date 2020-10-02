@@ -9,21 +9,20 @@ import com.vladmykol.takeandcharge.dto.RentReportDto;
 import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.entity.Rent;
 import com.vladmykol.takeandcharge.entity.RentError;
-import com.vladmykol.takeandcharge.exceptions.*;
+import com.vladmykol.takeandcharge.exceptions.ChargingStationException;
+import com.vladmykol.takeandcharge.exceptions.RentException;
 import com.vladmykol.takeandcharge.repository.RentRepository;
+import com.vladmykol.takeandcharge.utils.ExceptionUtil;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,24 +36,14 @@ public class RentService {
     private final UserService userService;
 
     public RentConfirmationDto getBeforeRentInfo(String stationId) {
-        final var serviceById = stationService.getById(stationId);
-
-        if (serviceById.getLastLogIn() != null) {
-            long diffInMillies = Math.abs(new Date().getTime() - serviceById.getLastLogIn().getTime());
-            final var lastSeenMinBefore = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS);
-            if (lastSeenMinBefore > 3) {
-                throw new CabinetIsOffline();
-            }
-        } else {
-            throw new CabinetIsOffline();
-        }
-
         final var powerBankInfo = stationService.findMaxChargedPowerBank(stationId);
 
+        final var holdAmount = paymentService.getHoldAmount() / 100;
         return RentConfirmationDto.builder()
-                .holdAmount(paymentService.getHoldAmount())
+                .stationId(stationId)
+                .holdAmount(holdAmount)
                 // TODO: 9/17/2020 calc bonus
-                .bonusAmount(100)
+                .bonusAmount(0)
                 .powerLevel(powerBankInfo.getPowerLevel())
                 .build();
     }
@@ -67,7 +56,7 @@ public class RentService {
                         .build()
         );
 
-        executeRentStepWithException(() -> {
+        executeRentStepThrow(() -> {
 
             safeCheckAvailablePowerBanks(rent);
             holdMoneyBeforeRent(rent);
@@ -229,7 +218,7 @@ public class RentService {
                                 .rentPeriodMs(rentedPowerBank.getRentTime())
                                 .price(paymentService.getRentPriceAmount(rentedPowerBank.getRentTime()))
                                 .isActive(rentedPowerBank.isActiveRent())
-                                .errorCode(rentedPowerBank.getLastErrorCode().value())
+                                .errorCode(rentedPowerBank.getLastErrorCodeValue())
                                 .errorMessage(rentedPowerBank.getLastErrorMessage())
                                 .build()
                 );
@@ -270,41 +259,34 @@ public class RentService {
                             .takenAt(rent.getTakenAt())
                             .returnedAt(rent.getReturnedAt())
                             .stage(rent.getStage())
-                            .lastErrorCode(rent.getLastErrorCode().value())
+                            .lastErrorCode(rent.getLastErrorCodeValue())
                             .lastErrorMessage(rent.getLastErrorMessage())
                             .build();
                 })
                 .collect(Collectors.toList());
     }
 
-    public RentError executeRentStep(Runnable r, Rent rent) {
-        RentError rentError = null;
+    public RentException executeRentStep(Runnable r, Rent rent) {
+        RentException rentException = null;
         try {
             r.run();
-        } catch (PaymentException e) {
-            rentError = new RentError(HttpStatus.PAYMENT_REQUIRED, e.getMessage(), e);
-        } catch (CabinetIsOffline e) {
-            rentError = new RentError(HttpStatus.PRECONDITION_FAILED, "Cabinet is offline", e);
-        } catch (NoPowerBanksLeft e) {
-            rentError = new RentError(HttpStatus.PRECONDITION_FAILED, "No powerbanks left", e);
-        } catch (StationCommunicatingException e) {
-            rentError = new RentError(HttpStatus.INTERNAL_SERVER_ERROR, "Station protocol exception", e);
         } catch (Exception e) {
-            rentError = new RentError(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+            rentException = ExceptionUtil.convertToRentException(e);
         }
-        if (rentError != null) {
-            rent.setLastError(rentError);
+        if (rentException != null) {
+            rent.setLastError(new RentError(rentException));
             rentRepository.save(rent);
-            webSocketServer.sendErrorMessage(rentError.getCode().value(), rentError.getMessage());
+            webSocketServer.sendErrorMessage(rentException);
         }
 
-        return rentError;
+        return rentException;
     }
 
-    public void executeRentStepWithException(Runnable r, Rent rent) {
-        final var rentError = executeRentStep(r, rent);
-        if (rentError != null) {
-            throw new RentException(rentError.getCode(), rentError.getMessage());
+
+    public void executeRentStepThrow(Runnable r, Rent rent) {
+        final var rentException = executeRentStep(r, rent);
+        if (rentException != null) {
+            throw rentException;
         }
     }
 }

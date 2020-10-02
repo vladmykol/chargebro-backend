@@ -1,4 +1,7 @@
 package com.vladmykol.takeandcharge.exceptions;
 
 public class NoPowerBanksLeft extends ChargingStationException {
+    public NoPowerBanksLeft() {
+        super("No powerbanks left");
+    }
 }
