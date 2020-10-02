@@ -1,18 +1,14 @@
 plugins {
-    id 'org.springframework.boot' version '2.2.6.RELEASE'
-    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'org.springframework.boot' version '2.3.4.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
     id 'java'
 }
 
 group = 'com.vladmykol'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+sourceCompatibility = '14'
 
 configurations {
-    developmentOnly
-    runtimeClasspath {
-        extendsFrom developmentOnly
-    }
     compileOnly {
         extendsFrom annotationProcessor
     }
@@ -23,37 +19,38 @@ repositories {
     maven {
         url "https://github.com/liqpay/sdk-java/raw/repository"
     }
-//            repository
-//            <repository>
-//            <id>repository</id>
-//            <url></url>
-//            <snapshots>
-//                <enabled>true</enabled>
-//            <updatePolicy>always</updatePolicy>
-//            </snapshots>
-//    </repository>
 }
 
 dependencies {
-    implementation 'com.liqpay:liqpay-sdk:0.7-SNAPSHOT'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    compileOnly 'org.projectlombok:lombok'
+//    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    annotationProcessor 'org.projectlombok:lombok'
+//    liqpay from maven
+    implementation 'com.liqpay:liqpay-sdk:0.7-SNAPSHOT'
+// string and collection utils
     implementation 'org.apache.commons:commons-lang3:3.10'
     implementation 'org.apache.commons:commons-collections4:4.4'
+//    for swagger UI
     implementation 'io.springfox:springfox-boot-starter:3.0.0'
     implementation 'org.modelmapper:modelmapper:2.3.8'
+//    custom security token generation
     implementation 'io.jsonwebtoken:jjwt:0.9.1'
     implementation 'javax.xml.bind:jaxb-api:2.3.0'
-    compileOnly 'org.projectlombok:lombok'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-    annotationProcessor 'org.projectlombok:lombok'
+
+//    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+//    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+//testing
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
@@ -63,4 +60,4 @@ test {
     useJUnitPlatform()
 }
 
-compileJava.dependsOn(processResources)
+//compileJava.dependsOn(processResources)

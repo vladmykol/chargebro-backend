@@ -18,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StationSocketServer {
     private final StationListener stationListener;
+    private final StationRegister stationRegister;
     @Value("${takeandcharge.socket.server.port}")
     private int portNumber;
     @Value("${takeandcharge.socket.server.client.idle-timeout-sec}")
@@ -29,31 +30,29 @@ public class StationSocketServer {
             log.info("Socket server started on port: {}", portNumber);
             while (!Thread.currentThread().isInterrupted()) {
                 Socket socket = serverSocket.accept();
-                StationSocketClient stationSocketClient = new StationSocketClient(socket);
+                StationSocketClient stationSocketClient = new StationSocketClient(socket, idleTimeoutSeconds);
+                stationRegister.addConnectedStation(stationSocketClient);
                 stationListener.listen(stationSocketClient);
-                stationListener.registerClient(stationSocketClient);
             }
         }
     }
 
     @Scheduled(fixedRate = 5000, initialDelay = 30000)
     public void monitorClients() {
-        List<StationSocketClient> inactiveStationSocketClients = stationListener.getInactiveClients(idleTimeoutSeconds);
+        List<StationSocketClient> inactiveStationSocketClients = stationRegister.getInactiveClients(idleTimeoutSeconds);
         inactiveStationSocketClients.forEach(this::tryToWakeUpInactive);
     }
 
     public void tryToWakeUpInactive(StationSocketClient stationSocketClient) {
-        log.debug("Try to wake up inactive client {}", stationSocketClient.getClientInfo().getIpAddress());
+        log.debug("Try to wake up inactive client {}", stationSocketClient.getClientInfo().getInetAddress());
         try {
-            stationListener.removeClient(stationSocketClient);
+            stationSocketClient.setActive(false);
             stationSocketClient.ping();
             stationSocketClient.check();
-            stationListener.registerClient(stationSocketClient);
+            stationSocketClient.setActive(true);
         } catch (Exception e) {
-            stationListener.removeClient(stationSocketClient);
-            if (stationSocketClient.isActive()) {
-                stationSocketClient.shutdown(e);
-            }
+            stationRegister.removeConnectedStation(stationSocketClient);
+            stationSocketClient.shutdown(e);
         }
     }
 

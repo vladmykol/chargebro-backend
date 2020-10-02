@@ -2,6 +2,7 @@ package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.conts.EndpointConst;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
+import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.service.PaymentService;
 import com.vladmykol.takeandcharge.service.RentService;
 import com.vladmykol.takeandcharge.service.UserWalletService;
@@ -24,25 +25,30 @@ public class PaymentController {
 
     @GetMapping(API_PAY_CHECKOUT)
     public String getCheckoutUrl() {
-        return paymentService.getCheckoutUrlWithTokenForCardAuth();
+        return paymentService.prepareCheckoutUrlWithTokenForCardAuth();
     }
 
     @PostMapping(API_PAY_CALLBACK_AUTH)
     @ResponseStatus(HttpStatus.OK)
     public void authCallback(@RequestBody FondyResponse callbackDto) {
-        try {
-            paymentService.processCallback(callbackDto);
+        final var payment = paymentService.savePaymentCallback(callbackDto);
 
+        try {
+            paymentService.checkForErrors(payment);
             userWalletService.saveCard(callbackDto);
+        } catch (PaymentException e) {
+            webSocketServer.sendPaymentErrorMessage(e.getMessage());
         } catch (Exception e) {
-            webSocketServer.sendPaymentErrorMessage("Added card is not valid");
+            webSocketServer.sendGeneralErrorMessage("Cannot add card: " + e.getMessage());
         }
     }
 
     @PostMapping(API_PAY_CALLBACK_HOLD)
     @ResponseStatus(HttpStatus.OK)
     public void rentPaymentCallback(@RequestBody FondyResponse callbackDto) {
-        rentService.rentUpdateWithPaymentCallback(callbackDto);
+        final var payment = paymentService.savePaymentCallback(callbackDto);
+
+        rentService.updateRentWithPayment(payment);
     }
 
 }

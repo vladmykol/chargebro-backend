@@ -10,9 +10,15 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class ClientInfo {
 
-    private final InetAddress IpAddress;
+    private final InetAddress inetAddress;
 
     private String cabinetId;
 
-    private Instant lastSeen = Instant.now().minusSeconds(25);
+    private Instant lastSeen;
+
+    public ClientInfo(InetAddress inetAddress, int idleTimeoutSeconds) {
+        this.inetAddress = inetAddress;
+//        right after connection station should be monitored for active state
+        this.lastSeen = Instant.now().minusSeconds(idleTimeoutSeconds - 3);
+    }
 }

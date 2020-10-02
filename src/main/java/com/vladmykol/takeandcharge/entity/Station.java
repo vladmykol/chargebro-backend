@@ -26,5 +26,5 @@ public class Station {
 
     private String mapUrl;
 
-    private Date lastSeen;
+    private Date lastLogIn;
 }

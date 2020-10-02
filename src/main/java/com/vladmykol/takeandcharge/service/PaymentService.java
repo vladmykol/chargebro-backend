@@ -22,6 +22,7 @@ public class PaymentService {
     private final UserWalletService userWalletService;
     private final FondyService paymentGateway;
 
+    //    125 = 1.25
     public int getRentPriceAmount(long rentTimeMs) {
 //       < 5min
         if (rentTimeMs < 300000) {
@@ -38,25 +39,23 @@ public class PaymentService {
         return paymentRepository.findAll();
     }
 
-    public String getCheckoutUrlWithTokenForCardAuth() {
+    public String prepareCheckoutUrlWithTokenForCardAuth() {
         final var newPayment = paymentRepository.save(
                 Payment.builder()
                         .type(PaymentType.CARD_AUTH)
                         .amount(MINIMAL_AMOUNT)
                         .build()
         );
+        final var response = paymentGateway.prepareCheckoutUrl(newPayment);
+        validateAndSaveResponseNoSignature(newPayment, response);
 
-        String url;
-        try {
-            url = paymentGateway.getCheckoutUrlWithTokenForCardAuth(newPayment);
-        } finally {
-            paymentRepository.save(newPayment);
-        }
+        checkForErrors(newPayment);
 
-        return url;
+        return response.getCheckout_url();
     }
 
-    public String holdMoney(String rentId, boolean isDeposit, int amount) {
+
+    public Payment holdMoney(String rentId, boolean isDeposit, int amount) {
         // TODO: 9/15/2020 get valid card from wallet
         final var validPaymentMethodsOrdered = userWalletService.getValidPaymentMethodsOrdered();
 
@@ -64,10 +63,6 @@ public class PaymentService {
             throw new PaymentException("Please add at least one valid credit card");
         }
 
-        String paymentId = "";
-//        final var iterator = validPaymentMethodsOrdered.iterator();
-//        while (iterator.hasNext()) {
-//            final var userWallet = iterator.next();
         final var userWallet = validPaymentMethodsOrdered.get(0);
         final var newPayment = paymentRepository.save(
                 Payment.builder()
@@ -77,34 +72,26 @@ public class PaymentService {
                         .build()
         );
 
-        try {
-            paymentGateway.holdMoneyByToken(userWallet.getCardToken(), newPayment);
-            paymentId = newPayment.getId();
+        final var response = paymentGateway.holdMoneyByToken(userWallet.getCardToken(), newPayment);
+        validateAndSavePayment(newPayment, response);
 
-//            break;
-//        } catch (PaymentGatewayException e) {
-//            if (!iterator.hasNext()) {
-//                throw e;
-//            }
-        } finally {
-            paymentRepository.save(newPayment);
-        }
-//        }
-
-        return paymentId;
+        return newPayment;
     }
 
-    public void reversePayment(String paymentId) {
-        var holdPayment = getPaymentById(paymentId);
+    public Payment reversePayment(String paymentId) {
+        final var optionalPayment = paymentRepository.findById(paymentId);
 
-        try {
-            paymentGateway.reverseMoney(holdPayment);
-        } finally {
-            paymentRepository.save(holdPayment);
+        if (optionalPayment.isEmpty()) {
+            throw new RuntimeException("Payment for reverse with ID " + paymentId + " is not found");
         }
+
+        final var response = paymentGateway.reverseMoney(optionalPayment.get());
+        validateAndSavePayment(optionalPayment.get(), response);
+
+        return optionalPayment.get();
     }
 
-    public Payment processCallback(FondyResponse callbackDto) {
+    public Payment savePaymentCallback(FondyResponse callbackDto) {
         final var existingPayment = paymentRepository.findById(callbackDto.getOrder_id());
         Payment payment;
 
@@ -113,21 +100,16 @@ public class PaymentService {
                     .type(PaymentType.UNEXPECTED_CALLBACK)
                     .amount(callbackDto.getAmount())
                     .orderStatus(callbackDto.getOrder_status())
-                    .callbacks(Collections.singletonList(callbackDto))
+                    .responses(Collections.singletonList(callbackDto))
                     .build();
         } else {
             payment = existingPayment.get();
             SecurityUtil.setUser(payment.getUserId());
 
             payment.setOrderStatus(callbackDto.getOrder_status());
-            payment.getCallbacks().add(callbackDto);
         }
 
-        try {
-            paymentGateway.validateResponse(callbackDto, true);
-        } finally {
-            paymentRepository.save(payment);
-        }
+        validateAndSavePayment(payment, callbackDto);
 
         return payment;
     }
@@ -136,12 +118,25 @@ public class PaymentService {
         return 200;
     }
 
-    private Payment getPaymentById(String id) {
-        final var optionalPayment = paymentRepository.findById(id);
-
-        if (optionalPayment.isEmpty()) {
-            throw new RuntimeException("Payment with ID " + id + " is not found");
+    public void checkForErrors(Payment payment) {
+        if (payment.getErrorMessage() != null) {
+            throw new PaymentException(payment.getErrorMessage());
         }
-        return optionalPayment.get();
     }
+
+
+    private void validateAndSavePayment(Payment payment, FondyResponse response, boolean isSignaturePresent) {
+        payment.getResponses().add(response);
+        payment.setErrorMessage(paymentGateway.validateResponse(response, isSignaturePresent));
+        paymentRepository.save(payment);
+    }
+
+    private void validateAndSavePayment(Payment payment, FondyResponse response) {
+        validateAndSavePayment(payment, response, true);
+    }
+
+    private void validateAndSaveResponseNoSignature(Payment payment, FondyResponse response) {
+        validateAndSavePayment(payment, response, false);
+    }
+
 }

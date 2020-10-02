@@ -2,11 +2,14 @@ package com.vladmykol.takeandcharge.entity;
 
 import com.mongodb.lang.NonNull;
 import com.vladmykol.takeandcharge.conts.RentStage;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import org.springframework.data.annotation.*;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.http.HttpStatus;
 
 import java.util.Date;
 
@@ -59,7 +62,8 @@ public class Rent {
     @LastModifiedBy
     private String lastModifiedBy;
 
-    private String errorCause;
+    @Getter(AccessLevel.NONE)
+    private RentError lastError;
 
     public void markRentStart(String powerBankId) {
         this.powerBankId = powerBankId;
@@ -80,5 +84,21 @@ public class Rent {
     public long getRentTime() {
         long returnedAt = getReturnedAt() == null ? System.currentTimeMillis() : getReturnedAt().getTime();
         return Math.abs(returnedAt - getTakenAt().getTime());
+    }
+
+    public HttpStatus getLastErrorCode() {
+        if (lastError != null) {
+            return lastError.getCode();
+        } else {
+            return null;
+        }
+    }
+
+    public String getLastErrorMessage() {
+        if (lastError != null) {
+            return lastError.getMessage();
+        } else {
+            return null;
+        }
     }
 }

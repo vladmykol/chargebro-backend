@@ -55,7 +55,7 @@ public class AdminController {
 
     @GetMapping(API_STATIONS)
     public List<ClientInfo> getAllConnectedStations() {
-        return stationService.getConnectedStations();
+        return stationService.getAllConnectedStations();
     }
 
     @GetMapping(API_ADMIN_ONLINE_CLIENT)

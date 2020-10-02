@@ -5,7 +5,10 @@ import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.cabinet.serialization.ProtocolSerializationUtils;
 import com.vladmykol.takeandcharge.utils.HexDecimalConverter;
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
@@ -20,6 +23,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.HEART_BEAT;
@@ -27,7 +31,6 @@ import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageComma
 
 
 @Slf4j
-@EqualsAndHashCode(exclude = {"pendingResponse"})
 public class StationSocketClient {
     @Getter
     private final ClientInfo clientInfo;
@@ -35,15 +38,15 @@ public class StationSocketClient {
     @Getter
     private final Map<Short, ProtocolMessage> pendingResponse = Collections.synchronizedMap(new HashMap<>());
     private final OutputStream out;
+    @Setter
     @Getter
     private volatile boolean isActive = true;
 
-    public StationSocketClient(Socket socket) throws IOException {
+    public StationSocketClient(Socket socket, int idleTimeoutSeconds) throws IOException {
         this.socket = socket;
-        this.clientInfo = new ClientInfo(socket.getInetAddress());
+        this.clientInfo = new ClientInfo(socket.getInetAddress(), idleTimeoutSeconds);
         this.out = socket.getOutputStream();
-        log.debug("Client {} is now connected", clientInfo.getIpAddress());
-        ping();
+        log.debug("Station socket client {} is now connected", clientInfo.getInetAddress());
     }
 
     public static void putUnsignedShort(ByteBuffer bb, int value) {
@@ -53,8 +56,10 @@ public class StationSocketClient {
     @SneakyThrows
     public void shutdown(Exception reason) {
         isActive = false;
-        socket.close();
-        log.debug("Client {} is now disconnected", clientInfo.getIpAddress(), reason);
+        if (!socket.isClosed()) {
+            socket.close();
+            log.debug("Client {} is now disconnected", clientInfo.getInetAddress(), reason);
+        }
     }
 
     public void ping() throws IOException {
@@ -64,22 +69,19 @@ public class StationSocketClient {
 
     public void check() {
         ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(SOFTWARE_VERSION);
-        communicate(softwareVersionRequest, 20000);
+        communicate(softwareVersionRequest, 10000);
     }
 
-    @SneakyThrows
     public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request) {
-        return communicate(request, 60000);
+        return communicate(request, 20000);
     }
 
     @SneakyThrows
-    public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request, int timeout) {
+    private ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request, int timeout) {
         ProtocolEntity<RawMessage> incomingMessage = waitAndGetResponse(request, timeout);
 
         if (incomingMessage == null)
-            if (isActive)
-                throw new TimeoutException("no response from a client");
-            else throw new RuntimeException("client is not active any more");
+            throw new TimeoutException("no response from a client");
         else
             return incomingMessage;
     }
@@ -127,11 +129,24 @@ public class StationSocketClient {
 
         out.write(arrayWithLeadingLength.array());
         out.flush();
-        log.debug("Writing message to client {}", HexDecimalConverter.toHexString(byteArrayMessage));
+        log.trace("Writing message to client {}", HexDecimalConverter.toHexString(byteArrayMessage));
     }
 
     public DataInputStream getInputStream() throws IOException {
         return new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StationSocketClient that = (StationSocketClient) o;
+        return clientInfo.getInetAddress().equals(that.clientInfo.getInetAddress());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(clientInfo.getInetAddress());
     }
 
     @RequiredArgsConstructor

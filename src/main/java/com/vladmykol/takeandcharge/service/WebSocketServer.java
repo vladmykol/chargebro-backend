@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
@@ -32,7 +33,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
     private static final short MESSAGE_TYPE_RENT_END = 3;
     private static final short MESSAGE_TYPE_ERROR = 4;
     private static final short MESSAGE_CODE_OK = 200;
-    private static final short MESSAGE_CODE_PAYMENT_ERROR = 402;
+    private static final int MESSAGE_CODE_PAYMENT_ERROR = HttpStatus.PAYMENT_REQUIRED.value();
     private static final short MESSAGE_CODE_UNAUTHORIZED = 401;
     private static final short MESSAGE_CODE_GENERAL_ERROR = 500;
     private static final MultiValuedMap<String, WebSocketSession> clientIdAndConnections = new HashSetValuedHashMap<>();
@@ -71,6 +72,17 @@ public class WebSocketServer extends BinaryWebSocketHandler {
 
         sendBaseMassage(baseMessage);
     }
+
+    public void sendErrorMessage(int errorCode, String errorMessage) {
+        final var baseMessage = BaseMessage.builder()
+                .messageType(MESSAGE_TYPE_ERROR)
+                .messageCode(errorCode)
+                .message(errorMessage)
+                .build();
+
+        sendBaseMassage(baseMessage);
+    }
+
 
     public void sendPaymentErrorMessage(String errorMessage) {
         final var baseMessage = BaseMessage.builder()
@@ -111,7 +123,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        log.debug("Client {} is now connected", session.getRemoteAddress());
+        log.debug("Web Socket Client {} is now connected", session.getRemoteAddress());
     }
 
     @Override
@@ -202,7 +214,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
     @ToString
     private static class BaseMessage {
         private final short messageType;
-        private final short messageCode;
+        private final int messageCode;
         private final String message;
     }
 }

@@ -1,6 +1,6 @@
 package com.vladmykol.takeandcharge.service;
 
-import com.vladmykol.takeandcharge.cabinet.StationListener;
+import com.vladmykol.takeandcharge.cabinet.StationRegister;
 import com.vladmykol.takeandcharge.cabinet.StationSocketClient;
 import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.MessageHeader;
@@ -36,14 +36,14 @@ import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageComma
 @RequiredArgsConstructor
 @Slf4j
 public class StationService {
-    private final StationListener stationListener;
+    private final StationRegister stationRegister;
     private final StationRepository stationRepository;
     private final ModelMapper stationInfoMapper;
 
     public ChargingStationInventory getStationInventory(String cabinetId) {
         ProtocolEntity<?> stockRequest = new ProtocolEntity<>(CABINET_STOCK);
 
-        StationSocketClient stationSocketClient = stationListener.getClient(cabinetId);
+        StationSocketClient stationSocketClient = stationRegister.getStation(cabinetId);
         ProtocolEntity<RawMessage> messageFromClient = stationSocketClient.communicate(stockRequest);
 
         ChargingStationInventory chargingStationInventory = messageFromClient.getBody().readTo(new ChargingStationInventory());
@@ -60,7 +60,7 @@ public class StationService {
         ProtocolEntity<TakePowerBankRequest> powerBankRequest = new ProtocolEntity<>(TAKE_POWER_BANK,
                 new TakePowerBankRequest(powerBankSlot));
 
-        StationSocketClient stationSocketClient = stationListener.getClient(cabinetId);
+        StationSocketClient stationSocketClient = stationRegister.getStation(cabinetId);
         ProtocolEntity<RawMessage> messageFromClient = stationSocketClient.communicate(powerBankRequest);
 
         TakePowerBankResponse takePowerBankResponse = messageFromClient.getBody().readFullyTo(new TakePowerBankResponse());
@@ -112,10 +112,6 @@ public class StationService {
                 .collect(Collectors.toList());
     }
 
-    public List<ClientInfo> getConnectedStations() {
-        return stationListener.listConnectedClients();
-    }
-
     public MessageHeader setServerAddressAndRestart(String cabinetId, String serverAddress, String port, short interval) {
         var changeServerAddressRequest = ChangeServerAddressRequest.builder()
                 .serverAddress(serverAddress)
@@ -124,7 +120,7 @@ public class StationService {
 
         ProtocolEntity<?> setServerAddressRequest = new ProtocolEntity<>(SET_SERVER_ADDRESS, changeServerAddressRequest);
 
-        StationSocketClient stationSocketClient = stationListener.getClient(cabinetId);
+        StationSocketClient stationSocketClient = stationRegister.getStation(cabinetId);
         stationSocketClient.communicate(setServerAddressRequest);
         ProtocolEntity<RawMessage> restartResponse = stationSocketClient.communicate(new ProtocolEntity<>(RESTART));
 
@@ -159,12 +155,22 @@ public class StationService {
         return optionalStation.orElseGet(Station::new);
     }
 
-    public void saveSingInRequest(LoginRequest loginRequest) {
+    public boolean singIn(LoginRequest loginRequest, StationSocketClient stationSocketClient) {
         final var optionalStation = stationRepository.findById(loginRequest.getBoxId());
         if (optionalStation.isPresent()) {
-            optionalStation.get().setLastSeen(new Date());
+            optionalStation.get().setLastLogIn(new Date());
+            stationRepository.save(optionalStation.get());
+
+            stationSocketClient.getClientInfo().setCabinetId(loginRequest.getBoxId());
+            stationRegister.authStation(stationSocketClient);
+            return true;
         } else {
-            throw new RuntimeException("Not existing station - " + loginRequest.getBoxId());
+            return false;
         }
+    }
+
+
+    public List<ClientInfo> getAllConnectedStations() {
+        return stationRegister.getAllConnectedStations();
     }
 }

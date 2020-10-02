@@ -2,6 +2,7 @@ package com.vladmykol.takeandcharge.service;
 
 import com.vladmykol.takeandcharge.dto.FondyResponse;
 import com.vladmykol.takeandcharge.entity.UserWallet;
+import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.repository.UserWalletRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class UserWalletService {
     public void saveCard(FondyResponse callback) {
 
         if (callback == null || StringUtils.isBlank(callback.getRectoken())) {
-            throw new RuntimeException("Card token is missing");
+            throw new PaymentException("Card token is missing");
         }
 
         var userWallet = UserWallet.builder()

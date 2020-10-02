@@ -1,6 +1,6 @@
 package com.vladmykol.takeandcharge.cabinet.controller;
 
-import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
+import com.vladmykol.takeandcharge.cabinet.StationSocketClient;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.client.LoginRequest;
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
+import static com.vladmykol.takeandcharge.cabinet.dto.CommonResult.ERROR;
 import static com.vladmykol.takeandcharge.cabinet.dto.CommonResult.OK;
 
 @Slf4j
@@ -28,16 +29,19 @@ public class CabinetController {
         return new ProtocolEntity<>(request.getHeader(), null);
     }
 
-    public  ProtocolEntity<LoginResponse> singIn(ProtocolEntity<RawMessage> request, ClientInfo clientInfo) {
+    public  ProtocolEntity<LoginResponse> singIn(ProtocolEntity<RawMessage> request, StationSocketClient stationSocketClient) {
         LoginRequest loginRequest = request.getBody().readFullyTo(new LoginRequest());
         log.debug("Sing in request {} and {}", request.getHeader(), loginRequest);
         request.getHeader().setCheckSum((short) 7);
         request.getHeader().setTime(Instant.now());
 
-        stationService.saveSingInRequest(loginRequest);
+        LoginResponse loginResponse;
 
-        clientInfo.setCabinetId(loginRequest.getBoxId());
-        LoginResponse loginResponse = new LoginResponse(OK);
+        if (stationService.singIn(loginRequest, stationSocketClient)) {
+            loginResponse = new LoginResponse(OK);
+        } else {
+            loginResponse = new LoginResponse(ERROR);
+        };
 
         return new ProtocolEntity<>(request.getHeader(), loginResponse);
     }
@@ -51,7 +55,7 @@ public class CabinetController {
                 .result(OK)
                 .build();
 
-        rentService.prepareForRentFinish(requestBody.getPowerBankId(), cabinetId);
+        rentService.updateRentWithReturnPowerBankRequest(requestBody.getPowerBankId(), cabinetId);
 
         return new ProtocolEntity<>(request.getHeader(), returnPowerBankResponse);
     }

@@ -6,8 +6,7 @@ import com.vladmykol.takeandcharge.dto.FondyRequest;
 import com.vladmykol.takeandcharge.dto.FondyRequestWrapper;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
 import com.vladmykol.takeandcharge.entity.Payment;
-import com.vladmykol.takeandcharge.exceptions.PaymentGatewayException;
-import com.vladmykol.takeandcharge.exceptions.PaymentGatewaySignatureException;
+import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.utils.FondyUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +38,7 @@ public class FondyService {
     @Value("${takeandcharge.api.domain}")
     private String callbackUrl;
 
-    String getCheckoutUrlWithTokenForCardAuth(Payment payment) {
+    public FondyResponse prepareCheckoutUrl(Payment payment) {
         var request = FondyRequest.builder()
                 .amount(payment.getAmount())
                 .currency("UAH")
@@ -52,16 +51,12 @@ public class FondyService {
                 .build();
 
         payment.setRequest(request);
-        var response = postForResponse(request, CHECKOUT_URI);
-        payment.setResponse(response);
 
-        validateResponse(response, false);
-
-        return response.getCheckout_url();
+        return postForResponse(request, CHECKOUT_URI);
     }
 
 
-    void holdMoneyByToken(String token, Payment payment) {
+    public FondyResponse holdMoneyByToken(String token, Payment payment) {
         final var request = FondyRequest.builder()
                 .amount(payment.getAmount())
                 .currency("UAH")
@@ -78,28 +73,26 @@ public class FondyService {
             request.setOrder_desc("Deposit before rent");
         }
         payment.setRequest(request);
-        final var response = postForResponse(request, WITH_TOKEN_URI);
-        payment.setResponse(response);
 
-        validateResponse(response, true);
+        return postForResponse(request, WITH_TOKEN_URI);
     }
 
-    void captureMoney(Payment payment) {
-        final var request = FondyRequest.builder()
-                .amount(payment.getAmount())
-                .currency("UAH")
-                .order_id(payment.getId())
-                //        params.put("lang", "uk");
-                .build();
+//    public PaymentResult captureMoney(Payment payment) {
+//        final var request = FondyRequest.builder()
+//                .amount(payment.getAmount())
+//                .currency("UAH")
+//                .order_id(payment.getId())
+//                //        params.put("lang", "uk");
+//                .build();
+//
+//        payment.setRequest(request);
+//        final var response = postForResponse(request, CAPTURE_URI);
+//        payment.setResponse(response);
+//
+//        return validateResponse(response, false);
+//    }
 
-        payment.setRequest(request);
-        final var response = postForResponse(request, CAPTURE_URI);
-        payment.setResponse(response);
-
-        validateResponse(response, false);
-    }
-
-    void reverseMoney(Payment payment) {
+    public FondyResponse reverseMoney(Payment payment) {
         final var request = FondyRequest.builder()
                 .amount(payment.getAmount())
                 .currency("UAH")
@@ -107,9 +100,7 @@ public class FondyService {
                 .comment("Returning a deposit as user returned a powerbank")
                 .build();
 
-        final var response = postForResponse(request, REVERSE_URI);
-
-        validateResponse(response, false);
+        return postForResponse(request, REVERSE_URI);
     }
 
 
@@ -128,50 +119,41 @@ public class FondyService {
         log.debug("Calling payment API:\nrequest: {}\nresponse: {}", request, response);
 
         if (response == null) {
-            throw new RuntimeException("Empty response from " + uri);
+            throw new PaymentException("Empty response from " + uri);
         }
 
         return response.getResponse();
     }
 
 
-    public void validateResponse(FondyResponse response, boolean isSignaturePresent) {
-        validateForErrors(response);
-        if (isSignaturePresent) {
-            validateForSignature(response);
+    public String validateResponse(FondyResponse response, boolean isSignaturePresent) {
+        var errorMessage = extractErrorMessage(response);
+        if (errorMessage == null && isSignaturePresent && !isValidSignature(response)) {
+            errorMessage = "Response has not valid signature";
         }
+        return errorMessage;
     }
 
-
-    public void validateForErrors(FondyResponse response) {
-        final var errorMessage = extractErrorMessage(response);
-        if (StringUtils.isNotBlank(errorMessage)) {
-            throw new PaymentGatewayException(errorMessage);
-        }
-
-    }
-
-
-    private void validateForSignature(FondyResponse callbackDto) {
-        if (!isValidSignature(callbackDto)) {
-            throw new PaymentGatewaySignatureException("Not valid signature for order id: " + callbackDto.getOrder_id());
-        }
-    }
 
     private String extractErrorMessage(FondyResponse response) {
-        String message = "";
+        String message = null;
         if (StringUtils.isNotBlank(response.getError_message())) {
             message = response.getError_message();
         }
         if (StringUtils.isNotBlank(response.getResponse_description())) {
             message = response.getResponse_description() + ". " + message;
         }
-        return message;
+        if (StringUtils.isNotBlank(message)) {
+            return message;
+        } else {
+            return null;
+        }
     }
 
 
     public boolean isValidSignature(FondyResponse callbackDto) {
         return FondyUtil.generateSignature(callbackDto, privateKey).equals(callbackDto.getSignature());
     }
+
 
 }

@@ -40,5 +40,7 @@ public class RentReportDto {
 
     private RentStage stage;
 
-    private String errorCause;
+    private Integer lastErrorCode;
+
+    private String lastErrorMessage;
 }

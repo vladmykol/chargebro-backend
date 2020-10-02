@@ -55,7 +55,7 @@ public class StationSocketHandler {
         ProtocolEntity<?> value;
         switch (incomingMessage.getCommand()) {
             case 0x60:
-                value = cabinetController.singIn(incomingMessage, stationSocketClient.getClientInfo());
+                value = cabinetController.singIn(incomingMessage, stationSocketClient);
                 break;
             case 0x61:
                 value = cabinetController.heartBeat(incomingMessage);
@@ -89,7 +89,7 @@ public class StationSocketHandler {
     private byte[] readInputStream() throws IOException {
         int messageLength = in.readUnsignedShort();
         byte[] bytes = in.readNBytes(messageLength);
-        log.debug("Reading message from client {}", HexDecimalConverter.toHexString(bytes));
+        log.trace("Reading message from client {}", HexDecimalConverter.toHexString(bytes));
         return bytes;
     }
 }

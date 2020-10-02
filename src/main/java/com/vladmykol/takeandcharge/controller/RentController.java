@@ -25,7 +25,7 @@ public class RentController {
 
     @PostMapping
     public void rentRequest(@RequestParam String stationId) {
-        rentService.prepareForRentStart(stationId);
+        rentService.syncRentStart(stationId);
     }
 
     @GetMapping("/history")

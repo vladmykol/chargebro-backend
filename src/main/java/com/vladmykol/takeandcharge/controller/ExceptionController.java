@@ -1,55 +1,33 @@
 package com.vladmykol.takeandcharge.controller;
 
-import com.vladmykol.takeandcharge.exceptions.*;
+import com.vladmykol.takeandcharge.dto.ErrorResponse;
+import com.vladmykol.takeandcharge.exceptions.PaymentException;
+import com.vladmykol.takeandcharge.exceptions.RentException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.util.Objects;
 
 @ControllerAdvice
 public class ExceptionController extends ResponseEntityExceptionHandler {
     @ExceptionHandler({BadCredentialsException.class})
-    public void handleBadCredentials(
-            Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.FORBIDDEN.value(), "User or password is incorrect");
+    public ResponseEntity<ErrorResponse> handleBadCredentials() {
+        final ErrorResponse passwordIsIncorrect = new ErrorResponse(HttpStatus.FORBIDDEN,
+                "User or password is incorrect");
+        return new ResponseEntity<>(passwordIsIncorrect, HttpStatus.FORBIDDEN);
     }
 
-    @ExceptionHandler({NotSuccessesRent.class})
-    public void notSuccessesRent(HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.EXPECTATION_FAILED.value(), "Station cannot give powerbank");
-    }
-
-    @ExceptionHandler({AuthenticationException.class, UsernameNotFoundException.class})
-    public void authIssue(
-            Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
-    }
-
-    @ExceptionHandler({CabinetIsOffline.class})
-    public void cabinetIsOffline(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.PRECONDITION_FAILED.value(), "Station is offline");
-    }
-
-    @ExceptionHandler({NoPowerBanksLeft.class})
-    public void noPowerBanksLeft(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.PRECONDITION_FAILED.value(), "No available power banks");
-    }
-
-    @ExceptionHandler({RentIsNotFound.class})
-    public void notFoundRent(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.PRECONDITION_FAILED.value(), "No rent request found");
+    @ExceptionHandler({RentException.class})
+    public ResponseEntity<ErrorResponse> handleRentException(RentException ex) {
+        return new ResponseEntity<>(new ErrorResponse(ex), ex.getStatus());
     }
 
     @ExceptionHandler({PaymentException.class})
-    public void paymentIssue(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.PAYMENT_REQUIRED.value(), ex.getMessage());
+    public ResponseEntity<ErrorResponse> handlePaymentException(PaymentException ex) {
+        return new ResponseEntity<>(new ErrorResponse(HttpStatus.PAYMENT_REQUIRED, ex.getMessage()), HttpStatus.PAYMENT_REQUIRED);
     }
-
-
 }
