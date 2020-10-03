@@ -5,8 +5,8 @@ plugins {
 }
 
 group = 'com.vladmykol'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '14'
+version = '0.1.1-SNAPSHOT'
+sourceCompatibility = '11'
 
 configurations {
     compileOnly {

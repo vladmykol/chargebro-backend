@@ -115,7 +115,7 @@ public class PaymentService {
     }
 
     public int getHoldAmount() {
-        return 200;
+        return 5000;
     }
 
     public void checkForErrors(Payment payment) {
