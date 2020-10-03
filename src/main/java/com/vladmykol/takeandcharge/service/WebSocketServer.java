@@ -112,7 +112,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
     private void sendBaseMassage(BaseMessage baseMessage) {
         var currentUserId = SecurityUtil.getUser();
         Collection<WebSocketSession> webSocketSessions = clientIdAndConnections.get(currentUserId);
-        if (webSocketSessions != null) {
+        if (webSocketSessions != null && !webSocketSessions.isEmpty()) {
             webSocketSessions.forEach(webSocketSession -> {
                 try {
                     sendMessage(webSocketSession, baseMessage);

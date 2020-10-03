@@ -41,9 +41,9 @@ public class RentService {
         final var holdAmount = paymentService.getHoldAmount() / 100;
         return RentConfirmationDto.builder()
                 .stationId(stationId)
-                .holdAmount(holdAmount)
+                .holdAmount(holdAmount + ".00")
                 // TODO: 9/17/2020 calc bonus
-                .bonusAmount(0)
+                .bonusAmount("0")
                 .powerLevel(powerBankInfo.getPowerLevel())
                 .build();
     }
@@ -266,6 +266,7 @@ public class RentService {
                 .collect(Collectors.toList());
     }
 
+    //    @SuppressWarnings(RuntimeException.class)
     public RentException executeRentStep(Runnable r, Rent rent) {
         RentException rentException = null;
         try {

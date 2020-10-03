@@ -7,7 +7,7 @@ import lombok.Data;
 @Builder
 public class RentConfirmationDto {
     private String stationId;
-    private int holdAmount;
-    private int bonusAmount;
+    private String holdAmount;
+    private String bonusAmount;
     private int powerLevel;
 }

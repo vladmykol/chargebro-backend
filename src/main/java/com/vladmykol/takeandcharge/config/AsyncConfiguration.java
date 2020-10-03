@@ -25,9 +25,9 @@ public class AsyncConfiguration {
     public Executor serverTaskExecutor() {
         log.debug("Creating Async Task Executor for Station server");
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(30);
-        executor.setMaxPoolSize(50);
-        executor.setQueueCapacity(100);
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(2);
         executor.setThreadNamePrefix("server-");
         executor.initialize();
         return executor;
@@ -37,8 +37,8 @@ public class AsyncConfiguration {
     public Executor clientTaskExecutor() {
         log.debug("Creating Async Task Executor for Active stations");
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(3);
+        executor.setCorePoolSize(20);
+        executor.setMaxPoolSize(50);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("station-");
         executor.initialize();
@@ -49,8 +49,8 @@ public class AsyncConfiguration {
     public Executor rentReturnTaskExecutor() {
         log.debug("Creating Async Task Executor for a returning rent requests from station");
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(3);
-        executor.setMaxPoolSize(5);
+        executor.setCorePoolSize(20);
+        executor.setMaxPoolSize(50);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("pb-return-");
         executor.initialize();
@@ -72,11 +72,10 @@ public class AsyncConfiguration {
     @Bean
     public ThreadPoolTaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-
-        scheduler.setPoolSize(2);
+        scheduler.setPoolSize(4);
+        scheduler.setPoolSize(4);
         scheduler.setThreadNamePrefix("scheduled-task-");
         scheduler.setDaemon(true);
-
         return scheduler;
     }
 
