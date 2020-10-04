@@ -53,6 +53,11 @@ public class AdminController {
         return rentService.getRentReport();
     }
 
+    @DeleteMapping(API_ADMIN_RENT_CLEAR)
+    public void rentClear() {
+        rentService.clearRent();
+    }
+
     @GetMapping(API_STATIONS)
     public List<ClientInfo> getAllConnectedStations() {
         return stationService.getAllConnectedStations();

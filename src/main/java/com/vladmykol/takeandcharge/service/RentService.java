@@ -290,4 +290,8 @@ public class RentService {
             throw rentException;
         }
     }
+
+    public void clearRent() {
+        rentRepository.deleteAll();
+    }
 }

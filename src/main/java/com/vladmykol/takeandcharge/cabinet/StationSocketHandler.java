@@ -86,7 +86,7 @@ public class StationSocketHandler {
         return new ProtocolEntity<>(messageHeader, new RawMessage(customDataInputStream));
     }
 
-    private byte[] readInputStream() throws IOException {
+    private synchronized byte[] readInputStream() throws IOException {
         int messageLength = in.readUnsignedShort();
         byte[] bytes = in.readNBytes(messageLength);
         log.trace("Reading message from client {}", HexDecimalConverter.toHexString(bytes));

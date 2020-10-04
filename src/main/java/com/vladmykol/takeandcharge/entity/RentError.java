@@ -2,13 +2,13 @@ package com.vladmykol.takeandcharge.entity;
 
 import com.mongodb.lang.NonNull;
 import com.vladmykol.takeandcharge.exceptions.RentException;
-import lombok.Data;
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 import java.util.Arrays;
 
 
-@Data
+@Getter
 public class RentError {
     @NonNull
     private final HttpStatus status;

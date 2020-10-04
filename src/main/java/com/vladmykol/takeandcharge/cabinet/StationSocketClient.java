@@ -122,13 +122,12 @@ public class StationSocketClient {
         }
     }
 
-    private void writeOutputStream(byte[] byteArrayMessage) throws IOException {
+    private synchronized void writeOutputStream(byte[] byteArrayMessage) throws IOException {
         ByteBuffer arrayWithLeadingLength = ByteBuffer.allocate(2 + byteArrayMessage.length);
         putUnsignedShort(arrayWithLeadingLength, byteArrayMessage.length);
         arrayWithLeadingLength.put(byteArrayMessage);
 
         out.write(arrayWithLeadingLength.array());
-        out.flush();
         log.trace("Writing message to client {}", HexDecimalConverter.toHexString(byteArrayMessage));
     }
 

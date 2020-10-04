@@ -34,7 +34,7 @@ public class StationInfoController {
 
     @GetMapping(API_STATIONS_CAPACITY)
     public int getRemainingPowerBanks(@PathVariable String id) {
-        return stationService.getRemainingPowerBanks(id);
+        return stationService.getRemainingPowerBanks(stationService.extractStationId(id));
     }
 
     @PostMapping()

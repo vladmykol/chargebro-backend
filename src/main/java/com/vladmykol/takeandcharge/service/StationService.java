@@ -169,6 +169,9 @@ public class StationService {
         }
     }
 
+    public String extractStationId(String url) {
+        return url.substring(url.indexOf("=") + 1);
+    }
 
     public List<ClientInfo> getAllConnectedStations() {
         return stationRegister.getAllConnectedStations();
