@@ -40,7 +40,7 @@ public class StationRegister {
                     stationSocketClientWrapper.getSocketClient().shutdown(new RuntimeException("New client with same ID is connected"));
                     stationSocketClientWrapper.setSocketClient(stationSocketClient);
                     stationSocketClientWrapper.setLastLogin(new Date());
-                    stationSocketClientWrapper.notifyAll();
+                    stationSocketClientWrapper.notify();
                 }
             } else {
                 authenticatedStations.put(stationSocketClient.getClientInfo().getCabinetId(), new StationSocketClientWrapper(stationSocketClient));

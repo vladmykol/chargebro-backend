@@ -2,7 +2,6 @@ package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.dto.RentConfirmationDto;
 import com.vladmykol.takeandcharge.dto.RentHistoryDto;
-import com.vladmykol.takeandcharge.exceptions.RentException;
 import com.vladmykol.takeandcharge.service.RentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,7 +20,13 @@ public class RentController {
 
     @GetMapping
     public RentConfirmationDto getInfoBeforeRent(@RequestParam String stationId) {
-        return rentService.getBeforeRentInfo(stationId);
+        final var id = extractStationId(stationId);
+        System.out.println("Station id " + id);
+        return rentService.getBeforeRentInfo(id);
+    }
+
+    private String extractStationId(String stationId) {
+        return stationId.substring(stationId.indexOf("=") + 1);
     }
 
     @PostMapping
