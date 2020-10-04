@@ -88,8 +88,9 @@ public class StationSocketHandler {
 
     private synchronized byte[] readInputStream() throws IOException {
         int messageLength = in.readUnsignedShort();
+        log.trace("Reading message from station. Message length {} bytes", messageLength);
         byte[] bytes = in.readNBytes(messageLength);
-        log.trace("Reading message from client {}", HexDecimalConverter.toHexString(bytes));
+        log.trace("Reading message from station. Message content {}", HexDecimalConverter.toHexString(bytes));
         return bytes;
     }
 }
