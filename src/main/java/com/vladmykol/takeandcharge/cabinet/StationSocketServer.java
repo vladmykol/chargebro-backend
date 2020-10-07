@@ -55,6 +55,7 @@ public class StationSocketServer {
             stationSocketClient.setInactive();
             stationSocketClient.check();
             stationSocketClient.setActive();
+            log.debug("Success check of inactive client {}", stationSocketClient.getClientInfo().getName());
         } catch (Exception e) {
             stationSocketClient.shutdown(e);
         }
