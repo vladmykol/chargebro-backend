@@ -2,6 +2,7 @@ package com.vladmykol.takeandcharge.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
+import lombok.ToString;
 
 
 @Data
@@ -46,4 +47,14 @@ public class FondyResponse {
     private String rectoken_lifetime;
     private String additional_info;
     private String checkout_url;
+
+    @ToString.Include(name = "rectoken")
+    private String sensitiveFieldMasker1() {
+        return rectoken == null ? null : "*****";
+    }
+
+    @ToString.Include(name = "signature")
+    private String sensitiveFieldMasker2() {
+        return signature == null ? null : "*****";
+    }
 }

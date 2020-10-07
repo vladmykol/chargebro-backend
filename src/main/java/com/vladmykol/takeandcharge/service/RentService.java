@@ -37,11 +37,18 @@ public class RentService {
 //        final var powerBankInfo = stationService.findMaxChargedPowerBank(stationId);
 
         final var holdAmount = paymentService.getHoldAmount() / 100;
+        final var userBonus = userService.getUserBonus(SecurityUtil.getUser());
+        String userBonusString;
+        if (userBonus == 0) {
+            userBonusString = "0";
+        } else {
+            userBonusString = userBonus + ".00";
+        }
         return RentConfirmationDto.builder()
                 .stationId(stationId)
                 .holdAmount(holdAmount + ".00")
                 // TODO: 9/17/2020 calc bonus
-                .bonusAmount("0")
+                .bonusAmount(userBonusString)
                 .build();
     }
 

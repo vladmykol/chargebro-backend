@@ -13,6 +13,11 @@ public class UserService {
     public String getUserPhone(String userId) {
         final var userOptional = userRepository.findById(userId);
         return userOptional.map(User::getUserName).orElse(null);
-
     }
+
+    public int getUserBonus(String userId) {
+        final var userOptional = userRepository.findById(userId);
+        return userOptional.map(User::getBonusAmount).orElse(0);
+    }
+
 }

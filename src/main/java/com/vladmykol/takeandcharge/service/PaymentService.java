@@ -29,7 +29,13 @@ public class PaymentService {
         if (rentMinutes < freeMinutes) {
             return 0;
         } else {
-            return (int) ((((rentMinutes - freeMinutes) / 30) + 1) * 900);
+            final var rentPeriods = ((rentMinutes - freeMinutes) / 30) + 1;
+            if (rentPeriods >= 5) {
+                final var days = (rentPeriods / 48) + 1;
+                return (int) (days * 4900);
+            } else {
+                return (int) (rentPeriods * 900);
+            }
         }
     }
 

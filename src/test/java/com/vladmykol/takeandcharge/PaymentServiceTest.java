@@ -29,13 +29,19 @@ class PaymentServiceTest {
 
         assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(30) + 1), is(900));
 
-        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(60)), is(1800));
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.HOURS.toMillis(1)), is(1800));
 
-        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(60) + 1), is(1800));
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.HOURS.toMillis(1) + 1), is(1800));
 
-        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(89)), is(1800));
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.HOURS.toMillis(2)), is(3600));
 
-        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(91)), is(2700));
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.HOURS.toMillis(2) + TimeUnit.MINUTES.toMillis(30)), is(4900));
+
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.HOURS.toMillis(23)), is(4900));
+
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.HOURS.toMillis(24)), is(5800));
+
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.HOURS.toMillis(25)), is(9800));
     }
 
 }

@@ -4,6 +4,7 @@ import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.cabinet.serialization.ProtocolSerializationUtils;
+import com.vladmykol.takeandcharge.exceptions.NoResponseFromWithinTimeout;
 import com.vladmykol.takeandcharge.utils.HexDecimalConverter;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
 
 import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.HEART_BEAT;
 import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.SOFTWARE_VERSION;
@@ -37,6 +37,10 @@ public class StationSocketClient {
     private final Socket socket;
     @Getter
     private volatile boolean isActive = true;
+    @Getter
+    @Setter
+    private Instant shutdownTime;
+
 
     public StationSocketClient(Socket socket, int idleTimeoutSeconds) throws IOException {
         socket.setKeepAlive(true);
@@ -60,14 +64,22 @@ public class StationSocketClient {
         isActive = false;
     }
 
+    public boolean isSocketConnected() {
+        return !socket.isClosed();
+    }
+
     @SneakyThrows
     public void shutdown(Exception reason) {
         isActive = false;
-        if (!socket.isClosed()) {
+        shutdownTime = Instant.now();
+        log.debug("Station socket client {} is now disconnected", clientInfo.getName(), reason);
+        try {
             out.close();
+        } catch (Exception ignore) {
+        }
+        try {
             socket.close();
-//            messageQueue.clear();
-            log.debug("Station socket client {} is now disconnected", clientInfo.getName(), reason);
+        } catch (Exception ignore) {
         }
     }
 
@@ -76,21 +88,34 @@ public class StationSocketClient {
         writeMessage(softwareVersionRequest);
     }
 
-    public void check() {
+    public boolean isResponsive() {
         ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(SOFTWARE_VERSION);
-        communicate(softwareVersionRequest, 30000);
+        log.debug("Check if station responsive {}", clientInfo.getName());
+        try {
+            communicate(softwareVersionRequest, 20000);
+        } catch (NoResponseFromWithinTimeout e) {
+            if (isSocketConnected()) {
+                log.debug("Second try for check if station responsive {}", clientInfo.getName());
+                communicate(softwareVersionRequest, 10000);
+            } else {
+                return false;
+            }
+        }
+        log.debug("Success check if station responsive {}", clientInfo.getName());
+
+        return true;
     }
 
     public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request) {
         return communicate(request, 20000);
     }
 
-    @SneakyThrows
+    @SneakyThrows({IOException.class, InterruptedException.class})
     private ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request, int timeout) {
-        ProtocolEntity<RawMessage> incomingMessage = waitAndGetResponse(request, timeout);
+        ProtocolEntity<RawMessage> incomingMessage = writeAndWaitForResponse(request, timeout);
 
         if (incomingMessage == null)
-            throw new TimeoutException("No response from a station socket client");
+            throw new NoResponseFromWithinTimeout(timeout);
         else
             return incomingMessage;
     }
@@ -120,7 +145,7 @@ public class StationSocketClient {
         return optionalProtocolMessage.isPresent();
     }
 
-    private ProtocolEntity<RawMessage> waitAndGetResponse(ProtocolEntity<?> request, int timeout)
+    private ProtocolEntity<RawMessage> writeAndWaitForResponse(ProtocolEntity<?> request, int timeout)
             throws InterruptedException, IOException {
         // TODO: 10/5/2020 same message ids can come and that one will be missed
         var protocolMessage = new ProtocolMessage(request.getCommand(), request);

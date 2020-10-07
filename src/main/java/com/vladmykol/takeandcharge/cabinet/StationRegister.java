@@ -22,22 +22,23 @@ import java.util.stream.Collectors;
 @Slf4j
 public class StationRegister {
 
-    private final List<StationSocketClient> allConnectedStations = Collections.synchronizedList(new LinkedList<>());
-    private final Map<String, StationSocketClientWrapper> authenticatedStations = new HashMap<>();
+    private final List<StationSocketClient> currentConnections = Collections.synchronizedList(new LinkedList<>());
+    private final Map<String, StationSocketClientWrapper> connections = new HashMap<>();
 
-    public List<ClientInfo> getAllConnectedStations() {
+    public List<ClientInfo> getCurrentConnections() {
         List<ClientInfo> result = new ArrayList<>();
-        allConnectedStations.forEach(stationSocketClient -> {
+        currentConnections.forEach(stationSocketClient -> {
             result.add(stationSocketClient.getClientInfo());
         });
         return result;
     }
 
-    public List<AuthenticatedStationsDto> getAuthenticatedStations() {
+    public List<AuthenticatedStationsDto> getConnections() {
         List<AuthenticatedStationsDto> result = new ArrayList<>();
-        authenticatedStations.forEach((stationId, stationSocketClientWrapper) -> {
+        connections.forEach((stationId, stationSocketClientWrapper) -> {
             final var dto = AuthenticatedStationsDto.builder()
                     .stationId(stationId)
+                    .isActive(stationSocketClientWrapper.getSocketClient().isActive())
                     .lastSeen(stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen())
                     .build();
 
@@ -54,30 +55,31 @@ public class StationRegister {
     public void authStation(StationSocketClient stationSocketClient) {
         Assert.notNull(stationSocketClient.getClientInfo().getCabinetId(), "Station ID must not be null during authentication");
 
-        synchronized (authenticatedStations) {
-            final var stationSocketClientWrapper = authenticatedStations.get(stationSocketClient.getClientInfo().getCabinetId());
+        synchronized (connections) {
+            final var stationSocketClientWrapper = connections.get(stationSocketClient.getClientInfo().getCabinetId());
             if (stationSocketClientWrapper != null) {
                 synchronized (stationSocketClientWrapper) {
 //                    removeConnectedStation(stationSocketClientWrapper.getSocketClient());
-
-                    stationSocketClientWrapper.getSocketClient().shutdown(new RuntimeException("Connection for station " +
-                            stationSocketClientWrapper.getSocketClient().getClientInfo().getName() + " is replaces by new connection from same client"));
+                    if (stationSocketClientWrapper.getSocketClient().isSocketConnected()) {
+                        stationSocketClientWrapper.getSocketClient().shutdown(new RuntimeException("Connection for station " +
+                                stationSocketClientWrapper.getSocketClient().getClientInfo().getName() + " is replaces by new connection from same client"));
+                    }
                     // set session duration before reconnect
-                    final var sessionDuration = Duration.between(stationSocketClientWrapper.getConnectTime(), Instant.now());
+                    final var sessionDuration = Duration.between(stationSocketClientWrapper.getLogInTime(), stationSocketClientWrapper.getSocketClient().getShutdownTime());
                     stationSocketClientWrapper.getLastSessions().add(sessionDuration);
 
                     stationSocketClientWrapper.setSocketClient(stationSocketClient);
-                    stationSocketClientWrapper.setConnectTime(Instant.now());
+                    stationSocketClientWrapper.setLogInTime(Instant.now());
                     stationSocketClientWrapper.notify();
                 }
             } else {
-                authenticatedStations.put(stationSocketClient.getClientInfo().getCabinetId(), new StationSocketClientWrapper(stationSocketClient));
+                connections.put(stationSocketClient.getClientInfo().getCabinetId(), new StationSocketClientWrapper(stationSocketClient));
             }
         }
     }
 
     public StationSocketClient getStation(String clientId) {
-        var stationSocketClientWrapper = authenticatedStations.get(clientId);
+        var stationSocketClientWrapper = connections.get(clientId);
 
         if (stationSocketClientWrapper == null) {
             throw new CabinetIsOffline();
@@ -110,15 +112,15 @@ public class StationRegister {
     }
 
     public void addConnectedStation(StationSocketClient stationSocketClient) {
-        allConnectedStations.add(stationSocketClient);
+        currentConnections.add(stationSocketClient);
     }
 
     public void removeConnectedStation(StationSocketClient stationSocketClient) {
-        allConnectedStations.remove(stationSocketClient);
+        currentConnections.remove(stationSocketClient);
     }
 
     public List<StationSocketClient> getInactiveClients(long seconds) {
-        return allConnectedStations.stream()
+        return currentConnections.stream()
                 .filter(client -> client.getClientInfo().getLastSeen().isBefore(Instant.now().minusSeconds(seconds)) && client.isActive())
                 .collect(Collectors.toList());
     }
@@ -126,12 +128,12 @@ public class StationRegister {
     @Data
     static class StationSocketClientWrapper {
         private StationSocketClient socketClient;
-        private Instant connectTime;
+        private Instant logInTime;
         private CircularFifoQueue<Duration> lastSessions = new CircularFifoQueue<>(50);
 
         public StationSocketClientWrapper(StationSocketClient socketClient) {
             this.socketClient = socketClient;
-            this.connectTime = Instant.now();
+            this.logInTime = Instant.now();
         }
     }
 

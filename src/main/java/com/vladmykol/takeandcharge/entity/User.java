@@ -31,15 +31,12 @@ public class User {
     @Indexed(unique = true)
     private String userName;
 
-    @NotBlank
     @Size(max = 20)
     private String firstName;
 
-    @NotBlank
     @Size(max = 20)
     private String lastName;
 
-    @NotBlank
     @Size(max = 50)
     @Email
     private String email;
@@ -67,6 +64,8 @@ public class User {
     private String registerCode;
 
     private UserStatus userStatus;
+
+    private Integer bonusAmount;
 
     public enum UserStatus {
         INITIALIZED,

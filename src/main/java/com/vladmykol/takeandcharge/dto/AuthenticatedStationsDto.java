@@ -12,5 +12,6 @@ import java.util.List;
 public class AuthenticatedStationsDto {
     private final List<String> sessionDuration = new ArrayList<>();
     private String stationId;
+    private boolean isActive;
     private Instant lastSeen;
 }

@@ -20,7 +20,7 @@ public class FondyUtil {
         Map<String, String> valueList = getFieldsForSignature(object);
         TreeMap<String, String> sortedByKey = new TreeMap<>(valueList);
         var joinedString = privateKey + "|" + String.join("|", sortedByKey.values());
-        log.debug("Build signature from string: {}", joinedString);
+        log.trace("Build signature from string: {}", joinedString);
         return (sha1(joinedString));
     }
 

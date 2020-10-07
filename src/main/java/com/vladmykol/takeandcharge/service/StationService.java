@@ -175,11 +175,11 @@ public class StationService {
     }
 
     public List<ClientInfo> getAllConnectedStations() {
-        return stationRegister.getAllConnectedStations();
+        return stationRegister.getCurrentConnections();
     }
 
     public List<AuthenticatedStationsDto> getAuthenticatedStations() {
-        return stationRegister.getAuthenticatedStations();
+        return stationRegister.getConnections();
     }
 
     public void deleteById(String stationId) {

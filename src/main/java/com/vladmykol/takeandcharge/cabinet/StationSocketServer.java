@@ -50,12 +50,12 @@ public class StationSocketServer {
 //    }
 
     public void tryToWakeUpInactive(StationSocketClient stationSocketClient) {
-        log.debug("Check inactive client {}", stationSocketClient.getClientInfo().getName());
+
         try {
             stationSocketClient.setInactive();
-            stationSocketClient.check();
-            stationSocketClient.setActive();
-            log.debug("Success check of inactive client {}", stationSocketClient.getClientInfo().getName());
+            if (stationSocketClient.isResponsive()) {
+                stationSocketClient.setActive();
+            }
         } catch (Exception e) {
             stationSocketClient.shutdown(e);
         }

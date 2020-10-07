@@ -43,7 +43,7 @@ public class StationSocketHandler {
     }
 
     public void handle() throws IOException {
-        while (!Thread.currentThread().isInterrupted()) {
+        while (!Thread.currentThread().isInterrupted() && stationSocketClient.isSocketConnected()) {
             try {
                 ProtocolEntity<RawMessage> incomingMessage = readIncomingMessage();
                 authenticate();
@@ -55,7 +55,10 @@ public class StationSocketHandler {
             } catch (NoHandlerDefined e) {
                 log.error("{} - {}", stationSocketClient.getClientInfo().getName(), e.getCause().getMessage());
             } catch (Exception e) {
-                in.close();
+                try {
+                    in.close();
+                } catch (Exception ignore) {
+                }
                 throw e;
             }
         }

@@ -3,6 +3,7 @@ package com.vladmykol.takeandcharge.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 
 
 @Data
@@ -22,4 +23,14 @@ public class FondyRequest {
     private String preauth;
     private String rectoken;
     private String comment;
+
+    @ToString.Include(name = "rectoken")
+    private String sensitiveFieldMasker1() {
+        return rectoken == null ? null : "*****";
+    }
+
+    @ToString.Include(name = "signature")
+    private String sensitiveFieldMasker2() {
+        return signature == null ? null : "*****";
+    }
 }
