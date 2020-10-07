@@ -20,12 +20,7 @@ public class EndpointConst {
     public static final String API_SOCKET_RENT = "/socket/rent";
     public static final String API_SMS = "/sms";
     public static final String API_SMS_CALLBACK = "/callback";
-    public static final String API_ADMIN_USER = "/user";
+    public static final String API_USER = "/user";
     public static final String API_ADMIN_ONLINE_CLIENT = "/online-client";
     public static final String API_ADMIN = "/admin";
-    public static final String API_ADMIN_PAYMENT = "/payment";
-    public static final String API_ADMIN_RENT_REPORT = "/rent/report";
-    public static final String API_ADMIN_RENT_CLEAR = "/rent/clear";
-    public static final String API_ADMIN_STATION_OPTIONS = API_STATIONS + API_ID + "/option";
-    ;
 }

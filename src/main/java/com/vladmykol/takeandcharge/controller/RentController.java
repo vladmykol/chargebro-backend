@@ -25,8 +25,6 @@ public class RentController {
         return rentService.getBeforeRentInfo(stationService.extractStationId(stationId));
     }
 
-
-
     @PostMapping
     public void rentRequest(@RequestParam String stationId) {
         rentService.syncRentStart(stationService.extractStationId(stationId));

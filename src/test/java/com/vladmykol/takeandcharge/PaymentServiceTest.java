@@ -7,6 +7,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -20,17 +22,20 @@ class PaymentServiceTest {
 
     @Test
     void checkRentPrice() throws Exception {
-        assertThat(paymentService.getRentPriceAmount(2 * 60 * 1000), is(0));
 
-        assertThat(paymentService.getRentPriceAmount(5 * 60 * 1000), is(0));
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(29)), is(0));
 
-        assertThat(paymentService.getRentPriceAmount(5 * 60 * 1000 + 1), is(100));
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(30)), is(900));
 
-        assertThat(paymentService.getRentPriceAmount(6 * 60 * 1000), is(100));
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(30) + 1), is(900));
 
-        assertThat(paymentService.getRentPriceAmount(6 * 60 * 1000 + 999), is(200));
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(60)), is(1800));
 
-        assertThat(paymentService.getRentPriceAmount(7 * 60 * 1000 + 1), is(300));
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(60) + 1), is(1800));
+
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(89)), is(1800));
+
+        assertThat(paymentService.getRentPriceAmount(TimeUnit.MINUTES.toMillis(91)), is(2700));
     }
 
 }

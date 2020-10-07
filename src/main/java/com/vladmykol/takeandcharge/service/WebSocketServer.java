@@ -161,7 +161,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
             String clientId = jwtProvider.parseAuthToken(tokenBuilder.toString());
             synchronized (clientIdAndConnections) {
                 if (clientIdAndConnections.put(clientId, session))
-                    log.debug("Client {} is now authenticated", session.getRemoteAddress());
+                    log.debug("Web Socket Client {} is now authenticated", session.getRemoteAddress());
             }
             final var successAuth = BaseMessage.builder()
                     .messageType(MESSAGE_TYPE_AUTH)

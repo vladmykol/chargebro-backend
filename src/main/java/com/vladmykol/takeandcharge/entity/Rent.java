@@ -86,11 +86,11 @@ public class Rent {
         return Math.abs(returnedAt - getTakenAt().getTime());
     }
 
-    public Integer getLastErrorCodeValue() {
+    public int getLastErrorCodeValue() {
         if (getLastErrorCode() != null) {
             return getLastErrorCode().value();
         } else {
-            return null;
+            return 0;
         }
     }
 

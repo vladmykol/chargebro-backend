@@ -11,4 +11,13 @@ public class RentException extends RuntimeException {
         super(e);
         this.status = status;
     }
+
+    @Override
+    public String getMessage() {
+        if (getCause().getMessage() != null) {
+            return getCause().getMessage();
+        } else {
+            return getCause().getClass().getSimpleName();
+        }
+    }
 }

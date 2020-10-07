@@ -12,6 +12,7 @@ import com.vladmykol.takeandcharge.cabinet.dto.client.PowerBankInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.client.TakePowerBankResponse;
 import com.vladmykol.takeandcharge.cabinet.dto.server.ChangeServerAddressRequest;
 import com.vladmykol.takeandcharge.cabinet.dto.server.TakePowerBankRequest;
+import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.dto.StationInfoDto;
 import com.vladmykol.takeandcharge.entity.Station;
 import com.vladmykol.takeandcharge.exceptions.NoPowerBanksLeft;
@@ -176,4 +177,13 @@ public class StationService {
     public List<ClientInfo> getAllConnectedStations() {
         return stationRegister.getAllConnectedStations();
     }
+
+    public List<AuthenticatedStationsDto> getAuthenticatedStations() {
+        return stationRegister.getAuthenticatedStations();
+    }
+
+    public void deleteById(String stationId) {
+        stationRepository.deleteById(stationId);
+    }
+
 }

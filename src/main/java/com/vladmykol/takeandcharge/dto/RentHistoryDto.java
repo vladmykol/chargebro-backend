@@ -7,9 +7,8 @@ import lombok.Data;
 @Builder
 public class RentHistoryDto {
     private String powerBankId;
-    private Long rentPeriodMs;
-    private int price;
-    private boolean isActive;
-    private Integer errorCode;
+    private long rentPeriodMs;
+    private int isReturned;
+    private int errorCode;
     private String errorMessage;
 }

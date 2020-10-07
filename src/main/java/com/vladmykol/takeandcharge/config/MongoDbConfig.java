@@ -49,4 +49,18 @@ public class MongoDbConfig {
         log.info("Mongo DB index creation on startup took: {}", DurationFormatUtils.formatDurationHMS(timeElapsed.toMillis()));
     }
 
+    @Bean
+    CommandLineRunner presetUserRoles(RoleRepository roleRepository) {
+        return args -> {
+            for (RoleEnum roleEnum : RoleEnum.values()) {
+                Role existingRole = roleRepository.findByRole(roleEnum);
+                if (existingRole == null) {
+                    Role newRole = new Role();
+                    newRole.setRole(roleEnum);
+                    roleRepository.save(newRole);
+                }
+            }
+        };
+    }
+
 }

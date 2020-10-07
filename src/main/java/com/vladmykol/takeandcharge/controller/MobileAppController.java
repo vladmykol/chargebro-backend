@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
+
 @RestController
 @RequestMapping(EndpointConst.API_APP)
 @RequiredArgsConstructor
@@ -28,5 +30,11 @@ public class MobileAppController {
         } else {
             return new ResponseEntity<>(link, HttpStatus.PRECONDITION_FAILED);
         }
+    }
+
+    @GetMapping()
+    public void redirectToAppSuccess(HttpServletResponse httpServletResponse) {
+        httpServletResponse.setHeader("Location", "chargebro://home");
+        httpServletResponse.setStatus(302);
     }
 }

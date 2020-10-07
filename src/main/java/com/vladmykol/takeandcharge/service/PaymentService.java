@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -22,16 +23,13 @@ public class PaymentService {
     private final UserWalletService userWalletService;
     private final FondyService paymentGateway;
 
-    //    125 = 1.25
     public int getRentPriceAmount(long rentTimeMs) {
-//       < 5min
-        if (rentTimeMs < 300000) {
+        final var rentMinutes = TimeUnit.MILLISECONDS.toMinutes(rentTimeMs);
+        final var freeMinutes = 30;
+        if (rentMinutes < freeMinutes) {
             return 0;
-//           < 5min
         } else {
-            final var trueRentTime = rentTimeMs - 300000;
-            final var min = (int) Math.ceil((double) trueRentTime / 60000);
-            return min * 100;
+            return (int) ((((rentMinutes - freeMinutes) / 30) + 1) * 900);
         }
     }
 

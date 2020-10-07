@@ -12,4 +12,5 @@ public class StationInfoDto {
     private String address;
     private String mapUrl;
     private int maxCapacity;
+    private Integer simPhoneNumber;
 }

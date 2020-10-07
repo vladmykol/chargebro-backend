@@ -2,33 +2,31 @@ package com.vladmykol.takeandcharge.entity;
 
 import com.mongodb.lang.NonNull;
 import com.vladmykol.takeandcharge.exceptions.RentException;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 import java.util.Arrays;
 
 
-@Getter
+@Data
+@NoArgsConstructor
 public class RentError {
     @NonNull
-    private final HttpStatus status;
+    private HttpStatus status;
 
     @NonNull
-    private final String message;
+    private String message;
 
-    private final String stackTrace;
+    private String stackTrace;
 
     public RentError(RentException rentException) {
         this.status = rentException.getStatus();
-        if (rentException.getCause().getMessage() != null) {
-            this.message = rentException.getCause().getMessage();
-        } else {
-            this.message = rentException.getCause().getClass().getSimpleName();
-        }
+        this.message = rentException.getMessage();
         if (status.is5xxServerError()) {
             this.stackTrace = Arrays.toString(rentException.getStackTrace());
-        } else {
-            this.stackTrace = null;
         }
     }
 }

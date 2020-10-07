@@ -1,13 +1,17 @@
 package com.vladmykol.takeandcharge.cabinet;
 
 import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
+import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -29,6 +33,24 @@ public class StationRegister {
         return result;
     }
 
+    public List<AuthenticatedStationsDto> getAuthenticatedStations() {
+        List<AuthenticatedStationsDto> result = new ArrayList<>();
+        authenticatedStations.forEach((stationId, stationSocketClientWrapper) -> {
+            final var dto = AuthenticatedStationsDto.builder()
+                    .stationId(stationId)
+                    .lastSeen(stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen())
+                    .build();
+
+            stationSocketClientWrapper.getLastSessions().forEach(duration -> {
+                final var durationHMS = DurationFormatUtils.formatDurationHMS(duration.toMillis());
+                dto.getSessionDuration().add(durationHMS);
+            });
+
+            result.add(dto);
+        });
+        return result;
+    }
+
     public void authStation(StationSocketClient stationSocketClient) {
         Assert.notNull(stationSocketClient.getClientInfo().getCabinetId(), "Station ID must not be null during authentication");
 
@@ -36,10 +58,16 @@ public class StationRegister {
             final var stationSocketClientWrapper = authenticatedStations.get(stationSocketClient.getClientInfo().getCabinetId());
             if (stationSocketClientWrapper != null) {
                 synchronized (stationSocketClientWrapper) {
-                    removeConnectedStation(stationSocketClientWrapper.getSocketClient());
-                    stationSocketClientWrapper.getSocketClient().shutdown(new RuntimeException("New client with same ID is connected"));
+//                    removeConnectedStation(stationSocketClientWrapper.getSocketClient());
+
+                    stationSocketClientWrapper.getSocketClient().shutdown(new RuntimeException("Connection for station " +
+                            stationSocketClientWrapper.getSocketClient().getClientInfo().getName() + " is replaces by new connection from same client"));
+                    // set session duration before reconnect
+                    final var sessionDuration = Duration.between(stationSocketClientWrapper.getConnectTime(), Instant.now());
+                    stationSocketClientWrapper.getLastSessions().add(sessionDuration);
+
                     stationSocketClientWrapper.setSocketClient(stationSocketClient);
-                    stationSocketClientWrapper.setLastLogin(new Date());
+                    stationSocketClientWrapper.setConnectTime(Instant.now());
                     stationSocketClientWrapper.notify();
                 }
             } else {
@@ -67,7 +95,8 @@ public class StationRegister {
                 synchronized (stationSocketClientWrapper) {
                     final var waitTimeSec = 60;
                     try {
-                        log.debug("Station ID {} is offline so trying to wait {} sec for reconnection", clientId, waitTimeSec);
+                        log.debug("Station {} is offline so trying to wait {} sec for reconnection",
+                                stationSocketClientWrapper.getSocketClient().getClientInfo().getName(), waitTimeSec);
                         stationSocketClientWrapper.wait(waitTimeSec * 1000);
 //                    sleep before working with station after connection. Station needs some time to check available powerbanks
                         Thread.sleep(7000);
@@ -90,18 +119,19 @@ public class StationRegister {
 
     public List<StationSocketClient> getInactiveClients(long seconds) {
         return allConnectedStations.stream()
-                .filter(client -> client.getClientInfo().getLastSeen().isBefore(Instant.now().minusSeconds(seconds)))
+                .filter(client -> client.getClientInfo().getLastSeen().isBefore(Instant.now().minusSeconds(seconds)) && client.isActive())
                 .collect(Collectors.toList());
     }
 
     @Data
     static class StationSocketClientWrapper {
         private StationSocketClient socketClient;
-        private Date lastLogin;
+        private Instant connectTime;
+        private CircularFifoQueue<Duration> lastSessions = new CircularFifoQueue<>(50);
 
         public StationSocketClientWrapper(StationSocketClient socketClient) {
             this.socketClient = socketClient;
-            this.lastLogin = new Date();
+            this.connectTime = Instant.now();
         }
     }
 

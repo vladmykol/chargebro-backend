@@ -1,6 +1,5 @@
 package com.vladmykol.takeandcharge.service;
 
-import com.vladmykol.takeandcharge.config.AsyncConfiguration;
 import com.vladmykol.takeandcharge.conts.PaymentType;
 import com.vladmykol.takeandcharge.conts.RentStage;
 import com.vladmykol.takeandcharge.dto.RentConfirmationDto;
@@ -16,7 +15,6 @@ import com.vladmykol.takeandcharge.utils.ExceptionUtil;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -36,7 +34,7 @@ public class RentService {
     private final UserService userService;
 
     public RentConfirmationDto getBeforeRentInfo(String stationId) {
-        final var powerBankInfo = stationService.findMaxChargedPowerBank(stationId);
+//        final var powerBankInfo = stationService.findMaxChargedPowerBank(stationId);
 
         final var holdAmount = paymentService.getHoldAmount() / 100;
         return RentConfirmationDto.builder()
@@ -44,7 +42,6 @@ public class RentService {
                 .holdAmount(holdAmount + ".00")
                 // TODO: 9/17/2020 calc bonus
                 .bonusAmount("0")
-                .powerLevel(powerBankInfo.getPowerLevel())
                 .build();
     }
 
@@ -56,12 +53,12 @@ public class RentService {
                         .build()
         );
 
-        executeRentStepThrow(() -> {
+        executeRentStep(() -> {
 
             safeCheckAvailablePowerBanks(rent);
             holdMoneyBeforeRent(rent);
 
-        }, rent);
+        }, rent, true);
     }
 
     public void updateRentWithPayment(Payment payment) {
@@ -77,10 +74,10 @@ public class RentService {
             paymentService.checkForErrors(payment);
             processRentUpdate(payment.getType(), optionalRent.get());
 
-        }, optionalRent.get());
+        }, optionalRent.get(), false);
     }
 
-    @Async(AsyncConfiguration.RETURN_POWER_BANK_TASK_EXECUTOR)
+    //    @Async(AsyncConfiguration.RETURN_POWER_BANK_TASK_EXECUTOR)
     public void updateRentWithReturnPowerBankRequest(String powerBankId, String stationId) {
         Optional<Rent> rent = rentRepository.findByPowerBankIdAndReturnedAtIsNullAndIsActiveRentTrue(powerBankId);
 
@@ -90,11 +87,12 @@ public class RentService {
         SecurityUtil.setUser(rent.get().getUserId());
 
         rent.get().markPbReturned(stationId);
+        //noinspection ThrowableNotThrown
         executeRentStep(() -> {
 
             finalizeRent(rent.get());
 
-        }, rent.get());
+        }, rent.get(), false);
     }
 
     private void finalizeRent(Rent rent) {
@@ -216,8 +214,8 @@ public class RentService {
                         RentHistoryDto.builder()
                                 .powerBankId(rentedPowerBank.getPowerBankId())
                                 .rentPeriodMs(rentedPowerBank.getRentTime())
-                                .price(paymentService.getRentPriceAmount(rentedPowerBank.getRentTime()))
-                                .isActive(rentedPowerBank.isActiveRent())
+//                                .price(paymentService.getRentPriceAmount(rentedPowerBank.getRentTime()))
+                                .isReturned((rentedPowerBank.getReturnedAt() == null) ? 0 : 1)
                                 .errorCode(rentedPowerBank.getLastErrorCodeValue())
                                 .errorMessage(rentedPowerBank.getLastErrorMessage())
                                 .build()
@@ -266,8 +264,7 @@ public class RentService {
                 .collect(Collectors.toList());
     }
 
-    //    @SuppressWarnings(RuntimeException.class)
-    public RentException executeRentStep(Runnable r, Rent rent) {
+    public void executeRentStep(Runnable r, Rent rent, boolean isNeedToThrow) {
         RentException rentException = null;
         try {
             r.run();
@@ -277,17 +274,11 @@ public class RentService {
         if (rentException != null) {
             rent.setLastError(new RentError(rentException));
             rentRepository.save(rent);
-            webSocketServer.sendErrorMessage(rentException);
-        }
-
-        return rentException;
-    }
-
-
-    public void executeRentStepThrow(Runnable r, Rent rent) {
-        final var rentException = executeRentStep(r, rent);
-        if (rentException != null) {
-            throw rentException;
+            if (isNeedToThrow) {
+                throw rentException;
+            } else {
+                webSocketServer.sendErrorMessage(rentException);
+            }
         }
     }
 

@@ -17,10 +17,6 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 public class StationInfoController {
     private final StationService stationService;
 
-    @GetMapping()
-    public List<StationInfoDto> getStations() {
-        return stationService.findAll();
-    }
 
     @GetMapping(API_STATIONS_NEARBY)
     public List<StationInfoDto> getStations(@RequestParam double x,
@@ -37,8 +33,4 @@ public class StationInfoController {
         return stationService.getRemainingPowerBanks(stationService.extractStationId(id));
     }
 
-    @PostMapping()
-    public void updateStationsInfo(@RequestBody StationInfoDto stationInfoDto) {
-        stationService.update(stationInfoDto);
-    }
 }

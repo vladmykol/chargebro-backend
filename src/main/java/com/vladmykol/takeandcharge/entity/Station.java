@@ -26,5 +26,7 @@ public class Station {
 
     private String mapUrl;
 
+    private Integer simPhoneNumber;
+
     private Date lastLogIn;
 }

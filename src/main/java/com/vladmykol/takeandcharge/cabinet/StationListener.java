@@ -18,8 +18,8 @@ public abstract class StationListener {
         try {
             newStationSocketHandler(stationSocketClient).handle();
         } catch (Exception e) {
-            stationRegister.removeConnectedStation(stationSocketClient);
             stationSocketClient.shutdown(e);
+            stationRegister.removeConnectedStation(stationSocketClient);
         }
     }
 

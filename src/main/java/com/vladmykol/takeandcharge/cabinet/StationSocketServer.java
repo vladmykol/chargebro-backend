@@ -31,8 +31,8 @@ public class StationSocketServer {
             while (!Thread.currentThread().isInterrupted()) {
                 Socket socket = serverSocket.accept();
                 StationSocketClient stationSocketClient = new StationSocketClient(socket, idleTimeoutSeconds);
-                stationRegister.addConnectedStation(stationSocketClient);
                 stationListener.listen(stationSocketClient);
+                stationRegister.addConnectedStation(stationSocketClient);
             }
         }
     }
@@ -43,17 +43,30 @@ public class StationSocketServer {
         inactiveStationSocketClients.forEach(this::tryToWakeUpInactive);
     }
 
+//    @Scheduled(fixedRate = 15000, initialDelay = 20000)
+//    public void checkClients() {
+//        List<StationSocketClient> activeClients = stationRegister.getInactiveClients(idleTimeoutSeconds / 2);
+//        activeClients.forEach(this::checkActiveClient);
+//    }
+
     public void tryToWakeUpInactive(StationSocketClient stationSocketClient) {
-        log.debug("Try to wake up inactive client {}", stationSocketClient.getClientInfo().getInetAddress());
+        log.debug("Check inactive client {}", stationSocketClient.getClientInfo().getName());
         try {
-            stationSocketClient.setActive(false);
-            stationSocketClient.ping();
+            stationSocketClient.setInactive();
             stationSocketClient.check();
-            stationSocketClient.setActive(true);
+            stationSocketClient.setActive();
         } catch (Exception e) {
-            stationRegister.removeConnectedStation(stationSocketClient);
             stationSocketClient.shutdown(e);
         }
     }
+
+//    public void checkActiveClient(StationSocketClient stationSocketClient) {
+//        log.debug("Check active client {}", stationSocketClient.getClientInfo().getInetAddress());
+//        try {
+//            stationSocketClient.check();
+//        } catch (Exception e) {
+//            stationSocketClient.shutdown(e);
+//        }
+//    }
 
 }

@@ -13,15 +13,10 @@ public class ErrorResponse {
     public ErrorResponse(RentException ex) {
         this.status = ex.getStatus().value();
         this.error = ex.getStatus().name();
-        if (ex.getCause().getMessage() != null) {
-            this.message = ex.getCause().getMessage();
-        } else {
-            this.message = ex.getCause().getClass().getSimpleName();
-        }
-
+        this.message = ex.getMessage();
     }
 
-    public ErrorResponse(HttpStatus status, String message, Exception e) {
+    public ErrorResponse(HttpStatus status, String message) {
         this.status = status.value();
         this.error = status.name();
         this.message = message;

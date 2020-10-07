@@ -13,16 +13,16 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class ExceptionController extends ResponseEntityExceptionHandler {
     @ExceptionHandler({BadCredentialsException.class})
-    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
+    public ResponseEntity<ErrorResponse> handleBadCredentials() {
         final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.FORBIDDEN,
-                "User or password is incorrect", ex);
+                "User or password is incorrect");
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler({ResponseStatusException.class})
     public ResponseEntity<ErrorResponse> responseStatusException(ResponseStatusException ex) {
         final ErrorResponse errorResponse = new ErrorResponse(ex.getStatus(),
-                ex.getMessage(), ex);
+                ex.getMessage());
 
         return new ResponseEntity<>(errorResponse, ex.getStatus());
     }

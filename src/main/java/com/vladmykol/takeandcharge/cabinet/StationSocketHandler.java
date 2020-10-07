@@ -6,7 +6,7 @@ import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.cabinet.serialization.CustomDataInputStream;
 import com.vladmykol.takeandcharge.cabinet.serialization.ProtocolSerializationUtils;
-import com.vladmykol.takeandcharge.exceptions.UnknownCommand;
+import com.vladmykol.takeandcharge.exceptions.NoHandlerDefined;
 import com.vladmykol.takeandcharge.utils.HexDecimalConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.time.Instant;
 import java.util.ArrayList;
 
@@ -43,10 +44,19 @@ public class StationSocketHandler {
 
     public void handle() throws IOException {
         while (!Thread.currentThread().isInterrupted()) {
-            ProtocolEntity<RawMessage> incomingMessage = readIncomingMessage();
-            authenticate();
-            if (!stationSocketClient.fulfillPendingRequest(incomingMessage)) {
-                stationSocketClient.writeMessage(dispatch(incomingMessage));
+            try {
+                ProtocolEntity<RawMessage> incomingMessage = readIncomingMessage();
+                authenticate();
+                if (!stationSocketClient.fulfillPendingRequest(incomingMessage)) {
+                    stationSocketClient.writeMessage(dispatch(incomingMessage));
+                }
+            } catch (SocketTimeoutException ignore) {
+                log.trace("Timeout when listening on socket client {}", stationSocketClient.getClientInfo().getCabinetId());
+            } catch (NoHandlerDefined e) {
+                log.error("{} - {}", stationSocketClient.getClientInfo().getName(), e.getCause().getMessage());
+            } catch (Exception e) {
+                in.close();
+                throw e;
             }
         }
     }
@@ -64,8 +74,7 @@ public class StationSocketHandler {
                 value = cabinetController.returnPowerBank(incomingMessage, stationSocketClient.getClientInfo().getCabinetId());
                 break;
             default:
-                throw new UnknownCommand(
-                        incomingMessage.getCommand() + " cannot map message to any know handler");
+                throw new NoHandlerDefined(incomingMessage.getCommand());
         }
         return value;
     }
@@ -88,7 +97,7 @@ public class StationSocketHandler {
 
     private synchronized byte[] readInputStream() throws IOException {
         int messageLength = in.readUnsignedShort();
-        log.trace("Reading message from station. Message length {} bytes", messageLength);
+        log.trace("Reading message from station. Message length {}", messageLength);
         byte[] bytes = in.readNBytes(messageLength);
         log.trace("Reading message from station. Message content {}", HexDecimalConverter.toHexString(bytes));
         return bytes;
