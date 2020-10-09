@@ -1,13 +1,13 @@
 package com.vladmykol.takeandcharge.cabinet.dto;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.net.InetAddress;
 import java.time.Instant;
 
-@EqualsAndHashCode
+@ToString
 public class ClientInfo {
 
     private final InetAddress inetAddress;
@@ -26,11 +26,4 @@ public class ClientInfo {
         this.lastSeen = Instant.now().minusSeconds(idleTimeoutSeconds - 3);
     }
 
-    public String getName() {
-        if (cabinetId == null) {
-            return inetAddress.getHostAddress();
-        } else {
-            return cabinetId;
-        }
-    }
 }

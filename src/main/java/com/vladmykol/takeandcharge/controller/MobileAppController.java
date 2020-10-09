@@ -25,7 +25,8 @@ public class MobileAppController {
         } else if ("ios".equalsIgnoreCase(os)) {
             link = "https://testflight.apple.com/join/jmqPENN8";
         }
-        if (currentVersion < 0.291f) {
+        System.out.println("Current app version " + currentVersion);
+        if (currentVersion < 0.34) {
             return ResponseEntity.ok(link);
         } else {
             return new ResponseEntity<>(link, HttpStatus.PRECONDITION_FAILED);

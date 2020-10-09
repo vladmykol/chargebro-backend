@@ -6,5 +6,9 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.List;
 
 public interface UserWalletRepository extends MongoRepository<UserWallet, String> {
-    List<UserWallet> findByUserIdOrderByLastModifiedDateDesc(String userId);
+    List<UserWallet> findByUserIdAndIsRemovedFalseOrderByLastModifiedDateDesc(String userId);
+
+    boolean existsByUserIdAndIsRemovedFalse(String userId);
+
+    boolean existsByCardToken(String cardToken);
 }

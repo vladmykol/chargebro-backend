@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
+import java.util.Objects;
 
 
 @Data
@@ -27,6 +28,7 @@ public class UserWallet {
     private String paymentId;
 
     @NonNull
+    @Indexed
     private String cardToken;
 
     @NonNull
@@ -48,5 +50,10 @@ public class UserWallet {
     @LastModifiedBy
     private String lastModifiedBy;
 
+    @Builder.Default
+    private Boolean isRemoved = false;
 
+    public Boolean getIsRemoved() {
+        return Objects.requireNonNullElse(isRemoved, false);
+    }
 }

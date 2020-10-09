@@ -53,7 +53,7 @@ public class StationSocketHandler {
             } catch (SocketTimeoutException ignore) {
                 log.trace("Timeout when listening on socket client {}", stationSocketClient.getClientInfo().getCabinetId());
             } catch (NoHandlerDefined e) {
-                log.error("{} - {}", stationSocketClient.getClientInfo().getName(), e.getCause().getMessage());
+                log.error("{} - {}", stationSocketClient.getClientInfo(), e.toString());
             } catch (Exception e) {
                 try {
                     in.close();

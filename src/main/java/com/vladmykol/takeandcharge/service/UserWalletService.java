@@ -3,6 +3,7 @@ package com.vladmykol.takeandcharge.service;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
 import com.vladmykol.takeandcharge.entity.UserWallet;
 import com.vladmykol.takeandcharge.exceptions.PaymentException;
+import com.vladmykol.takeandcharge.repository.RentRepository;
 import com.vladmykol.takeandcharge.repository.UserWalletRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import java.util.List;
 @Service
 public class UserWalletService {
     private final UserWalletRepository userWalletRepository;
+    private final RentRepository rentRepository;
 
     public void saveCard(FondyResponse callback) {
 
@@ -22,16 +24,36 @@ public class UserWalletService {
             throw new PaymentException("Card token is missing");
         }
 
-        var userWallet = UserWallet.builder()
-                .paymentId(callback.getOrder_id())
-                .cardToken(callback.getRectoken())
-                .cardType(callback.getCard_type())
-                .maskedCard(callback.getMasked_card())
-                .build();
-        userWalletRepository.save(userWallet);
+        final var cardExists = userWalletRepository.existsByCardToken(callback.getRectoken());
+        if (!cardExists) {
+            var userWallet = UserWallet.builder()
+                    .paymentId(callback.getOrder_id())
+                    .cardToken(callback.getRectoken())
+                    .cardType(callback.getCard_type())
+                    .maskedCard(callback.getMasked_card())
+                    .build();
+            userWalletRepository.save(userWallet);
+        }
     }
 
     public List<UserWallet> getValidPaymentMethodsOrdered() {
-        return userWalletRepository.findByUserIdOrderByLastModifiedDateDesc(SecurityUtil.getUser());
+        return userWalletRepository.findByUserIdAndIsRemovedFalseOrderByLastModifiedDateDesc(SecurityUtil.getUser());
+    }
+
+    public boolean removeUserCard(String id) {
+        final var optionalUserWallet = userWalletRepository.findById(id);
+        if (optionalUserWallet.isPresent()) {
+            if (rentRepository.existsByUserIdAndIsActiveRentTrue(SecurityUtil.getUser())) {
+                throw new PaymentException("Cannot delete card while rent is still in progress");
+            } else {
+                optionalUserWallet.get().setIsRemoved(true);
+                userWalletRepository.save(optionalUserWallet.get());
+            }
+        }
+        return optionalUserWallet.isPresent();
+    }
+
+    public boolean isUserHasPaymentMethod(String user) {
+        return userWalletRepository.existsByUserIdAndIsRemovedFalse(user);
     }
 }

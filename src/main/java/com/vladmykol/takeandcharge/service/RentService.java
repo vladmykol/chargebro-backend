@@ -9,6 +9,7 @@ import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.entity.Rent;
 import com.vladmykol.takeandcharge.entity.RentError;
 import com.vladmykol.takeandcharge.exceptions.ChargingStationException;
+import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.exceptions.RentException;
 import com.vladmykol.takeandcharge.repository.RentRepository;
 import com.vladmykol.takeandcharge.utils.ExceptionUtil;
@@ -32,12 +33,16 @@ public class RentService {
     private final RentRepository rentRepository;
     private final WebSocketServer webSocketServer;
     private final UserService userService;
+    private final UserWalletService userWalletService;
 
     public RentConfirmationDto getBeforeRentInfo(String stationId) {
 //        final var powerBankInfo = stationService.findMaxChargedPowerBank(stationId);
+        if (!userWalletService.isUserHasPaymentMethod(SecurityUtil.getUser())) {
+            throw new PaymentException("Please add at least one valid credit card");
+        }
 
         final var holdAmount = paymentService.getHoldAmount() / 100;
-        final var userBonus = userService.getUserBonus(SecurityUtil.getUser());
+        final var userBonus = userService.getUserBonus(SecurityUtil.getUser()) / 100;
         String userBonusString;
         if (userBonus == 0) {
             userBonusString = "0";
@@ -260,6 +265,8 @@ public class RentService {
                             .lastModifiedDate(rent.getLastModifiedDate())
                             .powerBankId(rent.getPowerBankId())
                             .price(rent.getPrice())
+                            .depositPaymentId(rent.getDepositPaymentId())
+                            .chargePaymentId(rent.getChargePaymentId())
                             .userPhone(userService.getUserPhone(rent.getUserId()))
                             .takenAt(rent.getTakenAt())
                             .returnedAt(rent.getReturnedAt())

@@ -161,9 +161,11 @@ public class StationService {
         if (optionalStation.isPresent()) {
             optionalStation.get().setLastLogIn(new Date());
             stationRepository.save(optionalStation.get());
-
-            stationSocketClient.getClientInfo().setCabinetId(loginRequest.getBoxId());
-            stationRegister.authStation(stationSocketClient);
+//first login, somehow station can send multiple login requests
+            if (stationSocketClient.getClientInfo().getCabinetId() == null) {
+                stationSocketClient.getClientInfo().setCabinetId(loginRequest.getBoxId());
+                stationRegister.authStation(stationSocketClient);
+            }
             return true;
         } else {
             return false;

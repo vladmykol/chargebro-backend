@@ -44,12 +44,12 @@ public class StationSocketClient {
 
     public StationSocketClient(Socket socket, int idleTimeoutSeconds) throws IOException {
         socket.setKeepAlive(true);
-        socket.setSoTimeout(idleTimeoutSeconds * 1000);
+        socket.setSoTimeout(10000);
         socket.setTcpNoDelay(true);
         this.socket = socket;
         this.clientInfo = new ClientInfo(socket.getInetAddress(), idleTimeoutSeconds);
         this.out = socket.getOutputStream();
-        log.debug("Station socket client {} is now connected", clientInfo.getName());
+        log.debug("New station socket client {}", clientInfo);
     }
 
     public static void putUnsignedShort(ByteBuffer bb, int value) {
@@ -71,8 +71,9 @@ public class StationSocketClient {
     @SneakyThrows
     public void shutdown(Exception reason) {
         isActive = false;
-        shutdownTime = Instant.now();
-        log.debug("Station socket client {} is now disconnected", clientInfo.getName(), reason);
+        if (isSocketConnected()) {
+            log.debug("Close socket for client {}", clientInfo, reason);
+        }
         try {
             out.close();
         } catch (Exception ignore) {
@@ -81,27 +82,31 @@ public class StationSocketClient {
             socket.close();
         } catch (Exception ignore) {
         }
+        if (shutdownTime == null) {
+            shutdownTime = Instant.now();
+        }
     }
 
-    public void ping() throws IOException {
+    @SneakyThrows
+    public void ping() {
         ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(HEART_BEAT);
         writeMessage(softwareVersionRequest);
     }
 
     public boolean isResponsive() {
         ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(SOFTWARE_VERSION);
-        log.debug("Check if station responsive {}", clientInfo.getName());
+        log.debug("Check if station responsive {}", clientInfo);
         try {
             communicate(softwareVersionRequest, 20000);
         } catch (NoResponseFromWithinTimeout e) {
             if (isSocketConnected()) {
-                log.debug("Second try for check if station responsive {}", clientInfo.getName());
-                communicate(softwareVersionRequest, 10000);
+                log.debug("Second try for check if station responsive {}", clientInfo);
+                communicate(softwareVersionRequest, 30000);
             } else {
                 return false;
             }
         }
-        log.debug("Success check if station responsive {}", clientInfo.getName());
+        log.debug("Success check if station responsive {}", clientInfo);
 
         return true;
     }
@@ -155,7 +160,7 @@ public class StationSocketClient {
         synchronized (protocolMessage) {
             protocolMessage.wait(timeout);
             messageQueue.remove(protocolMessage);
-            log.trace("Response from station {} took {}", getClientInfo().getName(),
+            log.trace("Response from station {} took {}", getClientInfo(),
                     DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis()));
             return protocolMessage.getResponse();
         }

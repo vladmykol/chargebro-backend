@@ -50,7 +50,6 @@ public class StationSocketServer {
 //    }
 
     public void tryToWakeUpInactive(StationSocketClient stationSocketClient) {
-
         try {
             stationSocketClient.setInactive();
             if (stationSocketClient.isResponsive()) {

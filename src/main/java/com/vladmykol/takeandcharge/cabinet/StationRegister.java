@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class StationRegister {
 
     private final List<StationSocketClient> currentConnections = Collections.synchronizedList(new LinkedList<>());
-    private final Map<String, StationSocketClientWrapper> connections = new HashMap<>();
+    private final Map<String, StationSocketClientWrapper> connections = Collections.synchronizedMap(new HashMap<>());
 
     public List<ClientInfo> getCurrentConnections() {
         List<ClientInfo> result = new ArrayList<>();
@@ -52,29 +52,27 @@ public class StationRegister {
         return result;
     }
 
-    public void authStation(StationSocketClient stationSocketClient) {
-        Assert.notNull(stationSocketClient.getClientInfo().getCabinetId(), "Station ID must not be null during authentication");
+    public void authStation(StationSocketClient newStationSocketClient) {
+        Assert.notNull(newStationSocketClient.getClientInfo().getCabinetId(), "Station ID must not be null during authentication");
 
-        synchronized (connections) {
-            final var stationSocketClientWrapper = connections.get(stationSocketClient.getClientInfo().getCabinetId());
-            if (stationSocketClientWrapper != null) {
-                synchronized (stationSocketClientWrapper) {
+        final var stationSocketClientWrapper = connections.get(newStationSocketClient.getClientInfo().getCabinetId());
+        if (stationSocketClientWrapper != null) {
 //                    removeConnectedStation(stationSocketClientWrapper.getSocketClient());
-                    if (stationSocketClientWrapper.getSocketClient().isSocketConnected()) {
-                        stationSocketClientWrapper.getSocketClient().shutdown(new RuntimeException("Connection for station " +
-                                stationSocketClientWrapper.getSocketClient().getClientInfo().getName() + " is replaces by new connection from same client"));
-                    }
-                    // set session duration before reconnect
-                    final var sessionDuration = Duration.between(stationSocketClientWrapper.getLogInTime(), stationSocketClientWrapper.getSocketClient().getShutdownTime());
-                    stationSocketClientWrapper.getLastSessions().add(sessionDuration);
+//                    if (stationSocketClientWrapper.getSocketClient().isSocketConnected()) {
+            stationSocketClientWrapper.getSocketClient().shutdown(new RuntimeException("Connection for station " +
+                    stationSocketClientWrapper.getSocketClient().getClientInfo() + " is replaces by " + newStationSocketClient.getClientInfo()));
+//                    }
+            // set session duration before reconnect
+            final var sessionDuration = Duration.between(stationSocketClientWrapper.getLogInTime(), stationSocketClientWrapper.getSocketClient().getShutdownTime());
+            stationSocketClientWrapper.getLastSessions().add(sessionDuration);
 
-                    stationSocketClientWrapper.setSocketClient(stationSocketClient);
-                    stationSocketClientWrapper.setLogInTime(Instant.now());
-                    stationSocketClientWrapper.notify();
-                }
-            } else {
-                connections.put(stationSocketClient.getClientInfo().getCabinetId(), new StationSocketClientWrapper(stationSocketClient));
+            stationSocketClientWrapper.setSocketClient(newStationSocketClient);
+            stationSocketClientWrapper.setLogInTime(Instant.now());
+            synchronized (stationSocketClientWrapper) {
+                stationSocketClientWrapper.notify();
             }
+        } else {
+            connections.put(newStationSocketClient.getClientInfo().getCabinetId(), new StationSocketClientWrapper(newStationSocketClient));
         }
     }
 
@@ -98,7 +96,7 @@ public class StationRegister {
                     final var waitTimeSec = 60;
                     try {
                         log.debug("Station {} is offline so trying to wait {} sec for reconnection",
-                                stationSocketClientWrapper.getSocketClient().getClientInfo().getName(), waitTimeSec);
+                                stationSocketClientWrapper.getSocketClient().getClientInfo(), waitTimeSec);
                         stationSocketClientWrapper.wait(waitTimeSec * 1000);
 //                    sleep before working with station after connection. Station needs some time to check available powerbanks
                         Thread.sleep(7000);

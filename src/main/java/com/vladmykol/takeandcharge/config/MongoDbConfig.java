@@ -2,9 +2,8 @@ package com.vladmykol.takeandcharge.config;
 
 import com.vladmykol.takeandcharge.conts.RoleEnum;
 import com.vladmykol.takeandcharge.entity.Role;
-import com.vladmykol.takeandcharge.entity.User;
 import com.vladmykol.takeandcharge.repository.RoleRepository;
-import com.vladmykol.takeandcharge.repository.UserRepository;
+import com.vladmykol.takeandcharge.repository.UserWalletRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -22,7 +21,6 @@ import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 
 @Configuration
 @RequiredArgsConstructor
@@ -60,6 +58,20 @@ public class MongoDbConfig {
                     roleRepository.save(newRole);
                 }
             }
+        };
+    }
+
+    @Bean
+    CommandLineRunner tempUserWalletCardFlag(UserWalletRepository userWalletRepository) {
+        return args -> {
+            final var all = userWalletRepository.findAll();
+            all.stream()
+                    .forEach(userWallet -> {
+                        if (!userWallet.getIsRemoved()) {
+                            userWallet.setIsRemoved(false);
+                        }
+                    });
+            userWalletRepository.saveAll(all);
         };
     }
 

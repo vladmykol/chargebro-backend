@@ -9,6 +9,8 @@ import java.util.Optional;
 public interface RentRepository extends MongoRepository<Rent, String> {
     Optional<Rent> findByPowerBankIdAndReturnedAtIsNullAndIsActiveRentTrue(String powerBankId);
 
+    boolean existsByUserIdAndIsActiveRentTrue(String userId);
+
     List<Rent> findByUserIdAndIsActiveRentTrue(String userId);
 
     List<Rent> findByUserId(String userId);

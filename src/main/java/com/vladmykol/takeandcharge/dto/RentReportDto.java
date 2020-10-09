@@ -30,6 +30,10 @@ public class RentReportDto {
 
     private int price;
 
+    private String depositPaymentId;
+
+    private String chargePaymentId;
+
     private String userPhone;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

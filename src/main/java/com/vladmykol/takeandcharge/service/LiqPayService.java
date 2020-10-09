@@ -30,6 +30,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class LiqPayService {
+    private final LiqPayHistoryRepository liqPayHistoryRepository;
+    private final UserWalletRepository userWalletRepository;
+    private final UserRepository userRepository;
     @Value("${takeandcharge.pay.link}")
     private String checkoutLink;
     @Value("${takeandcharge.pay.pass}")
@@ -39,22 +42,21 @@ public class LiqPayService {
     @Value("${takeandcharge.api.domain}")
     private String callbackUri;
 
-    private final LiqPayHistoryRepository liqPayHistoryRepository;
-    private final UserWalletRepository userWalletRepository;
-    private final UserRepository userRepository;
-
     public void savePaymentCallback(LiqPayHistory liqPayHistory) {
         var savedLiqPayHistory = liqPayHistoryRepository.save(liqPayHistory);
 
         if ("auth".equalsIgnoreCase(savedLiqPayHistory.getAction())) {
             Optional<User> user = userRepository.findById(savedLiqPayHistory.getCustomer());
             if (user.isPresent()) {
-                var userWallet = UserWallet.builder()
-                        .userId(user.get().getId())
-                        .cardToken(savedLiqPayHistory.getCard_token())
+                final var cardExists = userWalletRepository.existsByCardToken(savedLiqPayHistory.getCard_token());
+                if (!cardExists) {
+                    var userWallet = UserWallet.builder()
+                            .userId(user.get().getId())
+                            .cardToken(savedLiqPayHistory.getCard_token())
 //                        .liqPayHistory(savedLiqPayHistory)
-                        .build();
-                userWalletRepository.save(userWallet);
+                            .build();
+                    userWalletRepository.save(userWallet);
+                }
             }
         }
     }
