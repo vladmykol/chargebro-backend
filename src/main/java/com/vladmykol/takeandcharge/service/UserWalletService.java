@@ -7,6 +7,7 @@ import com.vladmykol.takeandcharge.repository.RentRepository;
 import com.vladmykol.takeandcharge.repository.UserWalletRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class UserWalletService {
     private final UserWalletRepository userWalletRepository;
     private final RentRepository rentRepository;
@@ -24,7 +26,7 @@ public class UserWalletService {
             throw new PaymentException("Card token is missing");
         }
 
-        final var cardExists = userWalletRepository.existsByCardToken(callback.getRectoken());
+        final var cardExists = userWalletRepository.existsByCardTokenAndUserIdAndIsRemovedFalse(callback.getRectoken(), SecurityUtil.getUser());
         if (!cardExists) {
             var userWallet = UserWallet.builder()
                     .paymentId(callback.getOrder_id())
@@ -33,6 +35,8 @@ public class UserWalletService {
                     .maskedCard(callback.getMasked_card())
                     .build();
             userWalletRepository.save(userWallet);
+        } else {
+            log.warn("Card already exist {}", callback.getMasked_card());
         }
     }
 

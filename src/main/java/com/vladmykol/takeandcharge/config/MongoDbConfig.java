@@ -3,7 +3,6 @@ package com.vladmykol.takeandcharge.config;
 import com.vladmykol.takeandcharge.conts.RoleEnum;
 import com.vladmykol.takeandcharge.entity.Role;
 import com.vladmykol.takeandcharge.repository.RoleRepository;
-import com.vladmykol.takeandcharge.repository.UserWalletRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -21,7 +20,6 @@ import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashSet;
 
 @Configuration
 @RequiredArgsConstructor
@@ -59,25 +57,6 @@ public class MongoDbConfig {
                     roleRepository.save(newRole);
                 }
             }
-        };
-    }
-
-
-    @Bean
-    CommandLineRunner fixCardDuplication(UserWalletRepository userWalletRepository) {
-        return args -> {
-            final var cardTokens = new HashSet<String>();
-            final var all = userWalletRepository.findAll();
-            all.forEach(userWallet -> {
-//                        remove cards without token
-                if (userWallet.getCardToken() == null || userWallet.getCardToken().isEmpty()) {
-                    userWallet.setRemoved(true);
-                } else {
-                    if (!cardTokens.add(userWallet.getCardToken())) {
-                        userWalletRepository.delete(userWallet);
-                    }
-                }
-            });
         };
     }
 

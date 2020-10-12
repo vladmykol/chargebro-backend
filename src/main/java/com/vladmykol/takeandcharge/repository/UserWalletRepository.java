@@ -10,5 +10,5 @@ public interface UserWalletRepository extends MongoRepository<UserWallet, String
 
     boolean existsByUserIdAndIsRemovedFalse(String userId);
 
-    boolean existsByCardToken(String cardToken);
+    boolean existsByCardTokenAndUserIdAndIsRemovedFalse(String cardToken, String userId);
 }
