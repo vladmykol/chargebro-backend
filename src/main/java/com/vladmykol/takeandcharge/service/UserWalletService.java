@@ -46,7 +46,7 @@ public class UserWalletService {
             if (rentRepository.existsByUserIdAndIsActiveRentTrue(SecurityUtil.getUser())) {
                 throw new PaymentException("Cannot delete card while rent is still in progress");
             } else {
-                optionalUserWallet.get().setIsRemoved(true);
+                optionalUserWallet.get().setRemoved(true);
                 userWalletRepository.save(optionalUserWallet.get());
             }
         }

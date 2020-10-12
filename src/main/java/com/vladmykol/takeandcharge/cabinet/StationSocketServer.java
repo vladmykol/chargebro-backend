@@ -54,6 +54,7 @@ public class StationSocketServer {
             stationSocketClient.setInactive();
             if (stationSocketClient.isResponsive()) {
                 stationSocketClient.setActive();
+                stationRegister.notifyAboutReactivatingClient(stationSocketClient.getClientInfo().getCabinetId());
             }
         } catch (Exception e) {
             stationSocketClient.shutdown(e);

@@ -6,6 +6,6 @@ public class SmsSendingError extends RuntimeException {
     }
 
     public SmsSendingError() {
-        super("Validation SMS was not send. Please contact support");
+        super("Validation SMS was not sent. Please contact support");
     }
 }

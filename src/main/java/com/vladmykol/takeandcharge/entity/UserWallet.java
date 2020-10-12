@@ -50,8 +50,7 @@ public class UserWallet {
     @LastModifiedBy
     private String lastModifiedBy;
 
-    @Builder.Default
-    private Boolean isRemoved = false;
+    private boolean isRemoved;
 
     public Boolean getIsRemoved() {
         return Objects.requireNonNullElse(isRemoved, false);

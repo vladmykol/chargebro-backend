@@ -30,7 +30,7 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({Exception.class})
     public ResponseEntity<ErrorResponse> generalException(Exception ex) {
-        final var rentException = ExceptionUtil.convertToRentException(ex);
+        final var rentException = ExceptionUtil.convertToHttpException(ex);
 
         return new ResponseEntity<>(new ErrorResponse(rentException), rentException.getStatus());
     }

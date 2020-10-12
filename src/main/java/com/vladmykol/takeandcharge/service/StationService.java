@@ -188,4 +188,7 @@ public class StationService {
         stationRepository.deleteById(stationId);
     }
 
+    public void check(String stationId) {
+
+    }
 }

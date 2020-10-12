@@ -21,6 +21,7 @@ import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 
 @Configuration
 @RequiredArgsConstructor
@@ -61,17 +62,22 @@ public class MongoDbConfig {
         };
     }
 
+
     @Bean
-    CommandLineRunner tempUserWalletCardFlag(UserWalletRepository userWalletRepository) {
+    CommandLineRunner fixCardDuplication(UserWalletRepository userWalletRepository) {
         return args -> {
+            final var cardTokens = new HashSet<String>();
             final var all = userWalletRepository.findAll();
-            all.stream()
-                    .forEach(userWallet -> {
-                        if (!userWallet.getIsRemoved()) {
-                            userWallet.setIsRemoved(false);
-                        }
-                    });
-            userWalletRepository.saveAll(all);
+            all.forEach(userWallet -> {
+//                        remove cards without token
+                if (userWallet.getCardToken() == null || userWallet.getCardToken().isEmpty()) {
+                    userWallet.setRemoved(true);
+                } else {
+                    if (!cardTokens.add(userWallet.getCardToken())) {
+                        userWalletRepository.delete(userWallet);
+                    }
+                }
+            });
         };
     }
 

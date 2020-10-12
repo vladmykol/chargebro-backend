@@ -100,6 +100,7 @@ public class StationSocketClient {
             communicate(softwareVersionRequest, 20000);
         } catch (NoResponseFromWithinTimeout e) {
             if (isSocketConnected()) {
+                ping();
                 log.debug("Second try for check if station responsive {}", clientInfo);
                 communicate(softwareVersionRequest, 30000);
             } else {

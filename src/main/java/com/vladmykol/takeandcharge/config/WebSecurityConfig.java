@@ -52,9 +52,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
 //                .antMatchers("/rent/location").permitAll()
 //                not authorized user can access this links
-                .antMatchers(API_AUTH + API_AUTH_LOGIN,
-                        API_AUTH + API_AUTH_REGISTER_INIT,
-                        API_AUTH + API_AUTH_REGISTER,
+                .antMatchers(
+                        //   auth operations is open
+                        API_AUTH + "/**",
                         //   anyone can fetch stations locations
                         API_STATIONS + API_STATIONS_NEARBY,
                         //   redirect to mobile version is available for all

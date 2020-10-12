@@ -65,6 +65,8 @@ public class Rent {
     @Getter(AccessLevel.NONE)
     private RentError lastError;
 
+    private String comment;
+
     public void markRentStart(String powerBankId) {
         this.powerBankId = powerBankId;
         this.isActiveRent = true;

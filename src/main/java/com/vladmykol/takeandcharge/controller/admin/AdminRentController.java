@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
+import static com.vladmykol.takeandcharge.conts.EndpointConst.API_ADMIN;
+import static com.vladmykol.takeandcharge.conts.EndpointConst.API_RENT;
 
 @RestController
 @RequestMapping(API_ADMIN + API_RENT)
@@ -28,6 +29,11 @@ public class AdminRentController {
 
     @GetMapping("/report")
     public List<RentReportDto> getRentReport() {
+//        HttpServletRequest request
+//        Locale clientLocale = request.getLocale();
+//        Calendar calendar = Calendar.getInstance(clientLocale);
+//        TimeZone clientTimeZone = calendar.getTimeZone();
+//        System.out.println(clientTimeZone);
         return rentService.getRentReport();
     }
 

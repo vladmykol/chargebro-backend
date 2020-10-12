@@ -4,6 +4,7 @@ import com.vladmykol.takeandcharge.dto.RentConfirmationDto;
 import com.vladmykol.takeandcharge.dto.RentHistoryDto;
 import com.vladmykol.takeandcharge.service.RentService;
 import com.vladmykol.takeandcharge.service.StationService;
+import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,11 @@ public class RentController {
     @PostMapping
     public void rentRequest(@RequestParam String stationId) {
         rentService.syncRentStart(stationService.extractStationId(stationId));
+    }
+
+    @PostMapping("/refresh")
+    public void rentRefresh() {
+        rentService.refresh(SecurityUtil.getUser());
     }
 
     @GetMapping("/history")

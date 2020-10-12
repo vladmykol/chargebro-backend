@@ -1,6 +1,6 @@
 package com.vladmykol.takeandcharge.dto;
 
-import com.vladmykol.takeandcharge.exceptions.RentException;
+import com.vladmykol.takeandcharge.exceptions.HttpException;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
@@ -10,7 +10,7 @@ public class ErrorResponse {
     private final String error;
     private final String message;
 
-    public ErrorResponse(RentException ex) {
+    public ErrorResponse(HttpException ex) {
         this.status = ex.getStatus().value();
         this.error = ex.getStatus().name();
         this.message = ex.getMessage();

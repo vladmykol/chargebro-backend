@@ -2,9 +2,6 @@ package com.vladmykol.takeandcharge.conts;
 
 public class EndpointConst {
     public static final String API_AUTH = "/auth";
-    public static final String API_AUTH_LOGIN = "/login";
-    public static final String API_AUTH_REGISTER_INIT = "/register";
-    public static final String API_AUTH_REGISTER = "/singup";
     public static final String API_AUTH_LOGOUT = "/logout";
     public static final String API_RENT = "/rent";
     public static final String API_STATIONS = "/stations";
@@ -21,6 +18,5 @@ public class EndpointConst {
     public static final String API_SMS = "/sms";
     public static final String API_SMS_CALLBACK = "/callback";
     public static final String API_USER = "/user";
-    public static final String API_ADMIN_ONLINE_CLIENT = "/online-client";
     public static final String API_ADMIN = "/admin";
 }

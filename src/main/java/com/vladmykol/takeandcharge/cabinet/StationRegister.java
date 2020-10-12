@@ -57,18 +57,19 @@ public class StationRegister {
 
         final var stationSocketClientWrapper = connections.get(newStationSocketClient.getClientInfo().getCabinetId());
         if (stationSocketClientWrapper != null) {
+            synchronized (stationSocketClientWrapper) {
 //                    removeConnectedStation(stationSocketClientWrapper.getSocketClient());
 //                    if (stationSocketClientWrapper.getSocketClient().isSocketConnected()) {
-            stationSocketClientWrapper.getSocketClient().shutdown(new RuntimeException("Connection for station " +
-                    stationSocketClientWrapper.getSocketClient().getClientInfo() + " is replaces by " + newStationSocketClient.getClientInfo()));
+                stationSocketClientWrapper.getSocketClient().shutdown(new RuntimeException("Connection for station " +
+                        stationSocketClientWrapper.getSocketClient().getClientInfo() + " is replaces by " + newStationSocketClient.getClientInfo()));
 //                    }
-            // set session duration before reconnect
-            final var sessionDuration = Duration.between(stationSocketClientWrapper.getLogInTime(), stationSocketClientWrapper.getSocketClient().getShutdownTime());
-            stationSocketClientWrapper.getLastSessions().add(sessionDuration);
+                // set session duration before reconnect
+                final var sessionDuration = Duration.between(stationSocketClientWrapper.getLogInTime(), stationSocketClientWrapper.getSocketClient().getShutdownTime());
+                stationSocketClientWrapper.getLastSessions().add(sessionDuration);
 
-            stationSocketClientWrapper.setSocketClient(newStationSocketClient);
-            stationSocketClientWrapper.setLogInTime(Instant.now());
-            synchronized (stationSocketClientWrapper) {
+                stationSocketClientWrapper.setSocketClient(newStationSocketClient);
+                stationSocketClientWrapper.setLogInTime(Instant.now());
+
                 stationSocketClientWrapper.notify();
             }
         } else {
@@ -91,7 +92,6 @@ public class StationRegister {
             if (lastSeenMinBefore > 3) {
                 throw new CabinetIsOffline();
             } else {
-
                 synchronized (stationSocketClientWrapper) {
                     final var waitTimeSec = 60;
                     try {
@@ -107,6 +107,16 @@ public class StationRegister {
             }
         }
         return stationSocketClientWrapper.getSocketClient();
+    }
+
+    public void notifyAboutReactivatingClient(String clientId) {
+        var stationSocketClientWrapper = connections.get(clientId);
+        if (stationSocketClientWrapper == null) {
+            throw new CabinetIsOffline();
+        }
+        synchronized (stationSocketClientWrapper) {
+            stationSocketClientWrapper.notify();
+        }
     }
 
     public void addConnectedStation(StationSocketClient stationSocketClient) {

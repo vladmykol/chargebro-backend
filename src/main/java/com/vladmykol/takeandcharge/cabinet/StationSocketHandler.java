@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -99,10 +100,18 @@ public class StationSocketHandler {
     }
 
     private synchronized byte[] readInputStream() throws IOException {
-        int messageLength = in.readUnsignedShort();
-        log.trace("Reading message from station. Message length {}", messageLength);
-        byte[] bytes = in.readNBytes(messageLength);
-        log.trace("Reading message from station. Message content {}", HexDecimalConverter.toHexString(bytes));
-        return bytes;
+        try {
+            int messageLength = in.readUnsignedShort();
+            log.trace("Reading message from station. Message length {}", messageLength);
+            byte[] bytes = in.readNBytes(messageLength);
+            log.trace("Reading message from station. Message content {}", HexDecimalConverter.toHexString(bytes));
+
+            return bytes;
+        } catch (SocketException e) {
+            if ("Connection reset".equals(e.getMessage())) {
+                log.error("socket error retry?", e);
+            }
+            throw e;
+        }
     }
 }

@@ -2,41 +2,77 @@ package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.conts.EndpointConst;
 import com.vladmykol.takeandcharge.dto.*;
-import com.vladmykol.takeandcharge.exceptions.SmsSendingError;
-import com.vladmykol.takeandcharge.exceptions.UserAlreadyExist;
-import com.vladmykol.takeandcharge.exceptions.UserIsBlocked;
-import com.vladmykol.takeandcharge.exceptions.UserIsFrozen;
 import com.vladmykol.takeandcharge.security.JwtProvider;
 import com.vladmykol.takeandcharge.service.RegisterUserService;
+import com.vladmykol.takeandcharge.service.UserWalletService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
-
-import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 
 @RestController
 @RequestMapping(EndpointConst.API_AUTH)
 @RequiredArgsConstructor
 public class AuthController {
-
-    private final RegisterUserService registerUserService;
     private final JwtProvider jwtProvider;
     private final AuthenticationManager authenticationManager;
+    private final RegisterUserService registerUserService;
+    private final UserWalletService userWalletService;
 
-    @PostMapping(API_AUTH_LOGIN)
-    public AuthenticationResponse login(@Valid @RequestBody LoginRequest loginRequest) {
+    @PostMapping("/login")
+    public UserInfoDto login(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 //        SecurityContextHolder.getContext().setAuthentication(authentication);
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        final var userHasPaymentMethod = userWalletService.isUserHasPaymentMethod(userDetails.getUsername());
 
-        return generateAuthResponse(userDetails.getUsername());
+        return UserInfoDto.builder()
+                .token(generateAuthResponse(userDetails.getUsername()).getToken())
+                .isHasCard(userHasPaymentMethod ? 1 : 0)
+                .phone(userDetails.getPhone())
+                .build();
+    }
+
+    @PostMapping("/init")
+    public SmsRegistrationTokenInfo preRegisterStep(@RequestParam String phone) {
+        SmsRegistrationTokenInfo result = registerUserService.initUserUpdate(phone, false);
+        jwtProvider.generateSmsToken(result);
+
+        return result;
+    }
+
+    @PostMapping("/reset")
+    public SmsRegistrationTokenInfo resetUserPass(@RequestParam String phone) {
+        SmsRegistrationTokenInfo result = registerUserService.initUserUpdate(phone, true);
+        jwtProvider.generateSmsToken(result);
+
+        return result;
+    }
+
+    @PostMapping("/register")
+    public UserInfoDto singUp(@Valid @RequestBody SingUpDto singUpDto) {
+        var smsCode = jwtProvider.parseSmsToken(singUpDto.getToken());
+
+        if (smsCode.equals(singUpDto.getSmsCode())) {
+            var user = registerUserService.saveUser(singUpDto);
+            final var authenticationResponse = generateAuthResponse(user.getId());
+            final var userHasPaymentMethod = userWalletService.isUserHasPaymentMethod(user.getId());
+
+            return UserInfoDto.builder()
+                    .token(authenticationResponse.getToken())
+                    .isHasCard(userHasPaymentMethod ? 1 : 0)
+                    .phone(user.getUserName())
+                    .build();
+
+        } else {
+            throw new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, "Invalid SMS code");
+        }
     }
 
     private AuthenticationResponse generateAuthResponse(String userId) {
@@ -44,39 +80,5 @@ public class AuthController {
 
         return new AuthenticationResponse(generateJwtToken);
     }
-
-    @PostMapping(API_AUTH_REGISTER_INIT)
-    public SmsRegistrationTokenInfo preRegisterStep(@RequestParam String phone, HttpServletResponse response) throws IOException {
-        SmsRegistrationTokenInfo result = null;
-        try {
-            result = registerUserService.preSingUp(phone);
-            jwtProvider.generateSmsToken(result);
-        } catch (UserIsFrozen e) {
-            response.sendError(HttpServletResponse.SC_EXPECTATION_FAILED, "Too many request. User is frozen for some time");
-        } catch (UserIsBlocked e) {
-            response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED, "User is blocked");
-        } catch (UserAlreadyExist e) {
-            response.sendError(HttpServletResponse.SC_CONFLICT, "User already exists");
-        } catch (SmsSendingError e) {
-            response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED, e.getMessage());
-        }
-
-        return result;
-    }
-
-    @PostMapping(API_AUTH_REGISTER)
-    public AuthenticationResponse singUp(@Valid @RequestBody SingUpDto singUpDto, HttpServletResponse response) throws IOException {
-        var smsCode = jwtProvider.parseSmsToken(singUpDto.getToken());
-
-        if (smsCode.equals(singUpDto.getSmsCode())) {
-            var userId = registerUserService.saveUser(singUpDto);
-            return generateAuthResponse(userId);
-        } else {
-            response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED, "Invalid SMS code");
-        }
-
-        return null;
-    }
-
 
 }

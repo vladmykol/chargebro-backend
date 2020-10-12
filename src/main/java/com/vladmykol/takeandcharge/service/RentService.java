@@ -9,8 +9,9 @@ import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.entity.Rent;
 import com.vladmykol.takeandcharge.entity.RentError;
 import com.vladmykol.takeandcharge.exceptions.ChargingStationException;
+import com.vladmykol.takeandcharge.exceptions.HttpException;
+import com.vladmykol.takeandcharge.exceptions.NotSuccessesRent;
 import com.vladmykol.takeandcharge.exceptions.PaymentException;
-import com.vladmykol.takeandcharge.exceptions.RentException;
 import com.vladmykol.takeandcharge.repository.RentRepository;
 import com.vladmykol.takeandcharge.utils.ExceptionUtil;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
@@ -38,8 +39,9 @@ public class RentService {
     public RentConfirmationDto getBeforeRentInfo(String stationId) {
 //        final var powerBankInfo = stationService.findMaxChargedPowerBank(stationId);
         if (!userWalletService.isUserHasPaymentMethod(SecurityUtil.getUser())) {
-            throw new PaymentException("Please add at least one valid credit card");
+            throw new PaymentException("Please add at least one valid payment card");
         }
+        stationService.check(stationId);
 
         final var holdAmount = paymentService.getHoldAmount() / 100;
         final var userBonus = userService.getUserBonus(SecurityUtil.getUser()) / 100;
@@ -135,10 +137,10 @@ public class RentService {
     }
 
     private void finishRent(Rent rent) {
-        reversePayment(rent);
         rent.markRentFinished();
-        webSocketServer.sendRentEndMessage(rent.getPowerBankId());
         rentRepository.save(rent);
+        webSocketServer.sendRentEndMessage(rent.getPowerBankId());
+        reversePayment(rent);
     }
 
     private void holdMoneyBeforeRent(Rent rent) {
@@ -173,12 +175,13 @@ public class RentService {
         } catch (ChargingStationException e) {
             checkAvailablePowerBanks(rent);
         }
-        rentRepository.save(rent);
     }
 
     private void checkAvailablePowerBanks(Rent rent) {
-        final var powerBankSlot = stationService.findMaxChargedPowerBank(rent.getTakenInStationId()).getSlotNumber();
-        rent.setPowerBankSlot(powerBankSlot);
+        final var powerBankInfo = stationService.findMaxChargedPowerBank(rent.getTakenInStationId());
+        rent.setPowerBankSlot(powerBankInfo.getSlotNumber());
+        rent.setPowerBankId(powerBankInfo.getPowerBankId());
+        rentRepository.save(rent);
     }
 
     private void safeUnlockPowerBank(Rent rent) {
@@ -193,21 +196,24 @@ public class RentService {
         String rentedPowerBankId = stationService.unlockPowerBank(rent.getPowerBankSlot(),
                 rent.getTakenInStationId());
         rent.markRentStart(rentedPowerBankId);
+        rentRepository.save(rent);
     }
 
 
     private void givePowerBank(Rent rent) {
         rent.setStage(RentStage.UNLOCK_POWERBANK);
+        rentRepository.save(rent);
         try {
             safeCheckAvailablePowerBanks(rent);
             safeUnlockPowerBank(rent);
+        } catch (NotSuccessesRent e) {
+//            dont know why but when station responses with this error, powerbank is unlocked sometime
+            rent.setComment(e.toString());
         } catch (Exception e) {
             reversePayment(rent);
-            rentRepository.save(rent);
             throw e;
         }
         webSocketServer.sendRentStartMessage(rent.getPowerBankId());
-        rentRepository.save(rent);
     }
 
     public List<RentHistoryDto> getRentHistory(Boolean onlyInRent) {
@@ -271,6 +277,7 @@ public class RentService {
                             .takenAt(rent.getTakenAt())
                             .returnedAt(rent.getReturnedAt())
                             .stage(rent.getStage())
+                            .comment(rent.getComment())
                             .lastErrorCode(rent.getLastErrorCodeValue())
                             .lastErrorMessage(rent.getLastErrorMessage())
                             .build();
@@ -279,11 +286,11 @@ public class RentService {
     }
 
     public void executeRentStep(Runnable r, Rent rent, boolean isNeedToThrow) {
-        RentException rentException = null;
+        HttpException rentException = null;
         try {
             r.run();
         } catch (Exception e) {
-            rentException = ExceptionUtil.convertToRentException(e);
+            rentException = ExceptionUtil.convertToHttpException(e);
         }
         if (rentException != null) {
             rent.setLastError(new RentError(rentException));
@@ -298,5 +305,13 @@ public class RentService {
 
     public void clearRent() {
         rentRepository.deleteAll();
+    }
+
+    public void refresh(String user) {
+//        final var rentInProgress = rentRepository.findByUserIdAndIsActiveRentTrue(user);
+//        rentInProgress.forEach(rent -> {
+//           stationService.getStationInventory(rent.getReturnedToStationId())
+//
+//        });
     }
 }

@@ -1,6 +1,7 @@
 package com.vladmykol.takeandcharge.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.vladmykol.takeandcharge.conts.RentStage;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +11,7 @@ import java.util.Date;
 
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class RentReportDto {
     private String orderId;
 
@@ -23,7 +25,7 @@ public class RentReportDto {
 
     private boolean isActiveRent;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Kiev")
     private Date lastModifiedDate;
 
     private String powerBankId;
@@ -36,10 +38,10 @@ public class RentReportDto {
 
     private String userPhone;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Kiev")
     private Date takenAt;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Kiev")
     private Date returnedAt;
 
     private RentStage stage;
@@ -47,4 +49,6 @@ public class RentReportDto {
     private Integer lastErrorCode;
 
     private String lastErrorMessage;
+
+    private String comment;
 }

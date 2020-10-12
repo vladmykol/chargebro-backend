@@ -1,7 +1,7 @@
 package com.vladmykol.takeandcharge.service;
 
 
-import com.vladmykol.takeandcharge.exceptions.RentException;
+import com.vladmykol.takeandcharge.exceptions.HttpException;
 import com.vladmykol.takeandcharge.security.JwtProvider;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.Builder;
@@ -74,7 +74,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
         sendBaseMassage(baseMessage);
     }
 
-    public void sendErrorMessage(RentException rentException) {
+    public void sendErrorMessage(HttpException rentException) {
         sendErrorMessage(rentException.getStatus().value(), rentException.getMessage());
     }
 
@@ -206,11 +206,11 @@ public class WebSocketServer extends BinaryWebSocketHandler {
             while (iterator.hasNext()) {
                 iterator.next();
                 if (iterator.getValue().equals(session)) {
+                    log.debug("WebSocket client disconnected - {}", iterator);
                     iterator.remove();
                 }
             }
         }
-        System.out.println("client disconnected. Remaining clients " + clientIdAndConnections);
     }
 
 

@@ -36,7 +36,7 @@ public class RegisterUserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
     }
 
-    public SmsRegistrationTokenInfo preSingUp(String userName) {
+    public SmsRegistrationTokenInfo initUserUpdate(String userName, boolean isPassReset) {
         var regToken = new SmsRegistrationTokenInfo();
         Optional<User> userByUserName = userRepository.findByUserName(userName);
 
@@ -79,7 +79,11 @@ public class RegisterUserService {
                 case MAX_REGISTER_ATTEMPS_REACHED:
                     throw new SmsSendingError("This number is blocked for too many requests");
                 case REGISTERED:
-                    throw new UserAlreadyExist();
+                    if (isPassReset) {
+                        sendChangePasswordSms(user, MAX_REGISTER_ATTEMPS_REACHED);
+                    } else {
+                        throw new UserAlreadyExist();
+                    }
             }
         } else {
             Role userRole = roleRepository.findByRole(RoleEnum.USER);
@@ -121,7 +125,7 @@ public class RegisterUserService {
         return diff > smsExpirationMin * 60 * 1000;
     }
 
-    public String saveUser(SingUpDto userDto) {
+    public User saveUser(SingUpDto userDto) {
         User existingUser = getUser(userDto.getName());
 
         existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
@@ -129,7 +133,7 @@ public class RegisterUserService {
         existingUser.setBonusAmount(1000);
         existingUser.setUserStatus(REGISTERED);
 
-        return userRepository.save(existingUser).getId();
+        return userRepository.save(existingUser);
     }
 
     public void saveUser(User user) {
