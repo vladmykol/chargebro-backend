@@ -44,6 +44,9 @@ public class StationSocketClient {
 
     public StationSocketClient(Socket socket, int idleTimeoutSeconds) throws IOException {
         socket.setKeepAlive(true);
+        socket.setSendBufferSize(1);
+        socket.setReceiveBufferSize(1);
+        socket.setReuseAddress(true);
         socket.setSoTimeout(10000);
         socket.setTcpNoDelay(true);
         this.socket = socket;

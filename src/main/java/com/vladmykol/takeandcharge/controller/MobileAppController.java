@@ -35,7 +35,8 @@ public class MobileAppController {
 
     @GetMapping()
     public void redirectToAppSuccess(HttpServletResponse httpServletResponse) {
-        httpServletResponse.setHeader("Location", "chargebro://home");
+//        httpServletResponse.setHeader("Location", "chargebro://home");
+        httpServletResponse.setHeader("Location", "https://take-and-charge.app.link/CB0001");
         httpServletResponse.setStatus(302);
     }
 }
