@@ -1,13 +1,11 @@
 package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.conts.EndpointConst;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -33,10 +31,11 @@ public class MobileAppController {
         }
     }
 
-    @GetMapping()
-    public void redirectToAppSuccess(HttpServletResponse httpServletResponse) {
-//        httpServletResponse.setHeader("Location", "chargebro://home");
-        httpServletResponse.setHeader("Location", "https://take-and-charge.app.link/CB0001");
+    @GetMapping("/{id}")
+    public void redirectToAppSuccess(HttpServletResponse httpServletResponse,
+                                     @ApiParam(allowableValues = "K005, K013, K015", required = true) @PathVariable String id) {
+        final String baseUrl = "https://take-and-charge.app.link/";
+        httpServletResponse.setHeader("Location", baseUrl + id);
         httpServletResponse.setStatus(302);
     }
 }
