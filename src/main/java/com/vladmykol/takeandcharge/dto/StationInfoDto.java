@@ -10,6 +10,7 @@ public class StationInfoDto {
     private double locationY;
     private String placeName;
     private String address;
+    private String workingHours = "8:30 - 21:00";
     private String mapUrl;
     private int maxCapacity;
     private Integer simPhoneNumber;

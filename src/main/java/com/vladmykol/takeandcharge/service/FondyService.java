@@ -45,7 +45,7 @@ public class FondyService {
                 .order_id(payment.getId())
                 .verification("Y")
                 .required_rectoken("Y")
-                .order_desc("Verify user payment method")
+                .order_desc("Payment card authorization")
 //        params.put("lang", "uk");
                 .server_callback_url(callbackUrl + API_PAY + API_PAY_CALLBACK_AUTH)
                 .build();
