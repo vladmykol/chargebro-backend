@@ -56,21 +56,21 @@ public class FondyService {
     }
 
 
-    public FondyResponse holdMoneyByToken(String token, Payment payment) {
+    public FondyResponse holdMoneyByToken(String token, Payment payment, String userPhone) {
         final var request = FondyRequest.builder()
                 .amount(payment.getAmount())
                 .currency("UAH")
                 .order_id(payment.getId())
-                .order_desc("Charge for renting a power bank")
+                .order_desc(payment.getPaymentDesc())
                 //        params.put("lang", "uk");
                 .server_callback_url(callbackUrl + API_PAY + API_PAY_CALLBACK_HOLD)
-                .merchant_data(payment.getId())
+                .descriptor("ChargeBro powerbank")
+                .merchant_data(userPhone)
                 .rectoken(token)
                 .build();
 
         if (payment.getType() == PaymentType.DEPOSIT) {
             request.setPreauth("Y");
-            request.setOrder_desc("Deposit before rent");
         }
         payment.setRequest(request);
 
@@ -97,7 +97,7 @@ public class FondyService {
                 .amount(payment.getAmount())
                 .currency("UAH")
                 .order_id(payment.getId())
-                .comment("Returning a deposit as user returned a powerbank")
+                .comment("Returning a deposit after rent finish")
                 .build();
 
         return postForResponse(request, REVERSE_URI);

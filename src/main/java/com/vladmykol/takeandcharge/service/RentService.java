@@ -2,6 +2,7 @@ package com.vladmykol.takeandcharge.service;
 
 import com.vladmykol.takeandcharge.conts.PaymentType;
 import com.vladmykol.takeandcharge.conts.RentStage;
+import com.vladmykol.takeandcharge.dto.HoldDetails;
 import com.vladmykol.takeandcharge.dto.RentConfirmationDto;
 import com.vladmykol.takeandcharge.dto.RentHistoryDto;
 import com.vladmykol.takeandcharge.dto.RentReportDto;
@@ -17,6 +18,7 @@ import com.vladmykol.takeandcharge.utils.ExceptionUtil;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -145,8 +147,15 @@ public class RentService {
 
     private void holdMoneyBeforeRent(Rent rent) {
         rent.setStage(RentStage.WAIT_HOLD_DEPOSIT_CALLBACK);
-        final var payment = paymentService.holdMoney(rent.getId(),
-                true, paymentService.getHoldAmount());
+        final var userPhone = userService.getUserPhone(rent.getUserId());
+        final var holdDetails = HoldDetails.builder()
+                .amount(paymentService.getHoldAmount())
+                .rentId(rent.getId())
+                .powerBankId(rent.getPowerBankId())
+                .userPhone(userPhone)
+                .isPreAuth(true)
+                .build();
+        final var payment = paymentService.holdMoney(holdDetails);
         rent.setDepositPaymentId(payment.getId());
 
         rentRepository.save(rent);
@@ -155,8 +164,17 @@ public class RentService {
 
     private void chargeMoneyAfterRent(Rent rent) {
         rent.setStage(RentStage.WAIT_CHARGE_MONEY_CALLBACK);
-        final var payment = paymentService.holdMoney(rent.getId(),
-                false, rent.getPrice());
+
+        final var userPhone = userService.getUserPhone(rent.getUserId());
+        final var holdDetails = HoldDetails.builder()
+                .amount(rent.getPrice())
+                .rentTimeFormatted(DurationFormatUtils.formatDurationHMS(rent.getRentTime()))
+                .rentId(rent.getId())
+                .powerBankId(rent.getPowerBankId())
+                .isPreAuth(false)
+                .userPhone(userPhone)
+                .build();
+        final var payment = paymentService.holdMoney(holdDetails);
         rent.setChargePaymentId(payment.getId());
 
         rentRepository.save(rent);

@@ -2,6 +2,7 @@ package com.vladmykol.takeandcharge.service;
 
 import com.vladmykol.takeandcharge.conts.PaymentType;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
+import com.vladmykol.takeandcharge.dto.HoldDetails;
 import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.repository.PaymentRepository;
@@ -59,24 +60,34 @@ public class PaymentService {
     }
 
 
-    public Payment holdMoney(String rentId, boolean isDeposit, int amount) {
-        // TODO: 9/15/2020 get valid card from wallet
+    public Payment holdMoney(HoldDetails holdDetails) {
         final var validPaymentMethodsOrdered = userWalletService.getValidPaymentMethodsOrdered();
 
         if (validPaymentMethodsOrdered == null || validPaymentMethodsOrdered.isEmpty()) {
             throw new PaymentException("Please add at least one valid credit card");
         }
-
+// TODO: 9/15/2020 get valid card from wallet
         final var userWallet = validPaymentMethodsOrdered.get(0);
+
         final var newPayment = paymentRepository.save(
                 Payment.builder()
-                        .type(isDeposit ? PaymentType.DEPOSIT : PaymentType.CHARGE)
-                        .rentId(rentId)
-                        .amount(amount)
+                        .rentId(holdDetails.getRentId())
+                        .amount(holdDetails.getAmount())
                         .build()
         );
 
-        final var response = paymentGateway.holdMoneyByToken(userWallet.getCardToken(), newPayment);
+        if (holdDetails.isPreAuth()) {
+            newPayment.setType(PaymentType.DEPOSIT);
+            newPayment.setPaymentDesc("Deposit before renting powerbank " + holdDetails.getPowerBankId());
+        } else {
+            newPayment.setType(PaymentType.CHARGE);
+            newPayment.setPaymentDesc("Payment for renting powerbank " + holdDetails.getPowerBankId() + " during " + holdDetails.getRentTimeFormatted());
+
+        }
+
+        final var response = paymentGateway.holdMoneyByToken(userWallet.getCardToken(),
+                newPayment,
+                holdDetails.getUserPhone());
         validateAndSavePayment(newPayment, response);
 
         return newPayment;

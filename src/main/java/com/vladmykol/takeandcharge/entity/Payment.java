@@ -32,6 +32,8 @@ public class Payment {
 
     private PaymentType type;
 
+    private String paymentDesc;
+
     private String orderStatus;
 
     private String errorMessage;

@@ -17,6 +17,7 @@ public class FondyRequest {
     private String order_desc;
     private String currency;
     private String server_callback_url;
+    private String descriptor;
     private String merchant_data;
     private String merchant_id;
     private String signature;
