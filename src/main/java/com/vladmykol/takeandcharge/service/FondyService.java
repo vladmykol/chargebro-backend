@@ -64,13 +64,14 @@ public class FondyService {
                 .order_desc(payment.getPaymentDesc())
                 //        params.put("lang", "uk");
                 .server_callback_url(callbackUrl + API_PAY + API_PAY_CALLBACK_HOLD)
-                .descriptor("ChargeBro powerbank")
+                .descriptor("ChargeBro")
                 .merchant_data(userPhone)
                 .rectoken(token)
                 .build();
 
         if (payment.getType() == PaymentType.DEPOSIT) {
             request.setPreauth("Y");
+            request.setDescriptor("ChargeBro deposit");
         }
         payment.setRequest(request);
 
