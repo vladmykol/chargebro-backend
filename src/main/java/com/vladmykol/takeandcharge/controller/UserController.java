@@ -25,10 +25,6 @@ import java.util.List;
 public class UserController {
     private final UserWalletService userWalletService;
 
-    private final JwtProvider jwtProvider;
-
-
-
     @GetMapping("/card")
     public List<UserCardDto> getUserCards() {
         final var userCardResp = new ArrayList<UserCardDto>();

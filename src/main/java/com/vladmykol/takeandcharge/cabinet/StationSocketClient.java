@@ -74,8 +74,9 @@ public class StationSocketClient {
     @SneakyThrows
     public void shutdown(Exception reason) {
         isActive = false;
-        if (isSocketConnected()) {
-            log.debug("Close socket for client {}", clientInfo, reason);
+        if (shutdownTime == null) {
+            log.debug("Shutdown socket client {}", clientInfo, reason);
+            shutdownTime = Instant.now();
         }
         try {
             out.close();
@@ -84,9 +85,6 @@ public class StationSocketClient {
         try {
             socket.close();
         } catch (Exception ignore) {
-        }
-        if (shutdownTime == null) {
-            shutdownTime = Instant.now();
         }
     }
 
@@ -100,12 +98,12 @@ public class StationSocketClient {
         ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(SOFTWARE_VERSION);
         log.debug("Check if station responsive {}", clientInfo);
         try {
+            ping();
             communicate(softwareVersionRequest, 20000);
         } catch (NoResponseFromWithinTimeout e) {
             if (isSocketConnected()) {
-                ping();
                 log.debug("Second try for check if station responsive {}", clientInfo);
-                communicate(softwareVersionRequest, 30000);
+                communicate(softwareVersionRequest, 10000);
             } else {
                 return false;
             }

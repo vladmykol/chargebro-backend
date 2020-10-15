@@ -33,6 +33,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
     private static final short MESSAGE_TYPE_RENT_START = 2;
     private static final short MESSAGE_TYPE_RENT_END = 3;
     private static final short MESSAGE_TYPE_ERROR = 4;
+    private static final short MESSAGE_TYPE_RENT_MONEY_HOLD_CONFIRM = 5;
     private static final short MESSAGE_CODE_OK = 200;
     private static final int MESSAGE_CODE_PAYMENT_ERROR = HttpStatus.PAYMENT_REQUIRED.value();
     private static final short MESSAGE_CODE_UNAUTHORIZED = 401;
@@ -59,6 +60,16 @@ public class WebSocketServer extends BinaryWebSocketHandler {
                 .messageType(MESSAGE_TYPE_RENT_START)
                 .messageCode(MESSAGE_CODE_OK)
                 .message(powerBankId)
+                .build();
+
+        sendBaseMassage(baseMessage);
+    }
+
+    public void sendMoneyHoldConfirmation(String status) {
+        final var baseMessage = BaseMessage.builder()
+                .messageType(MESSAGE_TYPE_RENT_MONEY_HOLD_CONFIRM)
+                .messageCode(MESSAGE_CODE_OK)
+                .message(status)
                 .build();
 
         sendBaseMassage(baseMessage);

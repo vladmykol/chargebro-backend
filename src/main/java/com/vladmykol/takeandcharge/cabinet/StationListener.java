@@ -18,7 +18,6 @@ public abstract class StationListener {
         try {
             newStationSocketHandler(stationSocketClient).handle();
         } catch (Exception e) {
-            log.debug("Disconnect station socket client {}", stationSocketClient.getClientInfo(), e);
             stationRegister.removeConnectedStation(stationSocketClient);
             stationSocketClient.shutdown(e);
         }

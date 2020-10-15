@@ -88,6 +88,7 @@ public class RentService {
         executeRentStep(() -> {
 
             paymentService.checkForErrors(payment);
+            webSocketServer.sendMoneyHoldConfirmation(payment.getOrderStatus());
             processRentUpdate(payment.getType(), optionalRent.get());
 
         }, optionalRent.get(), false);
@@ -222,7 +223,6 @@ public class RentService {
         rent.setStage(RentStage.UNLOCK_POWERBANK);
         rentRepository.save(rent);
         try {
-            safeCheckAvailablePowerBanks(rent);
             safeUnlockPowerBank(rent);
         } catch (NotSuccessesRent e) {
 //            dont know why but when station responses with this error, powerbank is unlocked sometime
