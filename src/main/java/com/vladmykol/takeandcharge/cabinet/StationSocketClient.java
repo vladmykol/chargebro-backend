@@ -4,6 +4,7 @@ import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.cabinet.serialization.ProtocolSerializationUtils;
+import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.NoResponseFromWithinTimeout;
 import com.vladmykol.takeandcharge.utils.HexDecimalConverter;
 import lombok.Getter;
@@ -23,8 +24,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.HEART_BEAT;
-import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.SOFTWARE_VERSION;
+import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.*;
 
 
 @Slf4j
@@ -39,7 +39,7 @@ public class StationSocketClient {
     private volatile boolean isActive = true;
     @Getter
     @Setter
-    private Instant shutdownTime;
+    private volatile Instant shutdownTime;
 
 
     public StationSocketClient(Socket socket, int idleTimeoutSeconds) throws IOException {
@@ -72,7 +72,7 @@ public class StationSocketClient {
     }
 
     @SneakyThrows
-    public void shutdown(Exception reason) {
+    public synchronized void shutdown(Exception reason) {
         isActive = false;
         if (shutdownTime == null) {
             log.debug("Shutdown socket client {}", clientInfo, reason);
@@ -99,13 +99,21 @@ public class StationSocketClient {
         log.debug("Check if station responsive {}", clientInfo);
         try {
             ping();
-            communicate(softwareVersionRequest, 20000);
+            communicate(softwareVersionRequest, 10000);
         } catch (NoResponseFromWithinTimeout e) {
             if (isSocketConnected()) {
                 log.debug("Second try for check if station responsive {}", clientInfo);
-                communicate(softwareVersionRequest, 10000);
+                try {
+                    communicate(softwareVersionRequest, 10000);
+                } catch (NoResponseFromWithinTimeout e2) {
+                    if (isSocketConnected()) {
+                        log.debug("Send restart command to not responsive station {}", clientInfo);
+                        writeMessage(new ProtocolEntity<>(RESTART));
+                    }
+                    throw new CabinetIsOffline();
+                }
             } else {
-                return false;
+                throw new CabinetIsOffline();
             }
         }
         log.debug("Success check if station responsive {}", clientInfo);
@@ -117,7 +125,7 @@ public class StationSocketClient {
         return communicate(request, 20000);
     }
 
-    @SneakyThrows({IOException.class, InterruptedException.class})
+    @SneakyThrows
     private ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request, int timeout) {
         ProtocolEntity<RawMessage> incomingMessage = writeAndWaitForResponse(request, timeout);
 
@@ -127,7 +135,8 @@ public class StationSocketClient {
             return incomingMessage;
     }
 
-    public synchronized void writeMessage(ProtocolEntity<?> protocolEntity) throws IOException {
+    @SneakyThrows
+    public synchronized void writeMessage(ProtocolEntity<?> protocolEntity) {
         byte[] byteArrayMessage;
         if (protocolEntity.hasBody()) {
             byteArrayMessage = ProtocolSerializationUtils.serialize(protocolEntity.getHeader(), protocolEntity.getBody());

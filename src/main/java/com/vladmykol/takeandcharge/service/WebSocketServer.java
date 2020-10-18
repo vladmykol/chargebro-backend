@@ -139,7 +139,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        log.debug("Web Socket Client {} is now connected", session.getRemoteAddress());
+        log.trace("Web Socket Client {} is now connected", session.getRemoteAddress());
     }
 
     @Override
@@ -172,7 +172,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
             String clientId = jwtProvider.parseAuthToken(tokenBuilder.toString());
             synchronized (clientIdAndConnections) {
                 if (clientIdAndConnections.put(clientId, session))
-                    log.debug("Web Socket Client {} is now authenticated", session.getRemoteAddress());
+                    log.trace("Web Socket Client {} is now authenticated", session.getRemoteAddress());
             }
             final var successAuth = BaseMessage.builder()
                     .messageType(MESSAGE_TYPE_AUTH)
@@ -217,7 +217,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
             while (iterator.hasNext()) {
                 iterator.next();
                 if (iterator.getValue().equals(session)) {
-                    log.debug("WebSocket client disconnected - {}", iterator);
+                    log.debug("WebSocket client is disconnected {}", iterator.getValue());
                     iterator.remove();
                 }
             }

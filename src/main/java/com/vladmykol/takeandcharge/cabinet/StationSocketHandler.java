@@ -52,7 +52,7 @@ public class StationSocketHandler {
                 }
             } catch (SocketTimeoutException ignore) {
             } catch (NoHandlerDefined e) {
-                log.error("{} - {}", stationSocketClient.getClientInfo(), e.toString());
+                log.error("Not handled message for station client - {}", stationSocketClient.getClientInfo(), e);
             } catch (Exception e) {
                 try {
                     in.close();
