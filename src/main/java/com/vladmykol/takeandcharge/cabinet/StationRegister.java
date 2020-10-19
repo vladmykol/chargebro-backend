@@ -93,9 +93,9 @@ public class StationRegister {
                 throw new CabinetIsOffline();
             } else {
                 synchronized (stationSocketClientWrapper) {
-                    final var waitTimeSec = 60;
+                    final var waitTimeSec = 50;
                     try {
-                        log.debug("Station {} is offline so trying to wait {} sec for reconnection",
+                        log.info("Station {} is offline so trying to wait {} sec for reconnection",
                                 stationSocketClientWrapper.getSocketClient().getClientInfo(), waitTimeSec);
                         stationSocketClientWrapper.wait(waitTimeSec * 1000);
 //                    sleep before working with station after connection. Station needs some time to check available powerbanks

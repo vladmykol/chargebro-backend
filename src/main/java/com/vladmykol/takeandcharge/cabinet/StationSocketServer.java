@@ -1,6 +1,7 @@
 package com.vladmykol.takeandcharge.cabinet;
 
 import com.vladmykol.takeandcharge.config.AsyncConfiguration;
+import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,10 +53,8 @@ public class StationSocketServer {
     public void tryToWakeUpInactive(StationSocketClient stationSocketClient) {
         try {
             stationSocketClient.setInactive();
-            if (stationSocketClient.isResponsive()) {
-                stationSocketClient.setActive();
-                stationRegister.notifyAboutReactivatingClient(stationSocketClient.getClientInfo().getCabinetId());
-            }
+            stationSocketClient.forceStationRestart();
+            throw new CabinetIsOffline();
         } catch (Exception e) {
             stationSocketClient.shutdown(e);
         }

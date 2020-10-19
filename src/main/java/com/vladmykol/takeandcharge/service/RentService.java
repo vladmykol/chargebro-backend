@@ -184,7 +184,7 @@ public class RentService {
 
     private void reversePayment(Rent rent) {
         final var payment = paymentService.reversePayment(rent.getDepositPaymentId());
-        rentRepository.save(rent);
+//        rentRepository.save(rent);
 //        paymentService.throwErrorIfUnsuccessful(payment);
     }
 
@@ -309,10 +309,12 @@ public class RentService {
             r.run();
         } catch (Exception e) {
             rentException = ExceptionUtil.convertToHttpException(e);
+            log.error("Not success rent request", e);
         }
         if (rentException != null) {
             rent.setLastError(new RentError(rentException));
             rentRepository.save(rent);
+
             if (isNeedToThrow) {
                 throw rentException;
             } else {

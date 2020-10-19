@@ -52,7 +52,7 @@ public class StationService {
             chargingStationInventory.getPowerBankList().add(messageFromClient.getBody().readTo(new PowerBankInfo()));
         }
 
-        log.info("Power Bank inventory request {} and {}", messageFromClient.getHeader(), chargingStationInventory);
+        log.debug("Power Bank inventory request {} and {}", messageFromClient.getHeader(), chargingStationInventory);
 
         return chargingStationInventory;
     }
@@ -65,7 +65,7 @@ public class StationService {
         ProtocolEntity<RawMessage> messageFromClient = stationSocketClient.communicate(powerBankRequest);
 
         TakePowerBankResponse takePowerBankResponse = messageFromClient.getBody().readFullyTo(new TakePowerBankResponse());
-        log.info("Rent response {} and {}", messageFromClient.getHeader(), takePowerBankResponse);
+        log.debug("Rent response {} and {}", messageFromClient.getHeader(), takePowerBankResponse);
 
         if (takePowerBankResponse.getResult() != 1) {
             throw new NotSuccessesRent();

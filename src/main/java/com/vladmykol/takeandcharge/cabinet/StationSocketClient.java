@@ -94,32 +94,19 @@ public class StationSocketClient {
         writeMessage(softwareVersionRequest);
     }
 
-    public boolean isResponsive() {
-        ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(SOFTWARE_VERSION);
-        log.debug("Check if station responsive {}", clientInfo);
+    public void forceStationRestart() {
+        ProtocolEntity<?> stationRestartCommand = new ProtocolEntity<>(RESTART);
+        log.debug("Send restart command to not responsive station {}", clientInfo);
         try {
-            ping();
-            communicate(softwareVersionRequest, 10000);
+            communicate(stationRestartCommand, 10000);
         } catch (NoResponseFromWithinTimeout e) {
             if (isSocketConnected()) {
-                log.debug("Second try for check if station responsive {}", clientInfo);
-                try {
-                    communicate(softwareVersionRequest, 10000);
-                } catch (NoResponseFromWithinTimeout e2) {
-                    if (isSocketConnected()) {
-                        log.debug("Send restart command to not responsive station {}", clientInfo);
-                        writeMessage(new ProtocolEntity<>(RESTART));
-                    }
-                    throw new CabinetIsOffline();
-                }
-            } else {
-                throw new CabinetIsOffline();
+                log.debug("Send restart no wait command to not responsive station {}", clientInfo);
+                writeMessage(stationRestartCommand);
             }
         }
-        log.debug("Success check if station responsive {}", clientInfo);
-
-        return true;
     }
+
 
     public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request) {
         return communicate(request, 20000);
@@ -136,7 +123,7 @@ public class StationSocketClient {
     }
 
     @SneakyThrows
-    public synchronized void writeMessage(ProtocolEntity<?> protocolEntity) {
+    public void writeMessage(ProtocolEntity<?> protocolEntity) {
         byte[] byteArrayMessage;
         if (protocolEntity.hasBody()) {
             byteArrayMessage = ProtocolSerializationUtils.serialize(protocolEntity.getHeader(), protocolEntity.getBody());
@@ -177,7 +164,7 @@ public class StationSocketClient {
         }
     }
 
-    private void writeOutputStream(byte[] byteArrayMessage) throws IOException {
+    private synchronized void writeOutputStream(byte[] byteArrayMessage) throws IOException {
         ByteBuffer arrayWithLeadingLength = ByteBuffer.allocate(2 + byteArrayMessage.length);
         putUnsignedShort(arrayWithLeadingLength, byteArrayMessage.length);
         arrayWithLeadingLength.put(byteArrayMessage);

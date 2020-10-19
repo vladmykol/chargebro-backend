@@ -133,7 +133,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
                 }
             });
         } else {
-            log.debug("No connected web socket clients to send rent update to");
+            log.warn("No connected web socket clients to send rent update {}",baseMessage);
         }
     }
 
