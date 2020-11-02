@@ -12,11 +12,13 @@ import com.vladmykol.takeandcharge.cabinet.dto.client.PowerBankInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.client.TakePowerBankResponse;
 import com.vladmykol.takeandcharge.cabinet.dto.server.ChangeServerAddressRequest;
 import com.vladmykol.takeandcharge.cabinet.dto.server.TakePowerBankRequest;
+import com.vladmykol.takeandcharge.conts.PowerBankStatus;
 import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.dto.StationInfoDto;
 import com.vladmykol.takeandcharge.entity.Station;
 import com.vladmykol.takeandcharge.exceptions.NoPowerBanksLeft;
 import com.vladmykol.takeandcharge.exceptions.NotSuccessesRent;
+import com.vladmykol.takeandcharge.repository.PowerBankRepository;
 import com.vladmykol.takeandcharge.repository.StationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,18 +40,26 @@ import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageComma
 @Slf4j
 public class StationService {
     private final StationRegister stationRegister;
+    private final PowerBankRepository powerBankRepository;
     private final StationRepository stationRepository;
     private final ModelMapper stationInfoMapper;
 
     public ChargingStationInventory getStationInventory(String cabinetId) {
         ProtocolEntity<?> stockRequest = new ProtocolEntity<>(CABINET_STOCK);
 
-        StationSocketClient stationSocketClient = stationRegister.getStation(cabinetId);
-        ProtocolEntity<RawMessage> messageFromClient = stationSocketClient.communicate(stockRequest);
+        ProtocolEntity<RawMessage> messageFromClient = stationRegister.communicateWithStation(cabinetId, stockRequest);
 
         ChargingStationInventory chargingStationInventory = messageFromClient.getBody().readTo(new ChargingStationInventory());
         for (int i = 0; i < chargingStationInventory.getRemainingPowerBanks(); i++) {
-            chargingStationInventory.getPowerBankList().add(messageFromClient.getBody().readTo(new PowerBankInfo()));
+            final var powerBankInfo = messageFromClient.getBody().readTo(new PowerBankInfo());
+
+            final var optionalPowerBank = powerBankRepository.findById(powerBankInfo.getPowerBankId());
+            if (optionalPowerBank.isPresent()) {
+                if (PowerBankStatus.MAINTENANCE == optionalPowerBank.get().getStatus()) {
+                    continue;
+                }
+            }
+            chargingStationInventory.getPowerBankList().add(powerBankInfo);
         }
 
         log.debug("Power Bank inventory request {} and {}", messageFromClient.getHeader(), chargingStationInventory);
@@ -61,17 +71,33 @@ public class StationService {
         ProtocolEntity<TakePowerBankRequest> powerBankRequest = new ProtocolEntity<>(TAKE_POWER_BANK,
                 new TakePowerBankRequest(powerBankSlot));
 
-        StationSocketClient stationSocketClient = stationRegister.getStation(cabinetId);
-        ProtocolEntity<RawMessage> messageFromClient = stationSocketClient.communicate(powerBankRequest);
+        ProtocolEntity<RawMessage> messageFromClient = stationRegister.communicateWithStation(cabinetId, powerBankRequest);
 
         TakePowerBankResponse takePowerBankResponse = messageFromClient.getBody().readFullyTo(new TakePowerBankResponse());
         log.debug("Rent response {} and {}", messageFromClient.getHeader(), takePowerBankResponse);
 
         if (takePowerBankResponse.getResult() != 1) {
-            throw new NotSuccessesRent();
+            if (!isPowerReallyTaken(powerBankSlot, cabinetId)) {
+                throw new NotSuccessesRent();
+            }
         }
 
         return takePowerBankResponse.getPowerBankId();
+    }
+
+    public boolean isPowerReallyTaken(short powerBankSlot, String cabinetId) {
+        ChargingStationInventory chargingStationInventory = getStationInventory(cabinetId);
+
+        if (chargingStationInventory.getPowerBankList().isEmpty()) {
+            throw new NoPowerBanksLeft();
+        }
+
+        var powerBankInfoOptional = chargingStationInventory.getPowerBankList()
+                .stream()
+                .filter(powerBankInfo -> powerBankSlot == powerBankInfo.getSlotNumber())
+                .findFirst();
+
+        return powerBankInfoOptional.isPresent();
     }
 
     public List<StationInfoDto> findStationsNearBy(double x, double y) {
@@ -121,17 +147,17 @@ public class StationService {
 
         ProtocolEntity<?> setServerAddressRequest = new ProtocolEntity<>(SET_SERVER_ADDRESS, changeServerAddressRequest);
 
-        StationSocketClient stationSocketClient = stationRegister.getStation(cabinetId);
-        stationSocketClient.communicate(setServerAddressRequest);
-        ProtocolEntity<RawMessage> restartResponse = stationSocketClient.communicate(new ProtocolEntity<>(RESTART));
+        stationRegister.communicateWithStation(cabinetId, setServerAddressRequest);
+        final var messageProtocolEntity = stationRegister.communicateWithStation(cabinetId, new ProtocolEntity<>(RESTART));
 
-        return restartResponse.getHeader();
+        return messageProtocolEntity.getHeader();
     }
 
 
     public int getRemainingPowerBanks(String cabinetId) {
         return getStationInventory(cabinetId).getRemainingPowerBanks();
     }
+
 
     public PowerBankInfo findMaxChargedPowerBank(String stationId) {
         ChargingStationInventory chargingStationInventory = getStationInventory(stationId);
@@ -150,6 +176,7 @@ public class StationService {
             throw new NoPowerBanksLeft();
         }
     }
+
 
     public Station getById(String id) {
         final var optionalStation = stationRepository.findById(id);
@@ -188,7 +215,4 @@ public class StationService {
         stationRepository.deleteById(stationId);
     }
 
-    public void check(String stationId) {
-
-    }
 }

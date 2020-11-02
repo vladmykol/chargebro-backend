@@ -16,7 +16,7 @@ public abstract class StationListener {
     @Async(AsyncConfiguration.STATION_LISTENER_TASK_EXECUTOR)
     public void listen(StationSocketClient stationSocketClient) {
         try {
-            newStationSocketHandler(stationSocketClient).handle();
+            newStationSocketHandler(stationSocketClient).infiniteHandle();
         } catch (Exception e) {
             stationRegister.removeConnectedStation(stationSocketClient);
             stationSocketClient.shutdown(e);

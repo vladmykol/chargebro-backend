@@ -17,7 +17,6 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 public class StationInfoController {
     private final StationService stationService;
 
-
     @GetMapping(API_STATIONS_NEARBY)
     public List<StationInfoDto> getStations(@RequestParam double x,
                                             @RequestParam double y) {

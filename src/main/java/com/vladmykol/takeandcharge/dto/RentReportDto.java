@@ -23,8 +23,6 @@ public class RentReportDto {
 
     private String returnAddress;
 
-    private boolean isActiveRent;
-
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Kiev")
     private Date lastModifiedDate;
 

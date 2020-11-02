@@ -2,9 +2,9 @@ package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.dto.RentConfirmationDto;
 import com.vladmykol.takeandcharge.dto.RentHistoryDto;
+import com.vladmykol.takeandcharge.service.RentFlowService;
 import com.vladmykol.takeandcharge.service.RentService;
 import com.vladmykol.takeandcharge.service.StationService;
-import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,22 +18,18 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.API_RENT;
 @RequestMapping(API_RENT)
 @RequiredArgsConstructor
 public class RentController {
+    private final RentFlowService rentFlowService;
     private final RentService rentService;
     private final StationService stationService;
 
     @GetMapping
     public RentConfirmationDto getInfoBeforeRent(@RequestParam String stationId) {
-        return rentService.getBeforeRentInfo(stationService.extractStationId(stationId));
+        return rentFlowService.getBeforeRentInfo(stationService.extractStationId(stationId));
     }
 
     @PostMapping
     public void rentRequest(@RequestParam String stationId) {
-        rentService.syncRentStart(stationService.extractStationId(stationId));
-    }
-
-    @PostMapping("/refresh")
-    public void rentRefresh() {
-        rentService.refresh(SecurityUtil.getUser());
+        rentFlowService.syncRentStart(stationService.extractStationId(stationId));
     }
 
     @GetMapping("/history")

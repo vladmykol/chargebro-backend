@@ -3,7 +3,6 @@ package com.vladmykol.takeandcharge.service;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
 import com.vladmykol.takeandcharge.entity.UserWallet;
 import com.vladmykol.takeandcharge.exceptions.PaymentException;
-import com.vladmykol.takeandcharge.repository.RentRepository;
 import com.vladmykol.takeandcharge.repository.UserWalletRepository;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,7 @@ import java.util.List;
 @Slf4j
 public class UserWalletService {
     private final UserWalletRepository userWalletRepository;
-    private final RentRepository rentRepository;
+    private final RentService rentService;
 
     public void saveCard(FondyResponse callback) {
 
@@ -47,7 +46,7 @@ public class UserWalletService {
     public boolean removeUserCard(String id) {
         final var optionalUserWallet = userWalletRepository.findById(id);
         if (optionalUserWallet.isPresent()) {
-            if (rentRepository.existsByUserIdAndIsActiveRentTrue(SecurityUtil.getUser())) {
+            if (rentService.isUserHasActiveRent()) {
                 throw new PaymentException("Cannot delete card while rent is still in progress");
             } else {
                 optionalUserWallet.get().setRemoved(true);

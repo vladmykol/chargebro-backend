@@ -1,8 +1,12 @@
 package com.vladmykol.takeandcharge.cabinet;
 
 import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
+import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
+import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
+import com.vladmykol.takeandcharge.exceptions.NoResponseFromWithinTimeout;
+import com.vladmykol.takeandcharge.service.WebSocketServer;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +28,7 @@ public class StationRegister {
 
     private final List<StationSocketClient> currentConnections = Collections.synchronizedList(new LinkedList<>());
     private final Map<String, StationSocketClientWrapper> connections = Collections.synchronizedMap(new HashMap<>());
+    private final WebSocketServer webSocketServer;
 
     public List<ClientInfo> getCurrentConnections() {
         List<ClientInfo> result = new ArrayList<>();
@@ -77,7 +82,7 @@ public class StationRegister {
         }
     }
 
-    public StationSocketClient getStation(String clientId) {
+    private synchronized StationSocketClient getStation(String clientId) {
         var stationSocketClientWrapper = connections.get(clientId);
 
         if (stationSocketClientWrapper == null) {
@@ -93,10 +98,11 @@ public class StationRegister {
                 throw new CabinetIsOffline();
             } else {
                 synchronized (stationSocketClientWrapper) {
-                    final var waitTimeSec = 50;
+                    final var waitTimeSec = 60;
                     try {
                         log.info("Station {} is offline so trying to wait {} sec for reconnection",
                                 stationSocketClientWrapper.getSocketClient().getClientInfo(), waitTimeSec);
+                        webSocketServer.sendResolveConnectionIssue();
                         stationSocketClientWrapper.wait(waitTimeSec * 1000);
 //                    sleep before working with station after connection. Station needs some time to check available powerbanks
                         Thread.sleep(7000);
@@ -109,14 +115,17 @@ public class StationRegister {
         return stationSocketClientWrapper.getSocketClient();
     }
 
-    public void notifyAboutReactivatingClient(String clientId) {
-        var stationSocketClientWrapper = connections.get(clientId);
-        if (stationSocketClientWrapper == null) {
-            throw new CabinetIsOffline();
+    public ProtocolEntity<RawMessage> communicateWithStation(String cabinetId, ProtocolEntity<?> stockRequest) {
+        StationSocketClient stationSocketClient;
+        ProtocolEntity<RawMessage> messageFromClient;
+        try {
+            stationSocketClient = getStation(cabinetId);
+            messageFromClient = stationSocketClient.communicate(stockRequest);
+        } catch (NoResponseFromWithinTimeout e) {
+            stationSocketClient = getStation(cabinetId);
+            messageFromClient = stationSocketClient.communicate(stockRequest);
         }
-        synchronized (stationSocketClientWrapper) {
-            stationSocketClientWrapper.notify();
-        }
+        return messageFromClient;
     }
 
     public void addConnectedStation(StationSocketClient stationSocketClient) {

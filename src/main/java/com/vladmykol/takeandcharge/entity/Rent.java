@@ -26,13 +26,12 @@ public class Rent {
 
     private String returnedToStationId;
 
+    @Indexed
     private String powerBankId;
 
     private short powerBankSlot;
 
     @Indexed
-    private boolean isActiveRent;
-
     private RentStage stage;
 
     private String depositPaymentId;
@@ -43,15 +42,16 @@ public class Rent {
 
     @CreatedBy
     @NonNull
+    @Indexed
     private String userId;
 
     @CreatedDate
     @NonNull
     private Date createDate;
 
-    private Date takenAt;
+    private Date powerBankTakenAt;
 
-    private Date returnedAt;
+    private Date powerBankReturnedAt;
 
     @Version
     private Long version;
@@ -67,25 +67,18 @@ public class Rent {
 
     private String comment;
 
-    public void markRentStart(String powerBankId) {
-        this.powerBankId = powerBankId;
-        this.isActiveRent = true;
-        this.takenAt = new Date();
-    }
-
-    public void markPbReturned(String stationId) {
+    public void setReturnedTo(String stationId) {
         this.returnedToStationId = stationId;
-        this.returnedAt = new Date();
+        this.powerBankReturnedAt = new Date();
     }
 
     public void markRentFinished() {
-        this.isActiveRent = false;
         this.stage = RentStage.SUCCESSFULLY_FINISHED;
     }
 
     public long getRentTime() {
-        long returnedAt = getReturnedAt() == null ? System.currentTimeMillis() : getReturnedAt().getTime();
-        return Math.abs(returnedAt - getTakenAt().getTime());
+        long returnedAt = getPowerBankReturnedAt() == null ? System.currentTimeMillis() : getPowerBankReturnedAt().getTime();
+        return Math.abs(returnedAt - getPowerBankTakenAt().getTime());
     }
 
     public int getLastErrorCodeValue() {
@@ -110,5 +103,14 @@ public class Rent {
         } else {
             return null;
         }
+    }
+
+    public void setPowerBankTaken() {
+        this.powerBankTakenAt = new Date();
+        this.stage = RentStage.POWERBANK_TAKEN;
+    }
+
+    public void setPowerBankUnlocked() {
+        this.stage = RentStage.UNLOCK_POWERBANK;
     }
 }

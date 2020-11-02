@@ -4,7 +4,7 @@ import com.vladmykol.takeandcharge.conts.EndpointConst;
 import com.vladmykol.takeandcharge.dto.FondyResponse;
 import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.service.PaymentService;
-import com.vladmykol.takeandcharge.service.RentService;
+import com.vladmykol.takeandcharge.service.RentFlowService;
 import com.vladmykol.takeandcharge.service.UserWalletService;
 import com.vladmykol.takeandcharge.service.WebSocketServer;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 public class PaymentController {
     private final PaymentService paymentService;
     private final UserWalletService userWalletService;
-    private final RentService rentService;
+    private final RentFlowService rentFlowService;
     private final WebSocketServer webSocketServer;
 
 
@@ -48,7 +48,7 @@ public class PaymentController {
     public void rentPaymentCallback(@RequestBody FondyResponse callbackDto) {
         final var payment = paymentService.savePaymentCallback(callbackDto);
 
-        rentService.updateRentWithPayment(payment);
+        rentFlowService.updateRentWithPayment(payment);
     }
 
 }

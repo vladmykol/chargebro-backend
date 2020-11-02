@@ -3,6 +3,7 @@ package com.vladmykol.takeandcharge.config;
 import com.vladmykol.takeandcharge.conts.RoleEnum;
 import com.vladmykol.takeandcharge.entity.Role;
 import com.vladmykol.takeandcharge.repository.RoleRepository;
+import com.vladmykol.takeandcharge.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -57,6 +58,17 @@ public class MongoDbConfig {
                     roleRepository.save(newRole);
                 }
             }
+        };
+    }
+
+    @Bean
+    CommandLineRunner toBeRemovedSetBonus(UserRepository userRepository) {
+        return args -> {
+            final var userList = userRepository.findAll();
+            userList.forEach(user -> {
+                user.setBonusAmount(20);
+            });
+            userRepository.saveAll(userList);
         };
     }
 

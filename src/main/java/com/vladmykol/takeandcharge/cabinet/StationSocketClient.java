@@ -12,9 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
-import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,7 +24,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.*;
+import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.GET_STOCK_NUMBER;
+import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.RESTART;
 
 
 @Slf4j
@@ -33,7 +34,9 @@ public class StationSocketClient {
     private final ClientInfo clientInfo;
     @Getter
     private final List<ProtocolMessage> messageQueue = Collections.synchronizedList(new LinkedList<>());
-    private final OutputStream out;
+    private final OutputStream outputStream;
+    @Getter
+    private final DataInputStream inputStream;
     private final Socket socket;
     @Getter
     private volatile boolean isActive = true;
@@ -41,17 +44,13 @@ public class StationSocketClient {
     @Setter
     private volatile Instant shutdownTime;
 
-
     public StationSocketClient(Socket socket, int idleTimeoutSeconds) throws IOException {
         socket.setKeepAlive(true);
-        socket.setSendBufferSize(1);
-        socket.setReceiveBufferSize(1);
-        socket.setReuseAddress(true);
         socket.setSoTimeout(10000);
-        socket.setTcpNoDelay(true);
         this.socket = socket;
         this.clientInfo = new ClientInfo(socket.getInetAddress(), idleTimeoutSeconds);
-        this.out = socket.getOutputStream();
+        this.inputStream = new DataInputStream(socket.getInputStream());
+        this.outputStream = socket.getOutputStream();
         log.debug("New station socket client {}", clientInfo);
     }
 
@@ -77,9 +76,17 @@ public class StationSocketClient {
         if (shutdownTime == null) {
             log.debug("Shutdown socket client {}", clientInfo, reason);
             shutdownTime = Instant.now();
+            try {
+                internalCommunicate(new ProtocolEntity<>(RESTART), 10000);
+            } catch (Exception ignore) {
+            }
         }
         try {
-            out.close();
+            socket.close();
+        } catch (Exception ignore) {
+        }
+        try {
+            outputStream.close();
         } catch (Exception ignore) {
         }
         try {
@@ -88,37 +95,39 @@ public class StationSocketClient {
         }
     }
 
-    @SneakyThrows
-    public void ping() {
-        ProtocolEntity<?> softwareVersionRequest = new ProtocolEntity<>(HEART_BEAT);
-        writeMessage(softwareVersionRequest);
-    }
-
-    public void forceStationRestart() {
-        ProtocolEntity<?> stationRestartCommand = new ProtocolEntity<>(RESTART);
-        log.debug("Send restart command to not responsive station {}", clientInfo);
-        try {
-            communicate(stationRestartCommand, 10000);
-        } catch (NoResponseFromWithinTimeout e) {
-            if (isSocketConnected()) {
-                log.debug("Send restart no wait command to not responsive station {}", clientInfo);
-                writeMessage(stationRestartCommand);
+    public void checkStationAlive() {
+        if (StringUtils.isEmpty(getClientInfo().getCabinetId())) {
+            throw new CabinetIsOffline();
+        } else {
+            log.debug("Send check command to station {}", clientInfo);
+            try {
+                internalCommunicate(new ProtocolEntity<>(GET_STOCK_NUMBER), 30000);
+            } catch (NoResponseFromWithinTimeout e) {
+                log.debug("Send Restart command not active station {}", clientInfo);
+                internalCommunicate(new ProtocolEntity<>(RESTART), 10000);
+                throw new CabinetIsOffline();
             }
+            log.debug("Success check command from station {}", clientInfo);
         }
     }
 
 
     public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request) {
-        return communicate(request, 20000);
+        try {
+            return internalCommunicate(request, 20000);
+        } catch (NoResponseFromWithinTimeout e) {
+            writeMessage(new ProtocolEntity<>(RESTART));
+            throw e;
+        }
     }
 
     @SneakyThrows
-    private ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request, int timeout) {
+    private ProtocolEntity<RawMessage> internalCommunicate(ProtocolEntity<?> request, int timeout) {
         ProtocolEntity<RawMessage> incomingMessage = writeAndWaitForResponse(request, timeout);
 
-        if (incomingMessage == null)
+        if (incomingMessage == null) {
             throw new NoResponseFromWithinTimeout(timeout);
-        else
+        } else
             return incomingMessage;
     }
 
@@ -169,13 +178,13 @@ public class StationSocketClient {
         putUnsignedShort(arrayWithLeadingLength, byteArrayMessage.length);
         arrayWithLeadingLength.put(byteArrayMessage);
 
-        log.trace("Writing message to station. Message content {}", HexDecimalConverter.toHexString(byteArrayMessage));
-        out.write(arrayWithLeadingLength.array());
-        out.flush();
-    }
-
-    public DataInputStream getInputStream() throws IOException {
-        return new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+        if (isSocketConnected()) {
+            log.trace("Writing message to station. Message content {}", HexDecimalConverter.toHexString(byteArrayMessage));
+            outputStream.write(arrayWithLeadingLength.array());
+            outputStream.flush();
+        } else {
+            throw new CabinetIsOffline();
+        }
     }
 
     @Override

@@ -42,7 +42,7 @@ public class StationSocketHandler {
         this.cabinetController = cabinetController;
     }
 
-    public void handle() throws IOException {
+    public void infiniteHandle() throws IOException {
         while (!Thread.currentThread().isInterrupted() && stationSocketClient.isSocketConnected()) {
             try {
                 ProtocolEntity<RawMessage> incomingMessage = readIncomingMessage();
@@ -53,12 +53,6 @@ public class StationSocketHandler {
             } catch (SocketTimeoutException ignore) {
             } catch (NoHandlerDefined e) {
                 log.error("Not handled message for station client - {}", stationSocketClient.getClientInfo(), e);
-            } catch (Exception e) {
-                try {
-                    in.close();
-                } catch (Exception ignore) {
-                }
-                throw e;
             }
         }
     }

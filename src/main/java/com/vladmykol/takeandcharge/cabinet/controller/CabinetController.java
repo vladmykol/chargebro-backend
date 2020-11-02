@@ -1,13 +1,14 @@
 package com.vladmykol.takeandcharge.cabinet.controller;
 
 import com.vladmykol.takeandcharge.cabinet.StationSocketClient;
-import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
+import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.cabinet.dto.client.LoginRequest;
 import com.vladmykol.takeandcharge.cabinet.dto.client.ReturnPowerBankRequest;
 import com.vladmykol.takeandcharge.cabinet.dto.server.LoginResponse;
 import com.vladmykol.takeandcharge.cabinet.dto.server.ReturnPowerBankResponse;
-import com.vladmykol.takeandcharge.service.RentService;
+import com.vladmykol.takeandcharge.service.PowerBankService;
+import com.vladmykol.takeandcharge.service.RentFlowService;
 import com.vladmykol.takeandcharge.service.StationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +23,15 @@ import static com.vladmykol.takeandcharge.cabinet.dto.CommonResult.OK;
 @Component
 @RequiredArgsConstructor
 public class CabinetController {
-    private final RentService rentService;
+    private final RentFlowService rentFlowService;
     private final StationService stationService;
+    private final PowerBankService powerBankService;
 
-    public  ProtocolEntity<Object> heartBeat(ProtocolEntity<RawMessage> request) {
+    public ProtocolEntity<Object> heartBeat(ProtocolEntity<RawMessage> request) {
         return new ProtocolEntity<>(request.getHeader(), null);
     }
 
-    public  ProtocolEntity<LoginResponse> singIn(ProtocolEntity<RawMessage> request, StationSocketClient stationSocketClient) {
+    public ProtocolEntity<LoginResponse> singIn(ProtocolEntity<RawMessage> request, StationSocketClient stationSocketClient) {
         LoginRequest loginRequest = request.getBody().readFullyTo(new LoginRequest());
         log.debug("Sing in request {} and {}", request.getHeader(), loginRequest);
         request.getHeader().setCheckSum((short) 7);
@@ -41,7 +43,7 @@ public class CabinetController {
             loginResponse = new LoginResponse(OK);
         } else {
             loginResponse = new LoginResponse(ERROR);
-        };
+        }
 
         return new ProtocolEntity<>(request.getHeader(), loginResponse);
     }
@@ -55,7 +57,10 @@ public class CabinetController {
                 .result(OK)
                 .build();
 
-        rentService.updateRentWithReturnPowerBankRequest(requestBody.getPowerBankId(), cabinetId);
+        final var rentId = powerBankService.returnAction(requestBody);
+        if (rentId != null) {
+            rentFlowService.returnPowerBankAction(rentId, cabinetId);
+        }
 
         return new ProtocolEntity<>(request.getHeader(), returnPowerBankResponse);
     }

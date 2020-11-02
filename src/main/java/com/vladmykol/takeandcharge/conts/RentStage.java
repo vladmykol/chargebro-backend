@@ -1,9 +1,10 @@
 package com.vladmykol.takeandcharge.conts;
 
 public enum RentStage {
-    INIT,
-    WAIT_HOLD_DEPOSIT_CALLBACK,
+    CHECK,
+    HOLD_DEPOSIT,
     UNLOCK_POWERBANK,
-    WAIT_CHARGE_MONEY_CALLBACK,
+    POWERBANK_TAKEN,
+    CHARGE_MONEY,
     SUCCESSFULLY_FINISHED;
 }
