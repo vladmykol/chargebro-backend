@@ -203,10 +203,6 @@ public class StationService {
         return url.substring(url.indexOf("=") + 1);
     }
 
-    public List<ClientInfo> getAllConnectedStations() {
-        return stationRegister.getCurrentConnections();
-    }
-
     public List<AuthenticatedStationsDto> getAuthenticatedStations() {
         return stationRegister.getConnections();
     }

@@ -30,14 +30,6 @@ public class StationRegister {
     private final Map<String, StationSocketClientWrapper> connections = Collections.synchronizedMap(new HashMap<>());
     private final WebSocketServer webSocketServer;
 
-    public List<ClientInfo> getCurrentConnections() {
-        List<ClientInfo> result = new ArrayList<>();
-        currentConnections.forEach(stationSocketClient -> {
-            result.add(stationSocketClient.getClientInfo());
-        });
-        return result;
-    }
-
     public List<AuthenticatedStationsDto> getConnections() {
         List<AuthenticatedStationsDto> result = new ArrayList<>();
         connections.forEach((stationId, stationSocketClientWrapper) -> {

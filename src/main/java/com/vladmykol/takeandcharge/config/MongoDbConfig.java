@@ -61,15 +61,4 @@ public class MongoDbConfig {
         };
     }
 
-    @Bean
-    CommandLineRunner toBeRemovedSetBonus(UserRepository userRepository) {
-        return args -> {
-            final var userList = userRepository.findAll();
-            userList.forEach(user -> {
-                user.setBonusAmount(20);
-            });
-            userRepository.saveAll(userList);
-        };
-    }
-
 }

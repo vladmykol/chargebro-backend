@@ -21,12 +21,7 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.API_STATIONS;
 public class AdminStationController {
     private final StationService stationService;
 
-    @GetMapping("/connected")
-    public List<ClientInfo> getAllConnectedStations() {
-        return stationService.getAllConnectedStations();
-    }
-
-    @GetMapping("/authenticated")
+    @GetMapping("/online")
     public List<AuthenticatedStationsDto> getAuthenticatedStations() {
         return stationService.getAuthenticatedStations();
     }

@@ -17,7 +17,7 @@ public class MobileAppController {
     @GetMapping("/version")
     public ResponseEntity<String> checkVersion(@RequestParam float currentVersion,
                                                @RequestParam String os) {
-        final var stableVersion = 1.27;
+        final var stableVersion = 1.26;
 
         String link = "https://apps.apple.com/us/app/chargebro/id1523146131";
         if ("android".equalsIgnoreCase(os)) {
