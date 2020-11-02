@@ -53,7 +53,6 @@ public class StationSocketServer {
         stationSocketClient.setInactive();
         try {
             stationSocketClient.checkStationAlive();
-            stationSocketClient.setActive();
         } catch (Exception e) {
             stationSocketClient.shutdown(e);
         }

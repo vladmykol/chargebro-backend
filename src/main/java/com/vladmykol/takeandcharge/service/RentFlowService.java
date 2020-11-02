@@ -42,6 +42,7 @@ public class RentFlowService {
 
         final var holdAmount = paymentService.getHoldAmount() / 100;
         final var userBonus = userService.getUserBonus(SecurityUtil.getUser());
+
         return RentConfirmationDto.builder()
                 .stationId(stationId)
                 .holdAmount(holdAmount + ".00")

@@ -98,7 +98,7 @@ public class StationRegister {
                 throw new CabinetIsOffline();
             } else {
                 synchronized (stationSocketClientWrapper) {
-                    final var waitTimeSec = 60;
+                    final var waitTimeSec = 30;
                     try {
                         log.info("Station {} is offline so trying to wait {} sec for reconnection",
                                 stationSocketClientWrapper.getSocketClient().getClientInfo(), waitTimeSec);

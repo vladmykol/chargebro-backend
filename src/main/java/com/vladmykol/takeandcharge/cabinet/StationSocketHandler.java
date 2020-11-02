@@ -91,7 +91,7 @@ public class StationSocketHandler {
         return new ProtocolEntity<>(messageHeader, new RawMessage(customDataInputStream));
     }
 
-    private synchronized byte[] readInputStream() throws IOException {
+    private byte[] readInputStream() throws IOException {
         int messageLength = in.readUnsignedShort();
         log.trace("Reading message from station. Message length {}", messageLength);
         byte[] bytes = in.readNBytes(messageLength);

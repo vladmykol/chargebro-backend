@@ -15,16 +15,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.GET_STOCK_NUMBER;
 import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.RESTART;
 
 
@@ -34,7 +33,7 @@ public class StationSocketClient {
     private final ClientInfo clientInfo;
     @Getter
     private final List<ProtocolMessage> messageQueue = Collections.synchronizedList(new LinkedList<>());
-    private final OutputStream outputStream;
+    private final BufferedOutputStream outputStream;
     @Getter
     private final DataInputStream inputStream;
     private final Socket socket;
@@ -46,11 +45,16 @@ public class StationSocketClient {
 
     public StationSocketClient(Socket socket, int idleTimeoutSeconds) throws IOException {
         socket.setKeepAlive(true);
+        socket.setReuseAddress(false);
+        socket.setTcpNoDelay(true);
+        socket.setOOBInline(true);
+        socket.setReceiveBufferSize(1024);
+        socket.setSendBufferSize(1024);
         socket.setSoTimeout(10000);
         this.socket = socket;
         this.clientInfo = new ClientInfo(socket.getInetAddress(), idleTimeoutSeconds);
         this.inputStream = new DataInputStream(socket.getInputStream());
-        this.outputStream = socket.getOutputStream();
+        this.outputStream = new BufferedOutputStream(socket.getOutputStream());
         log.debug("New station socket client {}", clientInfo);
     }
 
@@ -77,7 +81,7 @@ public class StationSocketClient {
             log.debug("Shutdown socket client {}", clientInfo, reason);
             shutdownTime = Instant.now();
             try {
-                internalCommunicate(new ProtocolEntity<>(RESTART), 10000);
+                internalCommunicate(new ProtocolEntity<>(RESTART), 5000);
             } catch (Exception ignore) {
             }
         }
@@ -99,26 +103,21 @@ public class StationSocketClient {
         if (StringUtils.isEmpty(getClientInfo().getCabinetId())) {
             throw new CabinetIsOffline();
         } else {
-            log.debug("Send check command to station {}", clientInfo);
+            log.debug("Send restart command to not responsive station {}", clientInfo);
             try {
-                internalCommunicate(new ProtocolEntity<>(GET_STOCK_NUMBER), 30000);
+                internalCommunicate(new ProtocolEntity<>(RESTART), 5000);
             } catch (NoResponseFromWithinTimeout e) {
-                log.debug("Send Restart command not active station {}", clientInfo);
-                internalCommunicate(new ProtocolEntity<>(RESTART), 10000);
+                log.debug("Send second restart command to not responsive station {}", clientInfo);
+                writeMessage(new ProtocolEntity<>(RESTART));
                 throw new CabinetIsOffline();
             }
-            log.debug("Success check command from station {}", clientInfo);
+//            log.debug("Success check command from station {}", clientInfo);
         }
     }
 
 
     public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request) {
-        try {
-            return internalCommunicate(request, 20000);
-        } catch (NoResponseFromWithinTimeout e) {
-            writeMessage(new ProtocolEntity<>(RESTART));
-            throw e;
-        }
+        return internalCommunicate(request, 10000);
     }
 
     @SneakyThrows
@@ -173,7 +172,7 @@ public class StationSocketClient {
         }
     }
 
-    private synchronized void writeOutputStream(byte[] byteArrayMessage) throws IOException {
+    private void writeOutputStream(byte[] byteArrayMessage) throws IOException {
         ByteBuffer arrayWithLeadingLength = ByteBuffer.allocate(2 + byteArrayMessage.length);
         putUnsignedShort(arrayWithLeadingLength, byteArrayMessage.length);
         arrayWithLeadingLength.put(byteArrayMessage);
