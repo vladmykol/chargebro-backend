@@ -7,24 +7,21 @@ import com.vladmykol.takeandcharge.cabinet.serialization.ProtocolSerializationUt
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.NoResponseFromWithinTimeout;
 import com.vladmykol.takeandcharge.utils.HexDecimalConverter;
+import com.vladmykol.takeandcharge.utils.TimeUtils;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DurationFormatUtils;
 
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.RESTART;
+import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.*;
 
 
 @Slf4j
@@ -33,28 +30,22 @@ public class StationSocketClient {
     private final ClientInfo clientInfo;
     @Getter
     private final List<ProtocolMessage> messageQueue = Collections.synchronizedList(new LinkedList<>());
-    private final BufferedOutputStream outputStream;
+    private final DataOutputStream outputStream;
     @Getter
     private final DataInputStream inputStream;
     private final Socket socket;
     @Getter
     private volatile boolean isActive = true;
-    @Getter
-    @Setter
-    private volatile Instant shutdownTime;
 
     public StationSocketClient(Socket socket, int idleTimeoutSeconds) throws IOException {
         socket.setKeepAlive(true);
-        socket.setReuseAddress(false);
+        socket.setReuseAddress(true);
         socket.setTcpNoDelay(true);
-        socket.setOOBInline(true);
-        socket.setReceiveBufferSize(1024);
-        socket.setSendBufferSize(1024);
         socket.setSoTimeout(10000);
         this.socket = socket;
         this.clientInfo = new ClientInfo(socket.getInetAddress(), idleTimeoutSeconds);
-        this.inputStream = new DataInputStream(socket.getInputStream());
-        this.outputStream = new BufferedOutputStream(socket.getOutputStream());
+        this.inputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+        this.outputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream(), 10 * 1024));
         log.debug("New station socket client {}", clientInfo);
     }
 
@@ -77,16 +68,12 @@ public class StationSocketClient {
     @SneakyThrows
     public synchronized void shutdown(Exception reason) {
         isActive = false;
-        if (shutdownTime == null) {
+        if (clientInfo.getShutdownTime() == null) {
             log.debug("Shutdown socket client {}", clientInfo, reason);
-            shutdownTime = Instant.now();
-            try {
-                internalCommunicate(new ProtocolEntity<>(RESTART), 5000);
-            } catch (Exception ignore) {
-            }
+            clientInfo.setShutdownTime(Instant.now());
         }
         try {
-            socket.close();
+            inputStream.close();
         } catch (Exception ignore) {
         }
         try {
@@ -99,22 +86,21 @@ public class StationSocketClient {
         }
     }
 
-    public void checkStationAlive() {
-        if (StringUtils.isEmpty(getClientInfo().getCabinetId())) {
-            throw new CabinetIsOffline();
-        } else {
-            log.debug("Send restart command to not responsive station {}", clientInfo);
+    public void check() {
+        log.debug("Send check command to not responsive station {}", clientInfo);
+//        if (StringUtils.isEmpty(getClientInfo().getCabinetId())) {
+//            internalCommunicate(new ProtocolEntity<>(SOFTWARE_VERSION), 5000);
+//            throw new CabinetIsOffline();
+//        } else {
             try {
-                internalCommunicate(new ProtocolEntity<>(RESTART), 5000);
+                internalCommunicate(new ProtocolEntity<>(SOFTWARE_VERSION), 10000);
             } catch (NoResponseFromWithinTimeout e) {
-                log.debug("Send second restart command to not responsive station {}", clientInfo);
-                writeMessage(new ProtocolEntity<>(RESTART));
+                internalCommunicate(new ProtocolEntity<>(RESTART), 30000);
                 throw new CabinetIsOffline();
             }
-//            log.debug("Success check command from station {}", clientInfo);
-        }
+            log.debug("Success check command to not responsive station {}", clientInfo);
+//        }
     }
-
 
     public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request) {
         return internalCommunicate(request, 10000);
@@ -157,7 +143,7 @@ public class StationSocketClient {
     }
 
     private ProtocolEntity<RawMessage> writeAndWaitForResponse(ProtocolEntity<?> request, int timeout)
-            throws InterruptedException, IOException {
+            throws InterruptedException {
         // TODO: 10/5/2020 same message ids can come and that one will be missed
         var protocolMessage = new ProtocolMessage(request.getCommand(), request);
         messageQueue.add(protocolMessage);
@@ -166,24 +152,18 @@ public class StationSocketClient {
         synchronized (protocolMessage) {
             protocolMessage.wait(timeout);
             messageQueue.remove(protocolMessage);
-            log.trace("Response from station {} took {}", getClientInfo(),
-                    DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis()));
+            if (protocolMessage.getResponse() != null) {
+                log.trace("Response from station {} took {}", getClientInfo(), TimeUtils.timeSince(start));
+            }
             return protocolMessage.getResponse();
         }
     }
 
     private void writeOutputStream(byte[] byteArrayMessage) throws IOException {
-        ByteBuffer arrayWithLeadingLength = ByteBuffer.allocate(2 + byteArrayMessage.length);
-        putUnsignedShort(arrayWithLeadingLength, byteArrayMessage.length);
-        arrayWithLeadingLength.put(byteArrayMessage);
-
-        if (isSocketConnected()) {
-            log.trace("Writing message to station. Message content {}", HexDecimalConverter.toHexString(byteArrayMessage));
-            outputStream.write(arrayWithLeadingLength.array());
-            outputStream.flush();
-        } else {
-            throw new CabinetIsOffline();
-        }
+        log.trace("Writing message to station. Message content {}", HexDecimalConverter.toHexString(byteArrayMessage));
+        outputStream.writeShort(byteArrayMessage.length);
+        outputStream.write(byteArrayMessage);
+        outputStream.flush();
     }
 
     @Override

@@ -20,6 +20,10 @@ public class ClientInfo {
     @Setter
     private Instant lastSeen;
 
+    @Getter
+    @Setter
+    private volatile Instant shutdownTime;
+
     public ClientInfo(InetAddress inetAddress, int idleTimeoutSeconds) {
         this.inetAddress = inetAddress;
 //        right after connection station should be monitored for active state

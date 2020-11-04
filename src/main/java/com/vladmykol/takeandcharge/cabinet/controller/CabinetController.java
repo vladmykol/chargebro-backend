@@ -1,6 +1,7 @@
 package com.vladmykol.takeandcharge.cabinet.controller;
 
 import com.vladmykol.takeandcharge.cabinet.StationSocketClient;
+import com.vladmykol.takeandcharge.cabinet.dto.MessageHeader;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.cabinet.dto.client.LoginRequest;
@@ -28,7 +29,7 @@ public class CabinetController {
     private final PowerBankService powerBankService;
 
     public ProtocolEntity<Object> heartBeat(ProtocolEntity<RawMessage> request) {
-        return new ProtocolEntity<>(request.getHeader(), null);
+        return new ProtocolEntity<>(MessageHeader.MessageCommand.HEART_BEAT);
     }
 
     public ProtocolEntity<LoginResponse> singIn(ProtocolEntity<RawMessage> request, StationSocketClient stationSocketClient) {

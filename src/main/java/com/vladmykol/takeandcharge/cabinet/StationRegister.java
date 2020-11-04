@@ -1,21 +1,19 @@
 package com.vladmykol.takeandcharge.cabinet;
 
-import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.NoResponseFromWithinTimeout;
 import com.vladmykol.takeandcharge.service.WebSocketServer;
+import com.vladmykol.takeandcharge.utils.TimeUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -35,14 +33,11 @@ public class StationRegister {
         connections.forEach((stationId, stationSocketClientWrapper) -> {
             final var dto = AuthenticatedStationsDto.builder()
                     .stationId(stationId)
-                    .isActive(stationSocketClientWrapper.getSocketClient().isActive())
+                    .isOnline(stationSocketClientWrapper.getSocketClient().isActive())
                     .lastSeen(stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen())
+                    .pastSessions(new ArrayList<>(stationSocketClientWrapper.getLastSessions()))
+                    .currentSession(TimeUtils.timeSince(stationSocketClientWrapper.getLogInTime()))
                     .build();
-
-            stationSocketClientWrapper.getLastSessions().forEach(duration -> {
-                final var durationHMS = DurationFormatUtils.formatDurationHMS(duration.toMillis());
-                dto.getSessionDuration().add(durationHMS);
-            });
 
             result.add(dto);
         });
@@ -61,7 +56,8 @@ public class StationRegister {
                         stationSocketClientWrapper.getSocketClient().getClientInfo() + " is replaces by " + newStationSocketClient.getClientInfo()));
 //                    }
                 // set session duration before reconnect
-                final var sessionDuration = Duration.between(stationSocketClientWrapper.getLogInTime(), stationSocketClientWrapper.getSocketClient().getShutdownTime());
+                final var sessionDuration = TimeUtils.timeBetween(stationSocketClientWrapper.getLogInTime(),
+                        stationSocketClientWrapper.getSocketClient().getClientInfo().getShutdownTime());
                 stationSocketClientWrapper.getLastSessions().add(sessionDuration);
 
                 stationSocketClientWrapper.setSocketClient(newStationSocketClient);
@@ -90,7 +86,7 @@ public class StationRegister {
                 throw new CabinetIsOffline();
             } else {
                 synchronized (stationSocketClientWrapper) {
-                    final var waitTimeSec = 30;
+                    final var waitTimeSec = 20;
                     try {
                         log.info("Station {} is offline so trying to wait {} sec for reconnection",
                                 stationSocketClientWrapper.getSocketClient().getClientInfo(), waitTimeSec);
@@ -138,7 +134,7 @@ public class StationRegister {
     static class StationSocketClientWrapper {
         private StationSocketClient socketClient;
         private Instant logInTime;
-        private CircularFifoQueue<Duration> lastSessions = new CircularFifoQueue<>(50);
+        private CircularFifoQueue<String> lastSessions = new CircularFifoQueue<>(10);
 
         public StationSocketClientWrapper(StationSocketClient socketClient) {
             this.socketClient = socketClient;

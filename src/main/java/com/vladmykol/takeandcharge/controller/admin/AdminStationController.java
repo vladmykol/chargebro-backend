@@ -1,6 +1,5 @@
 package com.vladmykol.takeandcharge.controller.admin;
 
-import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.MessageHeader;
 import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.dto.StationInfoDto;
@@ -21,7 +20,7 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.API_STATIONS;
 public class AdminStationController {
     private final StationService stationService;
 
-    @GetMapping("/online")
+    @GetMapping("/connection")
     public List<AuthenticatedStationsDto> getAuthenticatedStations() {
         return stationService.getAuthenticatedStations();
     }

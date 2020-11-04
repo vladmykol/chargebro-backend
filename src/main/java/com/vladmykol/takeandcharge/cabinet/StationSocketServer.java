@@ -37,7 +37,7 @@ public class StationSocketServer {
         }
     }
 
-    @Scheduled(fixedRate = 5000, initialDelay = 30000)
+    @Scheduled(fixedRate = 30000, initialDelay = 10000)
     public void monitorClients() {
         List<StationSocketClient> inactiveStationSocketClients = stationRegister.getInactiveClients(idleTimeoutSeconds);
         inactiveStationSocketClients.forEach(this::tryToWakeUpInactive);
@@ -52,7 +52,8 @@ public class StationSocketServer {
     public void tryToWakeUpInactive(StationSocketClient stationSocketClient) {
         stationSocketClient.setInactive();
         try {
-            stationSocketClient.checkStationAlive();
+            stationSocketClient.check();
+            stationSocketClient.setActive();
         } catch (Exception e) {
             stationSocketClient.shutdown(e);
         }

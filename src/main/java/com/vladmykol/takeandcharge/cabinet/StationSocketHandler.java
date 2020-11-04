@@ -93,7 +93,6 @@ public class StationSocketHandler {
 
     private byte[] readInputStream() throws IOException {
         int messageLength = in.readUnsignedShort();
-        log.trace("Reading message from station. Message length {}", messageLength);
         byte[] bytes = in.readNBytes(messageLength);
         log.trace("Reading message from station. Message content {}", HexDecimalConverter.toHexString(bytes));
         return bytes;

@@ -11,9 +11,10 @@ import java.util.List;
 @Data
 @Builder
 public class AuthenticatedStationsDto {
-    private final List<String> sessionDuration = new ArrayList<>();
+    private final List<String> pastSessions;
+    private final String currentSession;
     private String stationId;
-    private boolean isActive;
+    private boolean isOnline;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Kiev")
     private Instant lastSeen;
 }
