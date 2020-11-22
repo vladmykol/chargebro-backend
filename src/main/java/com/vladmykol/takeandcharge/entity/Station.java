@@ -4,6 +4,7 @@ import lombok.Data;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.NotNull;
@@ -13,6 +14,10 @@ import java.util.Date;
 @Document
 public class Station {
     private String id;
+
+    @Indexed(unique = true)
+    @NotNull
+    private String shortId;
 
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     @NotNull

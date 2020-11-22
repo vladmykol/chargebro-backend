@@ -2,7 +2,6 @@ package com.vladmykol.takeandcharge.service;
 
 import com.vladmykol.takeandcharge.cabinet.StationRegister;
 import com.vladmykol.takeandcharge.cabinet.StationSocketClient;
-import com.vladmykol.takeandcharge.cabinet.dto.ClientInfo;
 import com.vladmykol.takeandcharge.cabinet.dto.MessageHeader;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
@@ -153,6 +152,18 @@ public class StationService {
         return messageProtocolEntity.getHeader();
     }
 
+    public void unlockAllPowerBanks(String cabinetId) {
+        final var stationInventory = getStationInventory(cabinetId);
+
+        log.debug("Eject all powerbanks for station {}", cabinetId);
+        stationInventory.getPowerBankList().forEach(powerBankInfo -> {
+            ProtocolEntity<TakePowerBankRequest> powerBankRequest = new ProtocolEntity<>(FORCE_POPUP,
+                    new TakePowerBankRequest(powerBankInfo.getSlotNumber()));
+
+            stationRegister.communicateWithStation(cabinetId, powerBankRequest);
+        });
+    }
+
 
     public int getRemainingPowerBanks(String cabinetId) {
         return getStationInventory(cabinetId).getRemainingPowerBanks();
@@ -199,8 +210,33 @@ public class StationService {
         }
     }
 
+    private boolean isHardWareStationId(String id) {
+        return id.contains("STW");
+    }
+
     public String extractStationId(String url) {
-        return url.substring(url.indexOf("=") + 1);
+        if (isHardWareStationId(url)) {
+            var starIndex = url.indexOf("=");
+            if (starIndex > 0) {
+                return url.substring(starIndex + 1);
+            } else {
+                return url;
+            }
+        } else {
+            var starIndex = url.indexOf("/k");
+            String shortId;
+            if (starIndex > 0) {
+                shortId = url.substring(starIndex + 1);
+            } else {
+                shortId = url;
+            }
+            final var optionalStation = stationRepository.findByShortId(shortId);
+            if (optionalStation.isPresent()) {
+                return optionalStation.get().getId();
+            } else {
+                return shortId;
+            }
+        }
     }
 
     public List<AuthenticatedStationsDto> getAuthenticatedStations() {

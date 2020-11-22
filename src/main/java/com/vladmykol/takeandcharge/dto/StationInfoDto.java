@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 public class StationInfoDto {
     private String id;
+    private String shortId;
     private double locationX;
     private double locationY;
     private String placeName;

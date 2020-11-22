@@ -51,4 +51,10 @@ public class AdminStationController {
         return stationService.setServerAddressAndRestart(stationId, serverAddress, serverPort, interval);
     }
 
+    @PostMapping("/{id}/unlock-all")
+    @ApiOperation(value = "unlock all powerbank for mainteinc")
+    public void unlockAll(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005") @PathVariable(name = "id") String stationId) {
+        stationService.unlockAllPowerBanks(stationId);
+    }
+
 }

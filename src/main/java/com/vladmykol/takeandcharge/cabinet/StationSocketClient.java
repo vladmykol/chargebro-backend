@@ -159,6 +159,7 @@ public class StationSocketClient {
         }
     }
 
+
     private void writeOutputStream(byte[] byteArrayMessage) throws IOException {
         log.trace("Writing message to station. Message content {}", HexDecimalConverter.toHexString(byteArrayMessage));
         outputStream.writeShort(byteArrayMessage.length);

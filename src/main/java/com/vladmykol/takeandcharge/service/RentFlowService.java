@@ -51,7 +51,7 @@ public class RentFlowService {
                 .build();
     }
 
-    public void syncRentStart(String cabinetId) {
+    public void syncRentStart(String stationId) {
         if (rentService.isUserHasActiveRent()) {
             throw new RentAlreadyInProgress();
         }
@@ -59,7 +59,7 @@ public class RentFlowService {
         Rent rent = rentRepository.save(
                 Rent.builder()
                         .stage(RentStage.CHECK)
-                        .takenInStationId(cabinetId)
+                        .takenInStationId(stationId)
                         .build()
         );
 

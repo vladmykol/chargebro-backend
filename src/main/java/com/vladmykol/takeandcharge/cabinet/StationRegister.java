@@ -134,7 +134,7 @@ public class StationRegister {
     static class StationSocketClientWrapper {
         private StationSocketClient socketClient;
         private Instant logInTime;
-        private CircularFifoQueue<String> lastSessions = new CircularFifoQueue<>(10);
+        private CircularFifoQueue<String> lastSessions = new CircularFifoQueue<>(5);
 
         public StationSocketClientWrapper(StationSocketClient socketClient) {
             this.socketClient = socketClient;
