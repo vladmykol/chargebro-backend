@@ -130,7 +130,7 @@ public class RegisterUserService {
 
         existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         existingUser.setPasswordDate(new Date());
-        existingUser.setBonusAmount(30);
+        existingUser.setBonusAmount(0);
         existingUser.setUserStatus(REGISTERED);
 
         return userRepository.save(existingUser);
