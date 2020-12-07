@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class SendSmsBodyDto {
-    private String sender = "Take&Charge";
+    private String sender = "ChargeBro";
     private String text;
 
     public SendSmsBodyDto(String validationCode) {
