@@ -42,7 +42,7 @@ public class AdminStationController {
 
     @PostMapping("/{id}/option")
     @ApiOperation(value = "Set parameters for charging station if it is connected and restart. localhost - is a debug server")
-    public MessageHeader setStationOptions(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005") @PathVariable(name = "id") String stationId,
+    public MessageHeader setStationOptions(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId,
                                            @ApiParam(allowableValues = "localhost, REDACTED_SERVER_IP", required = true)
                                            @RequestParam(defaultValue = "localhost") String serverAddress,
                                            @RequestParam(defaultValue = "10382") String serverPort,
@@ -53,7 +53,7 @@ public class AdminStationController {
 
     @PostMapping("/{id}/unlock-all")
     @ApiOperation(value = "unlock all powerbank for mainteinc")
-    public void unlockAll(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005") @PathVariable(name = "id") String stationId) {
+    public void unlockAll(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId) {
         stationService.unlockAllPowerBanks(stationId);
     }
 
