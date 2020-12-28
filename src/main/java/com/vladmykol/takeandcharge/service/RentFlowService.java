@@ -116,7 +116,7 @@ public class RentFlowService {
     private void processRentPayment(PaymentType paymentType, String status, Rent rent) {
         if (isWaitingForDepositConfirmation(paymentType, status, rent.getStage())) {
             givePowerBank(rent);
-        } else if (isWaitingForChargeConfirmation(paymentType, status, rent.getStage())) {
+        } else if (isWaitingForChargeConfirmation(status, rent.getStage())) {
             finishRent(rent);
         }
     }
@@ -125,8 +125,8 @@ public class RentFlowService {
         return paymentType == PaymentType.DEPOSIT && rentStage == RentStage.HOLD_DEPOSIT && "approved".equalsIgnoreCase(status);
     }
 
-    private boolean isWaitingForChargeConfirmation(PaymentType paymentType, String status, RentStage rentStage) {
-        return paymentType == PaymentType.CHARGE && rentStage == RentStage.CHARGE_MONEY && "approved".equalsIgnoreCase(status);
+    private boolean isWaitingForChargeConfirmation(String status, RentStage rentStage) {
+        return rentStage == RentStage.CHARGE_MONEY && "approved".equalsIgnoreCase(status);
     }
 
     private void finishRent(Rent rent) {
