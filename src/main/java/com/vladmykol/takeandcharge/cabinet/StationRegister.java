@@ -28,6 +28,20 @@ public class StationRegister {
     private final Map<String, StationSocketClientWrapper> connections = Collections.synchronizedMap(new HashMap<>());
     private final WebSocketServer webSocketServer;
 
+    public List<String> getDisconnectedStations() {
+        List<String> disconnectedStations = new ArrayList<>();
+        connections.forEach((stationId, stationSocketClientWrapper) -> {
+            if (!stationSocketClientWrapper.getSocketClient().isActive()
+                    && stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen().isBefore(Instant.now().minusSeconds(5 * 60))
+                    && !stationSocketClientWrapper.isReportedInactive) {
+                stationSocketClientWrapper.setReportedInactive(true);
+                disconnectedStations.add(stationId);
+            }
+        });
+
+        return disconnectedStations;
+    }
+
     public List<AuthenticatedStationsDto> getConnections() {
         List<AuthenticatedStationsDto> result = new ArrayList<>();
         connections.forEach((stationId, stationSocketClientWrapper) -> {
@@ -36,7 +50,7 @@ public class StationRegister {
                     .isOnline(stationSocketClientWrapper.getSocketClient().isActive())
                     .lastSeen(stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen())
                     .pastSessions(new ArrayList<>(stationSocketClientWrapper.getLastSessions()))
-                    .currentSession(TimeUtils.timeSince(stationSocketClientWrapper.getLogInTime()))
+                    .timeSinceLastLogIn(TimeUtils.timeSince(stationSocketClientWrapper.getLogInTime()))
                     .build();
 
             result.add(dto);
@@ -62,6 +76,7 @@ public class StationRegister {
 
                 stationSocketClientWrapper.setSocketClient(newStationSocketClient);
                 stationSocketClientWrapper.setLogInTime(Instant.now());
+                stationSocketClientWrapper.setReportedInactive(false);
 
                 stationSocketClientWrapper.notify();
             }
@@ -134,6 +149,7 @@ public class StationRegister {
     static class StationSocketClientWrapper {
         private StationSocketClient socketClient;
         private Instant logInTime;
+        private boolean isReportedInactive;
         private CircularFifoQueue<String> lastSessions = new CircularFifoQueue<>(5);
 
         public StationSocketClientWrapper(StationSocketClient socketClient) {

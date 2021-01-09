@@ -10,6 +10,7 @@ import com.vladmykol.takeandcharge.entity.RentError;
 import com.vladmykol.takeandcharge.exceptions.HttpException;
 import com.vladmykol.takeandcharge.exceptions.PaymentException;
 import com.vladmykol.takeandcharge.exceptions.RentAlreadyInProgress;
+import com.vladmykol.takeandcharge.monitoring.TelegramNotifierService;
 import com.vladmykol.takeandcharge.repository.RentRepository;
 import com.vladmykol.takeandcharge.utils.ExceptionUtil;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
@@ -33,6 +34,7 @@ public class RentFlowService {
     private final UserService userService;
     private final UserWalletService userWalletService;
     private final PowerBankService powerBankService;
+    private final TelegramNotifierService telegramNotifierService;
 
     public RentConfirmationDto getBeforeRentInfo(String stationId) {
 //        final var powerBankInfo = stationService.findMaxChargedPowerBank(stationId);
@@ -215,6 +217,7 @@ public class RentFlowService {
         if (rentException != null) {
             rent.setLastError(new RentError(rentException));
             rentRepository.save(rent);
+            telegramNotifierService.messageToAdmin("Rent Error occurred: " + rent.getLastErrorMessage());
 
             if (isNeedToThrow) {
                 throw rentException;

@@ -5,14 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @Builder
 public class AuthenticatedStationsDto {
     private final List<String> pastSessions;
-    private final String currentSession;
+    private final String timeSinceLastLogIn;
     private String stationId;
     private boolean isOnline;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Kiev")

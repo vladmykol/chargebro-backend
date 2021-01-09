@@ -59,13 +59,4 @@ public class StationSocketServer {
         }
     }
 
-//    public void checkActiveClient(StationSocketClient stationSocketClient) {
-//        log.debug("Check active client {}", stationSocketClient.getClientInfo().getInetAddress());
-//        try {
-//            stationSocketClient.check();
-//        } catch (Exception e) {
-//            stationSocketClient.shutdown(e);
-//        }
-//    }
-
 }
