@@ -5,6 +5,7 @@ import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.NoResponseFromWithinTimeout;
+import com.vladmykol.takeandcharge.monitoring.TelegramNotifierService;
 import com.vladmykol.takeandcharge.service.WebSocketServer;
 import com.vladmykol.takeandcharge.utils.TimeUtils;
 import lombok.Data;
@@ -27,6 +28,7 @@ public class StationRegister {
     private final List<StationSocketClient> currentConnections = Collections.synchronizedList(new LinkedList<>());
     private final Map<String, StationSocketClientWrapper> connections = Collections.synchronizedMap(new HashMap<>());
     private final WebSocketServer webSocketServer;
+    private final TelegramNotifierService telegramNotifierService;
 
     public List<String> getDisconnectedStations() {
         List<String> disconnectedStations = new ArrayList<>();
@@ -76,12 +78,19 @@ public class StationRegister {
 
                 stationSocketClientWrapper.setSocketClient(newStationSocketClient);
                 stationSocketClientWrapper.setLogInTime(Instant.now());
+                if (stationSocketClientWrapper.isReportedInactive) {
+                    String msg = "Station " + newStationSocketClient.getClientInfo().getCabinetId() + " is back online";
+                    telegramNotifierService.messageToAdmin(msg);
+                }
+
                 stationSocketClientWrapper.setReportedInactive(false);
 
                 stationSocketClientWrapper.notify();
             }
         } else {
             connections.put(newStationSocketClient.getClientInfo().getCabinetId(), new StationSocketClientWrapper(newStationSocketClient));
+            String msg = "New station " + newStationSocketClient.getClientInfo().getCabinetId() + " is connected";
+            telegramNotifierService.messageToAdmin(msg);
         }
     }
 
