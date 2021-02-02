@@ -5,12 +5,18 @@ plugins {
 }
 
 group = 'com.vladmykol'
-version = '0.1.1-SNAPSHOT'
+version = '1.0.1-SNAPSHOT'
 sourceCompatibility = '11'
 
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
+    }
+}
+
+bootJar {
+    manifest {
+        attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
     }
 }
 

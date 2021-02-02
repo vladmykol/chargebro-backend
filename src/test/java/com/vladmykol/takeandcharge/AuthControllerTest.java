@@ -55,7 +55,7 @@ class AuthControllerTest {
                 .username("Admin")
                 .password("Admin").build();
 
-        mvc.perform(post(API_AUTH + API_AUTH_LOGIN)
+        mvc.perform(post(API_AUTH + "/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body(loginRequest)))
                 .andExpect(status().isOk())
@@ -66,7 +66,7 @@ class AuthControllerTest {
 
     @Test
     void twoStepSingUp() throws Exception {
-        var registerInit = mvc.perform(post(API_AUTH + API_AUTH_REGISTER_INIT)
+        var registerInit = mvc.perform(post(API_AUTH + "/init")
                 .contentType(MediaType.APPLICATION_JSON)
                 .param("phone", "380939008021"))
                 .andExpect(status().isOk())
@@ -84,7 +84,7 @@ class AuthControllerTest {
                 .password("1111")
                 .build();
 
-        mvc.perform(post(API_AUTH + API_AUTH_REGISTER)
+        mvc.perform(post(API_AUTH + "/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body(singUpDto)))
                 .andExpect(status().isOk())
