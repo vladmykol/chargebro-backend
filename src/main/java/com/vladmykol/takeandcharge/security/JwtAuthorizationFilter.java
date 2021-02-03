@@ -35,14 +35,18 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+        authenticate(request);
+
+        chain.doFilter(request, response);
+    }
+
+    private void authenticate(HttpServletRequest request) {
         String token = jwtProvider.getToken(request);
         if (token != null) {
             String userId = jwtProvider.parseAuthToken(token);
 
             setUpSpringAuthentication(userId, request);
         }
-
-        chain.doFilter(request, response);
     }
 
     private void setUpSpringAuthentication(String userId, HttpServletRequest request) {
