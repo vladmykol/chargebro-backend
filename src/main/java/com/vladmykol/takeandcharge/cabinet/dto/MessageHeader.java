@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.Getter;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.vladmykol.takeandcharge.cabinet.serialization.DataType.BYTE;
 import static com.vladmykol.takeandcharge.cabinet.serialization.DataType.DATE;
@@ -44,13 +46,26 @@ public class MessageHeader {
         SIM_INFO(0X69),
         GET_SERVER_ADDRESS(0X6A),
         GET_STOCK_NUMBER(0X6B),
-        FORCE_POPUP(0X80);
+        FORCE_POPUP(0X80),
+        NOT_DEFINED(-1);
+
+        private static final Map<Short, MessageCommand> BY_CODE_MAP = new HashMap<>();
+
+        static {
+            for (MessageCommand curEnum : MessageCommand.values()) {
+                BY_CODE_MAP.put(curEnum.command, curEnum);
+            }
+        }
 
         @Getter
         private final short command;
 
         MessageCommand(int command) {
             this.command = (short) command;
+        }
+
+        public static MessageCommand byCommand(int command) {
+            return BY_CODE_MAP.getOrDefault(command, MessageCommand.NOT_DEFINED);
         }
     }
 
