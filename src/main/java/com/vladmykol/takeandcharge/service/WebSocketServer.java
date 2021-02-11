@@ -144,12 +144,13 @@ public class WebSocketServer extends BinaryWebSocketHandler {
                 }
             });
         } else {
-            log.warn("No connected web socket clients to send rent update {}",baseMessage);
+            log.warn("No connected web socket clients to send rent update {}", baseMessage);
         }
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+//        todo:force auth in some time
         log.trace("Web Socket Client {} is now connected", session.getRemoteAddress());
     }
 
@@ -168,7 +169,7 @@ public class WebSocketServer extends BinaryWebSocketHandler {
 //                returnPowerBankAction(message);
 //                break;
             default:
-                System.out.println("not defined message type  " + messageType + " from client");
+                log.warn("not defined message {} from client {}", message, session.getRemoteAddress());
         }
     }
 
