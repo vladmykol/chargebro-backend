@@ -52,7 +52,8 @@ public class StationSocketHandler {
                 }
             } catch (SocketTimeoutException ignore) {
             } catch (NoHandlerDefined e) {
-                log.warn("Not handled message for station client - {}:{}", stationSocketClient.getClientInfo(), e.getMessage());
+                log.warn("Not known message from - {} : {}", stationSocketClient.getClientInfo(), e.getMessage());
+//                stationSocketClient.shutdown(e);
             }
         }
     }

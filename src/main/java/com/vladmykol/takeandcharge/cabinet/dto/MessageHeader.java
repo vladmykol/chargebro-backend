@@ -46,8 +46,7 @@ public class MessageHeader {
         SIM_INFO(0X69),
         GET_SERVER_ADDRESS(0X6A),
         GET_STOCK_NUMBER(0X6B),
-        FORCE_POPUP(0X80),
-        NOT_DEFINED(-1);
+        FORCE_POPUP(0X80);
 
         private static final Map<Short, MessageCommand> BY_CODE_MAP = new HashMap<>();
 
@@ -64,8 +63,9 @@ public class MessageHeader {
             this.command = (short) command;
         }
 
-        public static MessageCommand byCommand(int command) {
-            return BY_CODE_MAP.getOrDefault(command, MessageCommand.NOT_DEFINED);
+        public static String stringValueByCommand(short command) {
+            final var messageCommand = BY_CODE_MAP.get(command);
+            return messageCommand == null ? String.valueOf(command) : messageCommand.toString();
         }
     }
 
