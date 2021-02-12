@@ -54,7 +54,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             authenticate(request);
             chain.doFilter(request, response);
         } finally {
-            log.debug("Incoming {} from {} to {} and status {}\n", request.getMethod(), ipAddress, request.getRequestURL(), response.getStatus());
+            log.debug("Incoming {} from {} to {} and status {}", request.getMethod(), ipAddress, request.getRequestURL(), response.getStatus());
         }
     }
 
