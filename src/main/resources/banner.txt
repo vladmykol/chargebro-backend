@@ -5,4 +5,4 @@
    _| |_    // | |,  | |`\ \  | \__., | (___)  \_  \ `.___.'\  | | | |  // | |,  | |      \ \._// | \__.,
   |_____|   \'-;__/ [__|  \_]  '.__.' `._____.\__|  `.____ .' [___]|__] \'-;__/ [___]     .',__`   '.__.'
                                                                                          ( ( __))
-${Ansi.RED} :: Server ${application.formatted-version} :: ${Ansi.DEFAULT}
+${Ansi.RED} :: v ${application.formatted-version} :: ${Ansi.DEFAULT}
