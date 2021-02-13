@@ -9,5 +9,5 @@ import java.util.List;
 public interface RentRepository extends MongoRepository<Rent, String> {
     List<Rent> findByUserIdAndStageIn(String userId, List<RentStage> stages);
 
-    List<Rent> findByUserId(String userId);
+    List<Rent> findByUserIdAndPowerBankReturnedAtNotNull(String userId);
 }

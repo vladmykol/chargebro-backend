@@ -38,7 +38,7 @@ public class RentService {
             rentedPowerBanks = getActiveRentWithNotReturnedPowerBank();
 // TODO: 9/25/2020     if is active, check if it is present in station
         } else {
-            rentedPowerBanks = rentRepository.findByUserId(SecurityUtil.getUser());
+            rentedPowerBanks = rentRepository.findByUserIdAndPowerBankReturnedAtNotNull(SecurityUtil.getUser());
         }
 
         rentedPowerBanks.forEach(rentedPowerBank -> {
@@ -46,7 +46,8 @@ public class RentService {
                     RentHistoryDto.builder()
                             .powerBankId(rentedPowerBank.getPowerBankId())
                             .rentPeriodMs(rentedPowerBank.getRentTime())
-//                                .price(paymentService.getRentPriceAmount(rentedPowerBank.getRentTime()))
+                            .rentPrice(rentedPowerBank.getPrice())
+                            .rentStartTime(rentedPowerBank.getPowerBankTakenAt().getTime())
                             .isReturned((rentedPowerBank.getPowerBankReturnedAt() == null) ? 0 : 1)
                             .errorCode(rentedPowerBank.getLastErrorCodeValue())
                             .errorMessage(rentedPowerBank.getLastErrorMessage())

@@ -8,6 +8,8 @@ import lombok.Data;
 public class RentHistoryDto {
     private String powerBankId;
     private long rentPeriodMs;
+    private long rentPrice;
+    private long rentStartTime;
     private int isReturned;
     private int errorCode;
     private String errorMessage;
