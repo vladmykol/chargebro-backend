@@ -66,4 +66,10 @@ public class AdminStationController {
         }
     }
 
+    @PostMapping("/{id}/unlock-all/to-remove")
+    @ApiOperation(value = "unlock all powerbank for mainteinc")
+    public void unlockAll(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId) {
+        stationService.unlockAllPowerBanks(stationId);
+    }
+
 }
