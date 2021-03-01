@@ -21,7 +21,7 @@ public class StationConnectionMonitor {
         if (!disconnectedStations.isEmpty()) {
             final var stationEntityList = stationRepository.findAllById(disconnectedStations);
             stationEntityList.forEach(station -> {
-                String msg = "Station " + station.getId() + " went offline" +
+                String msg = "\uD83D\uDE14 Station " + station.getId() + " went offline" +
                         "\n\nPlace: " + station.getPlaceName() +
                         "\nPhone:" + station.getSimPhoneNumber();
                 telegramNotifierService.messageToAdmin(msg);

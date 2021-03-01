@@ -79,7 +79,7 @@ public class StationRegister {
                 stationSocketClientWrapper.setSocketClient(newStationSocketClient);
                 stationSocketClientWrapper.setLogInTime(Instant.now());
                 if (stationSocketClientWrapper.isReportedInactive) {
-                    String msg = "Station " + newStationSocketClient.getClientInfo().getCabinetId() + " is back online";
+                    String msg = "\uD83D\uDE05 Station " + newStationSocketClient.getClientInfo().getCabinetId() + " is back online";
                     telegramNotifierService.messageToAdmin(msg);
                 }
 
@@ -89,7 +89,7 @@ public class StationRegister {
             }
         } else {
             connections.put(newStationSocketClient.getClientInfo().getCabinetId(), new StationSocketClientWrapper(newStationSocketClient));
-            String msg = "New station " + newStationSocketClient.getClientInfo().getCabinetId() + " is connected";
+            String msg = "Station " + newStationSocketClient.getClientInfo().getCabinetId() + " is reconnected";
             telegramNotifierService.messageToAdmin(msg);
         }
     }

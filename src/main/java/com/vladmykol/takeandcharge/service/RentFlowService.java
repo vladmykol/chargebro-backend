@@ -136,6 +136,11 @@ public class RentFlowService {
         rentRepository.save(rent);
         webSocketServer.sendRentEndMessage(rent.getPowerBankId());
         reversePayment(rent);
+
+        String msg = "\uD83D\uDC4C Returned PowerBank: " + rent.getPowerBankId() +
+                "\n\nStation: " + rent.getReturnedToStationId() +
+                "\n\nPrice: " + (rent.getPrice() / 100);
+        telegramNotifierService.messageToAdmin(msg);
     }
 
     private void holdMoneyBeforeRent(Rent rent) {
@@ -203,6 +208,10 @@ public class RentFlowService {
         powerBankService.takeAction(rent.getPowerBankId(), rent.getId());
 
         webSocketServer.sendRentStartMessage(rent.getPowerBankId());
+
+        String msg = "\uD83D\uDE01 Taken PowerBank: " + rent.getPowerBankId() +
+                "\n\nStation: " + rent.getTakenInStationId();
+        telegramNotifierService.messageToAdmin(msg);
     }
 
 
@@ -217,7 +226,9 @@ public class RentFlowService {
         if (rentException != null) {
             rent.setLastError(new RentError(rentException));
             rentRepository.save(rent);
-            telegramNotifierService.messageToAdmin("Rent Error occurred: " + rent.getLastErrorMessage());
+            String msg = "❌ Rent Error occurred: " + rent.getLastErrorMessage() +
+                    "\n\nStation: " + rent.getTakenInStationId();
+            telegramNotifierService.messageToAdmin(msg);
 
             if (isNeedToThrow) {
                 throw rentException;
