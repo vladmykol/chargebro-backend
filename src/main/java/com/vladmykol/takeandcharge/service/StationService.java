@@ -247,4 +247,9 @@ public class StationService {
         stationRepository.deleteById(stationId);
     }
 
+    public MessageHeader restart(String stationId) {
+        final var messageProtocolEntity = stationRegister.communicateWithStation(stationId, new ProtocolEntity<>(RESTART));
+
+        return messageProtocolEntity.getHeader();
+    }
 }

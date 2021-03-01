@@ -51,10 +51,19 @@ public class AdminStationController {
         return stationService.setServerAddressAndRestart(stationId, serverAddress, serverPort, interval);
     }
 
+    @PostMapping("/{id}/reboot")
+    @ApiOperation(value = "Restart selected station")
+    public MessageHeader setStationOptions(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId) {
+        return stationService.restart(stationId);
+    }
+
     @PostMapping("/{id}/unlock-all")
     @ApiOperation(value = "unlock all powerbank for mainteinc")
-    public void unlockAll(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId) {
-        stationService.unlockAllPowerBanks(stationId);
+    public void unlockAll(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId,
+                          @ApiParam(allowableValues = "Yes, No") @RequestParam(defaultValue = "No") String force) {
+        if (force.equalsIgnoreCase("Yes")) {
+            stationService.unlockAllPowerBanks(stationId);
+        }
     }
 
 }
