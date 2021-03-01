@@ -17,18 +17,18 @@ public class MobileAppController {
     @GetMapping("/version")
     public ResponseEntity<String> checkVersion(@RequestParam float currentVersion,
                                                @RequestParam String os) {
-        final var stableVersion = 1.26;
-
+        var stableVersion = 1.28f;
         String link = "https://apps.apple.com/us/app/chargebro/id1523146131";
         if ("android".equalsIgnoreCase(os)) {
+            stableVersion = 1.29f;
             link = "https://play.google.com/store/apps/details?id=com.mykovol.takeandcharge";
         }
 
         if (currentVersion < stableVersion) {
             return ResponseEntity.ok(link);
-        } else {
-            return new ResponseEntity<>(link, HttpStatus.PRECONDITION_FAILED);
         }
+
+        return new ResponseEntity<>(link, HttpStatus.PRECONDITION_FAILED);
     }
 
     @GetMapping("/{id}")
