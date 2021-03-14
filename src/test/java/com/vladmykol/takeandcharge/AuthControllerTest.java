@@ -6,16 +6,16 @@ import com.vladmykol.takeandcharge.dto.SingUpDto;
 import com.vladmykol.takeandcharge.dto.SmsRegistrationTokenInfo;
 import com.vladmykol.takeandcharge.repository.StationRepository;
 import com.vladmykol.takeandcharge.security.JwtProvider;
-import com.vladmykol.takeandcharge.service.SmsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
+import static com.vladmykol.takeandcharge.conts.EndpointConst.API_AUTH;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,7 +31,7 @@ class AuthControllerTest {
     @Autowired
     private JwtProvider jwtProvider;
     @Autowired
-    private SmsService smsService;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -89,6 +89,11 @@ class AuthControllerTest {
                 .content(body(singUpDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty());
+    }
+
+    @Test
+    public void encodePass() {
+        System.out.println(passwordEncoder.encode("testPass"));
     }
 
 
