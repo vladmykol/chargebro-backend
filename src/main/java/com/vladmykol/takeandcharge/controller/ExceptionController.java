@@ -16,7 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class ExceptionController extends ResponseEntityExceptionHandler {
     @ExceptionHandler({BadCredentialsException.class})
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException e) {
-        log.warn("User or password is bad when login via rest api", e);
+        log.warn("User or password is bad when login via rest api - {}", e.getMessage());
         final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.FORBIDDEN,
                 "User or password is incorrect");
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
@@ -34,7 +34,7 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({Exception.class})
     public ResponseEntity<ErrorResponse> generalException(Exception ex) {
-        log.error("Error in rest api", ex);
+        log.warn("Error in rest api - {}", ex.getMessage());
         final var rentException = ExceptionUtil.convertToHttpException(ex);
 
         return new ResponseEntity<>(new ErrorResponse(rentException), rentException.getStatus());

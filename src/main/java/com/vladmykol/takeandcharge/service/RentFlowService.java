@@ -137,11 +137,28 @@ public class RentFlowService {
         webSocketServer.sendRentEndMessage(rent.getPowerBankId());
         reversePayment(rent);
 
+        notifyAdminRentFinish(rent);
+    }
+
+    private void notifyAdminRentFinish(Rent rent) {
+        final var userPhone = userService.getUserPhone(rent.getUserId());
+
         String msg = "\uD83D\uDC4C Returned PowerBank: " + rent.getPowerBankId() +
                 "\n\nStation: " + rent.getReturnedToStationId() +
-                "\n\nPrice: " + (rent.getPrice() / 100);
+                "\nPrice: " + (rent.getPrice() / 100) +
+                "\nUser: " + userPhone;
         telegramNotifierService.messageToAdmin(msg);
     }
+
+    private void notifyAdminRentStart(Rent rent) {
+        final var userPhone = userService.getUserPhone(rent.getUserId());
+
+        String msg = "\uD83D\uDE01 Taken PowerBank: " + rent.getPowerBankId() +
+                "\n\nStation: " + rent.getTakenInStationId() +
+                "\nUser: " + userPhone;
+        telegramNotifierService.messageToAdmin(msg);
+    }
+
 
     private void holdMoneyBeforeRent(Rent rent) {
         rent.setStage(RentStage.HOLD_DEPOSIT);
@@ -209,9 +226,7 @@ public class RentFlowService {
 
         webSocketServer.sendRentStartMessage(rent.getPowerBankId());
 
-        String msg = "\uD83D\uDE01 Taken PowerBank: " + rent.getPowerBankId() +
-                "\n\nStation: " + rent.getTakenInStationId();
-        telegramNotifierService.messageToAdmin(msg);
+        notifyAdminRentStart(rent);
     }
 
 
