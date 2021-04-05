@@ -61,7 +61,7 @@ public class PaymentService {
 
 
     public Payment holdMoney(HoldDetails holdDetails) {
-        final var validPaymentMethodsOrdered = userWalletService.getValidPaymentMethodsOrdered();
+        final var validPaymentMethodsOrdered = userWalletService.getValidPaymentMethodsOrdered(holdDetails.getUserId());
 
         if (validPaymentMethodsOrdered == null || validPaymentMethodsOrdered.isEmpty()) {
             throw new PaymentException("Please add at least one valid credit card");

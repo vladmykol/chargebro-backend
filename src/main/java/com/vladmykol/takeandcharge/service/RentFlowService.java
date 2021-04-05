@@ -165,6 +165,7 @@ public class RentFlowService {
         rentRepository.save(rent);
         final var userPhone = userService.getUserPhone(rent.getUserId());
         final var holdDetails = HoldDetails.builder()
+                .userId(rent.getUserId())
                 .amount(paymentService.getHoldAmount())
                 .rentId(rent.getId())
                 .powerBankId(rent.getPowerBankId())
@@ -183,6 +184,7 @@ public class RentFlowService {
 
         final var userPhone = userService.getUserPhone(rent.getUserId());
         final var holdDetails = HoldDetails.builder()
+                .userId(rent.getUserId())
                 .amount(rent.getPrice())
                 .rentTimeFormatted(DurationFormatUtils.formatDurationHMS(rent.getRentTime()))
                 .rentId(rent.getId())

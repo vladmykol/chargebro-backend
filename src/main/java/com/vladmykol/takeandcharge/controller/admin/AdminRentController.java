@@ -1,14 +1,14 @@
 package com.vladmykol.takeandcharge.controller.admin;
 
+import com.vladmykol.takeandcharge.dto.HoldDetails;
 import com.vladmykol.takeandcharge.dto.RentReportDto;
 import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.service.PaymentService;
 import com.vladmykol.takeandcharge.service.RentService;
+import com.vladmykol.takeandcharge.service.UserService;
+import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,6 +21,7 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.API_RENT;
 public class AdminRentController {
     private final PaymentService paymentService;
     private final RentService rentService;
+    private final UserService userService;
 
     @GetMapping("/payment")
     public List<Payment> getAllPaymentHistory() {
@@ -40,5 +41,19 @@ public class AdminRentController {
     @DeleteMapping("/clear")
     public void rentClear() {
         rentService.clearRent();
+    }
+
+    @PutMapping("/hold")
+    public Payment HoldMoney(@RequestParam int amount, @RequestParam String rentId) {
+        final var userPhone = userService.getUserPhone(SecurityUtil.getUser());
+        final var holdDetails = HoldDetails.builder()
+                .userId(SecurityUtil.getUser())
+                .amount(amount)
+                .rentId(rentId)
+                .powerBankId("Manual hold")
+                .userPhone(userPhone)
+                .isPreAuth(true)
+                .build();
+        return paymentService.holdMoney(holdDetails);
     }
 }

@@ -39,8 +39,8 @@ public class UserWalletService {
         }
     }
 
-    public List<UserWallet> getValidPaymentMethodsOrdered() {
-        return userWalletRepository.findByUserIdAndIsRemovedFalseOrderByLastModifiedDateDesc(SecurityUtil.getUser());
+    public List<UserWallet> getValidPaymentMethodsOrdered(String userId) {
+        return userWalletRepository.findByUserIdAndIsRemovedFalseOrderByLastModifiedDateDesc(userId);
     }
 
     public boolean removeUserCard(String id) {

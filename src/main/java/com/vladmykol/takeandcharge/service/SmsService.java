@@ -33,12 +33,12 @@ public class SmsService {
     @Value("${takeandcharge.sms.gateway.token}")
     private String authToken;
 
-    public String sendValidationSms(String validationCode, String phone, boolean isViber) {
+    public String sendSMS(String text, String phone, boolean isViber) {
         var requestBody = SendSmsRequestDto.builder()
                 .recipients(Collections.singletonList(phone))
                 .build();
 
-        var body = new SendSmsBodyDto(validationCode);
+        var body = new SendSmsBodyDto(text);
         if (isViber) {
             requestBody.setViber(body);
         } else {
@@ -47,8 +47,8 @@ public class SmsService {
 
         HttpEntity<SendSmsRequestDto> request = new HttpEntity<>(requestBody, getHttpHeaders());
         if (gatewayUri.contains("localhost")) {
-            log.info("Validation code was not send in SMS as running on localhost: " + validationCode);
-            return validationCode;
+            log.info("SMS was not send as running on localhost: " + text);
+            return text;
         } else {
             SendSmsResponseDto response = postForObject(request, sendCommand, SendSmsResponseDto.class);
             validateSendSmsResponse(response);

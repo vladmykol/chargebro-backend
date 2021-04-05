@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 @Builder
 public class HoldDetails {
+    private String userId;
     private String rentId;
     private boolean isPreAuth;
     private int amount;
