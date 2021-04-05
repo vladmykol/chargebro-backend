@@ -33,17 +33,13 @@ public class SmsService {
     @Value("${takeandcharge.sms.gateway.token}")
     private String authToken;
 
-    public String sendSMS(String text, String phone, boolean isViber) {
+    public String sendSMS(String text, String phone) {
         var requestBody = SendSmsRequestDto.builder()
                 .recipients(Collections.singletonList(phone))
                 .build();
 
         var body = new SendSmsBodyDto(text);
-        if (isViber) {
-            requestBody.setViber(body);
-        } else {
-            requestBody.setSms(body);
-        }
+        requestBody.setSms(body);
 
         HttpEntity<SendSmsRequestDto> request = new HttpEntity<>(requestBody, getHttpHeaders());
         if (gatewayUri.contains("localhost")) {
@@ -54,6 +50,10 @@ public class SmsService {
             validateSendSmsResponse(response);
             return getMessageId(response);
         }
+    }
+
+    public String sendVerificationCode(String code, String phone) {
+        return sendSMS("Verification code: " + code, phone);
     }
 
     public boolean checkIfSmsSend(String messageId) {

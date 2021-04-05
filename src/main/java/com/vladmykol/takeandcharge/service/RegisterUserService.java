@@ -111,7 +111,7 @@ public class RegisterUserService {
         user.setUserStatus(status);
 
         try {
-            var smsId = smsService.sendSMS(user.getRegisterCode(), user.getUserName(), (status == RE_INITIALIZED_VIBER));
+            var smsId = smsService.sendVerificationCode(user.getRegisterCode(), user.getUserName());
             user.setSmsId(smsId);
         } catch (Exception e) {
             userRepository.save(user);

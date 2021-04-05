@@ -46,7 +46,7 @@ public class AdminUserController {
     @PostMapping("/notify")
     @ApiOperation(value = "For manual SMS sending to user")
     public void sendSms(@RequestParam String phone, @RequestParam String text) {
-        smsService.sendSMS(text, phone, false);
+        smsService.sendSMS(text, phone);
     }
 
 

@@ -8,6 +8,6 @@ public class SendSmsBodyDto {
     private String text;
 
     public SendSmsBodyDto(String validationCode) {
-        this.text = sender + " code: " + validationCode;
+        this.text = validationCode;
     }
 }

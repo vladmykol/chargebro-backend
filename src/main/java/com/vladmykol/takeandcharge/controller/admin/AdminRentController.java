@@ -44,10 +44,10 @@ public class AdminRentController {
     }
 
     @PutMapping("/hold")
-    public Payment HoldMoney(@RequestParam int amount, @RequestParam String rentId) {
+    public Payment HoldMoney(@RequestParam String userId, @RequestParam int amount, @RequestParam String rentId) {
         final var userPhone = userService.getUserPhone(SecurityUtil.getUser());
         final var holdDetails = HoldDetails.builder()
-                .userId(SecurityUtil.getUser())
+                .userId(userId)
                 .amount(amount)
                 .rentId(rentId)
                 .powerBankId("Manual hold")
