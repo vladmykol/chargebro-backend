@@ -53,7 +53,7 @@ public class SmsService {
     }
 
     public String sendVerificationCode(String code, String phone) {
-        return sendSMS("Verification code: " + code, phone);
+        return sendSMS("ChargeBro code: " + code, phone);
     }
 
     public boolean checkIfSmsSend(String messageId) {
