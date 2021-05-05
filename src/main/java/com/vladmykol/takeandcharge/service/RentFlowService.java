@@ -243,8 +243,11 @@ public class RentFlowService {
         if (rentException != null) {
             rent.setLastError(new RentError(rentException));
             rentRepository.save(rent);
+            final var userPhone = userService.getUserPhone(rent.getUserId());
+
             String msg = "❌ Rent Error occurred: " + rent.getLastErrorMessage() +
-                    "\n\nStation: " + rent.getTakenInStationId();
+                    "\n\nStation: " + rent.getTakenInStationId() +
+                    "\nUser: " + userPhone;
             telegramNotifierService.messageToAdmin(msg);
 
             if (isNeedToThrow) {
