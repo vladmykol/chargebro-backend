@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.*;
@@ -177,8 +178,11 @@ public class StationService {
             throw new NoPowerBanksLeft();
         }
 
+        var blackList = Set.of("STWA02010047", "STWA02010046", "STWA08100029");
+
         var maxChargedPowerBank = chargingStationInventory.getPowerBankList()
                 .stream()
+                .filter(powerBankInfo -> !blackList.contains(powerBankInfo.getPowerBankId()))
                 .max(Comparator.comparing(PowerBankInfo::getPowerLevel));
 
         if (maxChargedPowerBank.isPresent()) {
