@@ -55,6 +55,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(
                         //   auth operations is open
                         API_AUTH + "/**",
+                        API_VERSION_1 + API_AUTH + "/**",
                         //   anyone can fetch stations locations
                         API_STATIONS + API_STATIONS_NEARBY,
                         //   redirect to mobile version is available for all

@@ -21,10 +21,7 @@ public class StationConnectionMonitor {
         if (!disconnectedStations.isEmpty()) {
             final var stationEntityList = stationRepository.findAllById(disconnectedStations);
             stationEntityList.forEach(station -> {
-                String msg = "\uD83D\uDE14 Station " + station.getId() + " went offline" +
-                        "\n\nPlace: " + station.getPlaceName() +
-                        "\nPhone:" + station.getSimPhoneNumber();
-                telegramNotifierService.messageToAdmin(msg);
+                telegramNotifierService.wentOffline(station);
             });
         }
     }

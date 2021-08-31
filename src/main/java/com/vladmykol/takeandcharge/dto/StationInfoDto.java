@@ -14,5 +14,6 @@ public class StationInfoDto {
     private String workingHours = "8:30 - 21:00";
     private String mapUrl;
     private int maxCapacity;
-    private Integer simPhoneNumber;
+    private String simPhoneNumber;
+    private boolean maintenance;
 }

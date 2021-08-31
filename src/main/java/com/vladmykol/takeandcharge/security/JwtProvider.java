@@ -20,8 +20,8 @@ public class JwtProvider {
     @Value("${takeandcharge.api.auth.token-secret}")
     private String authSecret;
 
-    @Value("${takeandcharge.api.auth.token-expiration.min}")
-    private int authExpirationMin;
+    @Value("${takeandcharge.api.auth.token-expiration.hours}")
+    private int authExpirationHours;
 
     @Value("${takeandcharge.api.sms.token-secret}")
     private String smsSecret;
@@ -35,7 +35,7 @@ public class JwtProvider {
                 .setId("AuthJwt")
                 .setSubject(userId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + authExpirationMin * 60 * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + authExpirationHours * 60 * 60 * 1000))
                 .signWith(SignatureAlgorithm.HS512,
                         authSecret.getBytes()).compact();
     }

@@ -142,21 +142,12 @@ public class RentFlowService {
 
     private void notifyAdminRentFinish(Rent rent) {
         final var userPhone = userService.getUserPhone(rent.getUserId());
-
-        String msg = "\uD83D\uDC4C Returned PowerBank: " + rent.getPowerBankId() +
-                "\n\nStation: " + rent.getReturnedToStationId() +
-                "\nPrice: " + (rent.getPrice() / 100) +
-                "\nUser: " + userPhone;
-        telegramNotifierService.messageToAdmin(msg);
+        telegramNotifierService.rentFinished(rent, userPhone);
     }
 
     private void notifyAdminRentStart(Rent rent) {
         final var userPhone = userService.getUserPhone(rent.getUserId());
-
-        String msg = "\uD83D\uDE01 Taken PowerBank: " + rent.getPowerBankId() +
-                "\n\nStation: " + rent.getTakenInStationId() +
-                "\nUser: " + userPhone;
-        telegramNotifierService.messageToAdmin(msg);
+        telegramNotifierService.rentStarted(rent, userPhone);
     }
 
 
@@ -206,7 +197,7 @@ public class RentFlowService {
     }
 
     private void checkAvailablePowerBanks(Rent rent) {
-        final var powerBankInfo = stationService.findMaxChargedPowerBank(rent.getTakenInStationId());
+        final var powerBankInfo = stationService.findBestPowerBankToTake(rent.getTakenInStationId());
         rent.setPowerBankSlot(powerBankInfo.getSlotNumber());
         rent.setPowerBankId(powerBankInfo.getPowerBankId());
         rentRepository.save(rent);
@@ -244,11 +235,7 @@ public class RentFlowService {
             rent.setLastError(new RentError(rentException));
             rentRepository.save(rent);
             final var userPhone = userService.getUserPhone(rent.getUserId());
-
-            String msg = "❌ Rent Error occurred: " + rent.getLastErrorMessage() +
-                    "\n\nStation: " + rent.getTakenInStationId() +
-                    "\nUser: " + userPhone;
-            telegramNotifierService.messageToAdmin(msg);
+            telegramNotifierService.rentError(rent, userPhone);
 
             if (isNeedToThrow) {
                 throw rentException;

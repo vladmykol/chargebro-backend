@@ -44,6 +44,7 @@ public class CabinetController {
             loginResponse = new LoginResponse(OK);
         } else {
             loginResponse = new LoginResponse(ERROR);
+            log.error("Station login failed for {}",loginRequest.getBoxId());
         }
 
         return new ProtocolEntity<>(request.getHeader(), loginResponse);

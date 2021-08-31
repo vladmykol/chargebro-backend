@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RentService {
     private final RentRepository rentRepository;
-    private final StationService stationService;
+    private final StationServiceHelper stationServiceHelper;
     private final UserService userService;
 
     public List<Rent> getActiveRentWithNotReturnedPowerBank() {
@@ -59,22 +59,12 @@ public class RentService {
     }
 
     public List<RentReportDto> getRentReport() {
-//        ExampleMatcher matcher = ExampleMatcher
-//                .matchingAll()
-//                .withMatcher("firstName", contains().ignoreCase());
-//        MarvelCharacter example = MarvelCharacter
-//                .builder()
-//                .firstName(firstName) // firstName from parameter
-//                .lastName(lastName) // lastName from parameter
-//                .build();
-//        final var all = rentRepository.findAll(Example.of(example, matcher));
         final var allRent = rentRepository.findAll();
-
 
         return allRent.stream()
                 .map(rent -> {
-                    final var takeInStation = stationService.getById(rent.getTakenInStationId());
-                    final var returnedToStation = stationService.getById(rent.getTakenInStationId());
+                    final var takeInStation = stationServiceHelper.getByIdOrNew(rent.getTakenInStationId());
+                    final var returnedToStation = stationServiceHelper.getByIdOrNew(rent.getTakenInStationId());
                     return RentReportDto.builder()
                             .orderId(rent.getId())
                             .takePlace(takeInStation.getPlaceName())

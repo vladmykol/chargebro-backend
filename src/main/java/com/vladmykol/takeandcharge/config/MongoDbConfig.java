@@ -2,8 +2,9 @@ package com.vladmykol.takeandcharge.config;
 
 import com.vladmykol.takeandcharge.conts.RoleEnum;
 import com.vladmykol.takeandcharge.entity.Role;
+import com.vladmykol.takeandcharge.repository.PowerBankRepository;
 import com.vladmykol.takeandcharge.repository.RoleRepository;
-import com.vladmykol.takeandcharge.repository.UserRepository;
+import com.vladmykol.takeandcharge.repository.StationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -58,6 +59,19 @@ public class MongoDbConfig {
                     roleRepository.save(newRole);
                 }
             }
+        };
+    }
+
+    @Bean
+    CommandLineRunner setStationsStatus(StationRepository stationRepository, PowerBankRepository powerBankRepository) {
+        return args -> {
+            stationRepository.findAll().forEach(station -> {
+                station.setMaintenance(false);
+                if (!station.getSimPhoneNumber().startsWith("+380")) {
+                    station.setSimPhoneNumber("+380"+station.getSimPhoneNumber());
+                }
+                stationRepository.save(station);
+            });
         };
     }
 

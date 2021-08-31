@@ -40,36 +40,29 @@ public class AdminStationController {
         stationService.update(stationInfoDto);
     }
 
-    @PostMapping("/{id}/option")
+    @PostMapping("/{shortId}/option")
     @ApiOperation(value = "Set parameters for charging station if it is connected and restart. localhost - is a debug server")
-    public MessageHeader setStationOptions(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId,
-                                           @ApiParam(allowableValues = "localhost, REDACTED_SERVER_IP", required = true)
-                                           @RequestParam(defaultValue = "localhost") String serverAddress,
+    public MessageHeader setStationOptions(@PathVariable(name = "shortId") String shortId,
+                                           @ApiParam(allowableValues = "localhost, REDACTED_SERVER_IP", required = true) @RequestParam(defaultValue = "localhost") String serverAddress,
                                            @RequestParam(defaultValue = "10382") String serverPort,
                                            @RequestParam(defaultValue = "30") short interval
     ) {
-        return stationService.setServerAddressAndRestart(stationId, serverAddress, serverPort, interval);
+        return stationService.setServerAddressAndRestart(shortId, serverAddress, serverPort, interval);
     }
 
-    @PostMapping("/{id}/reboot")
+    @PostMapping("/{shortId}/reboot")
     @ApiOperation(value = "Restart selected station")
-    public MessageHeader setStationOptions(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId) {
-        return stationService.restart(stationId);
+    public MessageHeader setStationOptions(@PathVariable(name = "shortId") String shortId) {
+        return stationService.restart(shortId);
     }
 
-    @PostMapping("/{id}/unlock-all")
-    @ApiOperation(value = "unlock all powerbank for mainteinc")
-    public void unlockAll(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId,
+    @PostMapping("/{shortId}/unlock-all")
+    @ApiOperation(value = "unlock all power-bank for maintenance")
+    public void unlockAll(@PathVariable(name = "shortId") String shortId,
                           @ApiParam(allowableValues = "Yes, No") @RequestParam(defaultValue = "No") String force) {
         if (force.equalsIgnoreCase("Yes")) {
-            stationService.unlockAllPowerBanks(stationId);
+            stationService.unlockAllPowerBanks(shortId);
         }
-    }
-
-    @PostMapping("/{id}/unlock-all/to-remove")
-    @ApiOperation(value = "unlock all powerbank for mainteinc")
-    public void unlockAll(@ApiParam(allowableValues = "STWA062001000013, STWA312001000005, STWA062001000015") @PathVariable(name = "id") String stationId) {
-        stationService.unlockAllPowerBanks(stationId);
     }
 
 }

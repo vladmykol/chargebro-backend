@@ -1,11 +1,13 @@
 package com.vladmykol.takeandcharge;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vladmykol.takeandcharge.conts.RoleEnum;
 import com.vladmykol.takeandcharge.dto.LoginRequest;
 import com.vladmykol.takeandcharge.dto.SingUpDto;
 import com.vladmykol.takeandcharge.dto.SmsRegistrationTokenInfo;
-import com.vladmykol.takeandcharge.repository.StationRepository;
-import com.vladmykol.takeandcharge.security.JwtProvider;
+import com.vladmykol.takeandcharge.entity.Role;
+import com.vladmykol.takeandcharge.entity.User;
+import com.vladmykol.takeandcharge.service.RegisterUserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,7 +17,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Collections;
+
 import static com.vladmykol.takeandcharge.conts.EndpointConst.API_AUTH;
+import static com.vladmykol.takeandcharge.entity.User.UserStatus.REGISTERED;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,9 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 //@RestClientTest
 class AuthControllerTest {
     @Autowired
-    private StationRepository stationRepository;
-    @Autowired
-    private JwtProvider jwtProvider;
+    private RegisterUserService registerUserService;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -91,10 +94,21 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.token").isNotEmpty());
     }
 
-    @Test
-    public void encodePass() {
-        System.out.println(passwordEncoder.encode("testPass"));
-    }
+//    @Test
+//    public void newUser() throws Exception {
+//        var role = new Role();
+//        role.setRole(RoleEnum.ADMIN);
+//
+//        var userDto = User.builder()
+//                .userName("Vlad")
+//                .password(passwordEncoder.encode("1234"))
+//                .roles(Collections.singleton(role))
+//                .bonusAmount(0)
+//                .userStatus(REGISTERED)
+//                .build();
+//
+//        registerUserService.saveUser(userDto);
+//    }
 
 
 }

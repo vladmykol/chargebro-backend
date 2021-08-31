@@ -1,6 +1,7 @@
 package com.vladmykol.takeandcharge.conts;
 
 public class EndpointConst {
+    public static final String API_VERSION_1 = "/v1";
     public static final String API_AUTH = "/auth";
     public static final String API_AUTH_LOGOUT = "/logout";
     public static final String API_RENT = "/rent";

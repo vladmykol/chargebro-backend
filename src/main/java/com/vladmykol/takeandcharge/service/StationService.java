@@ -43,6 +43,7 @@ public class StationService {
     private final PowerBankRepository powerBankRepository;
     private final StationRepository stationRepository;
     private final ModelMapper stationInfoMapper;
+    private final StationServiceHelper stationServiceHelper;
 
     public ChargingStationInventory getStationInventory(String cabinetId) {
         ProtocolEntity<?> stockRequest = new ProtocolEntity<>(CABINET_STOCK);
@@ -57,6 +58,8 @@ public class StationService {
             if (optionalPowerBank.isPresent()) {
                 if (PowerBankStatus.MAINTENANCE == optionalPowerBank.get().getStatus()) {
                     continue;
+                } else {
+                    powerBankInfo.setLastTakeAt(optionalPowerBank.get().getLastOperationDate());
                 }
             }
             chargingStationInventory.getPowerBankList().add(powerBankInfo);
@@ -108,6 +111,7 @@ public class StationService {
             var nearByStations = stationRepository.findByLocationNear(point, distance);
 
             return nearByStations.stream()
+                    .filter(station -> !station.isMaintenance())
                     .map(this::convertToDto)
                     .collect(Collectors.toList());
 
@@ -139,7 +143,7 @@ public class StationService {
                 .collect(Collectors.toList());
     }
 
-    public MessageHeader setServerAddressAndRestart(String cabinetId, String serverAddress, String port, short interval) {
+    public MessageHeader setServerAddressAndRestart(String shortId, String serverAddress, String port, short interval) {
         var changeServerAddressRequest = ChangeServerAddressRequest.builder()
                 .serverAddress(serverAddress)
                 .serverPort(port)
@@ -147,21 +151,25 @@ public class StationService {
 
         ProtocolEntity<?> setServerAddressRequest = new ProtocolEntity<>(SET_SERVER_ADDRESS, changeServerAddressRequest);
 
-        stationRegister.communicateWithStation(cabinetId, setServerAddressRequest);
-        final var messageProtocolEntity = stationRegister.communicateWithStation(cabinetId, new ProtocolEntity<>(RESTART));
+        var station = stationServiceHelper.getByShortIdThrow(shortId);
+
+        stationRegister.communicateWithStation(station.getId(), setServerAddressRequest);
+        final var messageProtocolEntity = stationRegister.communicateWithStation(station.getId(), new ProtocolEntity<>(RESTART));
 
         return messageProtocolEntity.getHeader();
     }
 
-    public void unlockAllPowerBanks(String cabinetId) {
-        final var stationInventory = getStationInventory(cabinetId);
+    public void unlockAllPowerBanks(String shortId) {
+        var station = stationServiceHelper.getByShortIdThrow(shortId);
 
-        log.debug("Eject all powerbanks for station {}", cabinetId);
+        final var stationInventory = getStationInventory(station.getId());
+
+        log.debug("Eject all powerbanks for station {}", station.getId());
         stationInventory.getPowerBankList().forEach(powerBankInfo -> {
             ProtocolEntity<TakePowerBankRequest> powerBankRequest = new ProtocolEntity<>(FORCE_POPUP,
                     new TakePowerBankRequest(powerBankInfo.getSlotNumber()));
 
-            stationRegister.communicateWithStation(cabinetId, powerBankRequest);
+            stationRegister.communicateWithStation(station.getId(), powerBankRequest);
         });
     }
 
@@ -171,7 +179,7 @@ public class StationService {
     }
 
 
-    public PowerBankInfo findMaxChargedPowerBank(String stationId) {
+    public PowerBankInfo findBestPowerBankToTake(String stationId) {
         ChargingStationInventory chargingStationInventory = getStationInventory(stationId);
 
         if (chargingStationInventory.getPowerBankList().isEmpty()) {
@@ -180,22 +188,20 @@ public class StationService {
 
         var blackList = Set.of("STWA02010047", "STWA02010046", "STWA08100029");
 
-        var maxChargedPowerBank = chargingStationInventory.getPowerBankList()
+        Comparator<PowerBankInfo> compareByChargingLevelAndLastTakenDate = Comparator
+                .comparing(PowerBankInfo::getPowerLevel);
+//                .thenComparing(PowerBankInfo::getLastTakeAt);
+
+        var bestPowerBankToTake = chargingStationInventory.getPowerBankList()
                 .stream()
                 .filter(powerBankInfo -> !blackList.contains(powerBankInfo.getPowerBankId()))
-                .max(Comparator.comparing(PowerBankInfo::getPowerLevel));
+                .max(compareByChargingLevelAndLastTakenDate);
 
-        if (maxChargedPowerBank.isPresent()) {
-            return maxChargedPowerBank.get();
+        if (bestPowerBankToTake.isPresent()) {
+            return bestPowerBankToTake.get();
         } else {
             throw new NoPowerBanksLeft();
         }
-    }
-
-
-    public Station getById(String id) {
-        final var optionalStation = stationRepository.findById(id);
-        return optionalStation.orElseGet(Station::new);
     }
 
     public boolean singIn(LoginRequest loginRequest, StationSocketClient stationSocketClient) {
@@ -251,8 +257,9 @@ public class StationService {
         stationRepository.deleteById(stationId);
     }
 
-    public MessageHeader restart(String stationId) {
-        final var messageProtocolEntity = stationRegister.communicateWithStation(stationId, new ProtocolEntity<>(RESTART));
+    public MessageHeader restart(String shortId) {
+        var station = stationServiceHelper.getByShortIdThrow(shortId);
+        final var messageProtocolEntity = stationRegister.communicateWithStation(station.getId(), new ProtocolEntity<>(RESTART));
 
         return messageProtocolEntity.getHeader();
     }

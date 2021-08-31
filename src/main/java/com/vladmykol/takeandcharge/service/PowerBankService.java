@@ -26,11 +26,10 @@ public class PowerBankService {
                 return optionalPowerBank.get().getCurrentRentId();
             }
         } else {
-            powerBankRepository.save(
-                    PowerBank.builder()
-                            .id(powerBankRequest.getPowerBankId())
-                            .status(PowerBankStatus.RETURNED)
-                            .build());
+            var powerBank = new PowerBank();
+            powerBank.setId(powerBankRequest.getPowerBankId());
+            powerBank.setStatus(PowerBankStatus.RETURNED);
+            powerBankRepository.save(powerBank);
         }
 
         return null;

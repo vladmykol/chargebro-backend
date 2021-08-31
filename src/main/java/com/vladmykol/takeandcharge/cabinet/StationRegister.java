@@ -6,6 +6,7 @@ import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.NoResponseFromWithinTimeout;
 import com.vladmykol.takeandcharge.monitoring.TelegramNotifierService;
+import com.vladmykol.takeandcharge.service.StationService;
 import com.vladmykol.takeandcharge.service.WebSocketServer;
 import com.vladmykol.takeandcharge.utils.TimeUtils;
 import lombok.Data;
@@ -79,8 +80,7 @@ public class StationRegister {
                 stationSocketClientWrapper.setSocketClient(newStationSocketClient);
                 stationSocketClientWrapper.setLogInTime(Instant.now());
                 if (stationSocketClientWrapper.isReportedInactive) {
-                    String msg = "\uD83D\uDE05 Station " + newStationSocketClient.getClientInfo().getCabinetId() + " is back online";
-                    telegramNotifierService.messageToAdmin(msg);
+                    telegramNotifierService.backOnline(newStationSocketClient.getClientInfo().getCabinetId());
                 }
 
                 stationSocketClientWrapper.setReportedInactive(false);
@@ -88,9 +88,9 @@ public class StationRegister {
                 stationSocketClientWrapper.notify();
             }
         } else {
-            connections.put(newStationSocketClient.getClientInfo().getCabinetId(), new StationSocketClientWrapper(newStationSocketClient));
-            String msg = "Station " + newStationSocketClient.getClientInfo().getCabinetId() + " is reconnected";
-            telegramNotifierService.messageToAdmin(msg);
+            var stationId = newStationSocketClient.getClientInfo().getCabinetId();
+            connections.put(stationId, new StationRegister.StationSocketClientWrapper(newStationSocketClient));
+            telegramNotifierService.stationConnected(stationId);
         }
     }
 

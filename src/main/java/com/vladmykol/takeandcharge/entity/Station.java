@@ -1,6 +1,7 @@
 package com.vladmykol.takeandcharge.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
@@ -13,6 +14,7 @@ import java.util.Date;
 @Data
 @Document
 public class Station {
+    @Id
     private String id;
 
     @Indexed(unique = true)
@@ -23,7 +25,8 @@ public class Station {
     @NotNull
     private Point location;
 
-    private Integer maxCapacity;
+    @NotNull
+    private Integer maxCapacity = 6;
 
     private String placeName;
 
@@ -31,7 +34,10 @@ public class Station {
 
     private String mapUrl;
 
-    private Integer simPhoneNumber;
+    private String simPhoneNumber;
 
     private Date lastLogIn;
+
+    @NotNull
+    private boolean maintenance = false;
 }
