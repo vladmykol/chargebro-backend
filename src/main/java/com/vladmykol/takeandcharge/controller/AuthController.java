@@ -5,6 +5,7 @@ import com.vladmykol.takeandcharge.dto.*;
 import com.vladmykol.takeandcharge.security.JwtProvider;
 import com.vladmykol.takeandcharge.service.RegisterUserService;
 import com.vladmykol.takeandcharge.service.UserWalletService;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -57,7 +58,12 @@ public class AuthController {
 
     @PostMapping("/register")
     public UserInfoDto singUp(@Valid @RequestBody SingUpDto singUpDto) {
-        var smsCode = jwtProvider.parseSmsToken(singUpDto.getToken());
+        var smsCode = "";
+        try {
+            smsCode = jwtProvider.parseSmsToken(singUpDto.getToken());
+        } catch (JwtException e) {
+            throw new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, "Invalid SMS code");
+        }
 
         if (smsCode.equals(singUpDto.getSmsCode())) {
             var user = registerUserService.saveUser(singUpDto);

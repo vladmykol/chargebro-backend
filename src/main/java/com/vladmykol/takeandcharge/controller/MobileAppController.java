@@ -33,7 +33,7 @@ public class MobileAppController {
 
     @GetMapping("/{id}")
     public void redirectToAppSuccess(HttpServletResponse httpServletResponse,
-                                     @ApiParam(allowableValues = "k05, k13, k15", required = true) @PathVariable String id) {
+                                     @ApiParam(allowableValues = "k05, k13, k15, k20, k14", required = true) @PathVariable String id) {
         final String baseUrl = "https://chargebro.app.link/";
         httpServletResponse.setHeader("Location", baseUrl + id);
         httpServletResponse.setStatus(302);

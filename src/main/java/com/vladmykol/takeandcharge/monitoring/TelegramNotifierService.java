@@ -65,10 +65,11 @@ public class TelegramNotifierService {
 
 
     public void rentFinished(Rent rent, String userPhone) {
+        var station = stationServiceHelper.getByIdOrNew(rent.getReturnedToStationId());
         String msg = "\uD83D\uDC4C Returned PowerBank: " + rent.getPowerBankId() +
-                "\n--\n<code>Station</code>: " + rent.getReturnedToStationId() +
-                "\n<code>Price</code>: " + (rent.getPrice() / 100) +
-                "\n<code>User</code>: " + userPhone;
+                "\n--\n<code>Station</code>: " + station.getShortId() +
+                "\n<code>Place</code>: " + station.getPlaceName() +
+                "\n<code>Price</code>: " + (rent.getPrice() / 100);
         messageToAdmin(msg);
     }
 

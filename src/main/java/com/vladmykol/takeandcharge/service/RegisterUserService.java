@@ -30,6 +30,9 @@ public class RegisterUserService {
     @Value("${takeandcharge.api.sms.token-expiration.min}")
     private int smsExpirationMin;
 
+    @Value("${takeandcharge.api.sms.throttling.min}")
+    private int throttlingMin;
+
 
     private User getUser(String username) {
         return userRepository.findByUserName(username)
@@ -77,13 +80,19 @@ public class RegisterUserService {
                     }
                     break;
                 case MAX_REGISTER_ATTEMPS_REACHED:
-                    throw new SmsSendingError("This number is blocked for too many requests");
+//                    if (ifRequestWasLongTimeAgo(user.getPasswordDate())) {
+                        sendChangePasswordSms(user, INITIALIZED);
+//                    } else {
+//                        throw new SmsSendingError("This number is blocked for too many requests");
+//                    }
+                    break;
                 case REGISTERED:
                     if (isPassReset) {
                         sendChangePasswordSms(user, MAX_REGISTER_ATTEMPS_REACHED);
                     } else {
                         throw new UserAlreadyExist();
                     }
+                    break;
             }
         } else {
             Role userRole = roleRepository.findByRole(RoleEnum.USER);
@@ -123,6 +132,12 @@ public class RegisterUserService {
         if (lastRequestDate == null) return true;
         long diff = new Date().getTime() - lastRequestDate.getTime();
         return diff > smsExpirationMin * 60 * 1000;
+    }
+
+    private boolean ifRequestWasLongTimeAgo(Date lastRequestDate) {
+        if (lastRequestDate == null) return true;
+        long diff = new Date().getTime() - lastRequestDate.getTime();
+        return diff > throttlingMin * 60 * 1000;
     }
 
     public User saveUser(SingUpDto userDto) {
