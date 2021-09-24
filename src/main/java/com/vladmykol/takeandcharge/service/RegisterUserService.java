@@ -80,11 +80,11 @@ public class RegisterUserService {
                     }
                     break;
                 case MAX_REGISTER_ATTEMPS_REACHED:
-//                    if (ifRequestWasLongTimeAgo(user.getPasswordDate())) {
+                    if (ifRequestWasLongTimeAgo(user.getPasswordDate())) {
                         sendChangePasswordSms(user, INITIALIZED);
-//                    } else {
-//                        throw new SmsSendingError("This number is blocked for too many requests");
-//                    }
+                    } else {
+                        throw new SmsSendingError("This number is blocked for too many requests");
+                    }
                     break;
                 case REGISTERED:
                     if (isPassReset) {

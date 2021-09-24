@@ -22,7 +22,6 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class AuthController1 {
     private final JwtProvider jwtProvider;
-    private final AuthenticationManager authenticationManager;
     private final RegisterUserService registerUserService;
     private final UserWalletService userWalletService;
 
