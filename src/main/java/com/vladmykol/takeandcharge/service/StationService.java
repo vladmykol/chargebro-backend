@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.*;
+import static java.util.Comparator.comparing;
 
 @Service
 @RequiredArgsConstructor
@@ -188,9 +189,8 @@ public class StationService {
 
         var blackList = Set.of("STWA02010047", "STWA02010046", "STWA08100029");
 
-        Comparator<PowerBankInfo> compareByChargingLevelAndLastTakenDate = Comparator
-                .comparing(PowerBankInfo::getPowerLevel);
-//                .thenComparing(PowerBankInfo::getLastTakeAt);
+        Comparator<PowerBankInfo> compareByChargingLevelAndLastTakenDate = comparing(PowerBankInfo::getPowerLevel);
+//                .thenComparing(comparing(PowerBankInfo::getLastTakeAt).reversed());
 
         var bestPowerBankToTake = chargingStationInventory.getPowerBankList()
                 .stream()
