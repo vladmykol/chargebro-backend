@@ -22,6 +22,7 @@ import com.vladmykol.takeandcharge.repository.StationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
@@ -45,6 +46,8 @@ public class StationService {
     private final StationRepository stationRepository;
     private final ModelMapper stationInfoMapper;
     private final StationServiceHelper stationServiceHelper;
+    @Value("${TEST_STATION:false}")
+    private boolean isEmulateTestStation;
 
     public ChargingStationInventory getStationInventory(String cabinetId) {
         ProtocolEntity<?> stockRequest = new ProtocolEntity<>(CABINET_STOCK);
@@ -72,6 +75,9 @@ public class StationService {
     }
 
     public String unlockPowerBank(short powerBankSlot, String cabinetId) {
+        if (isEmulateTestStation) {
+            return "PB-1";
+        }
         ProtocolEntity<TakePowerBankRequest> powerBankRequest = new ProtocolEntity<>(TAKE_POWER_BANK,
                 new TakePowerBankRequest(powerBankSlot));
 
@@ -181,6 +187,14 @@ public class StationService {
 
 
     public PowerBankInfo findBestPowerBankToTake(String stationId) {
+        if (isEmulateTestStation) {
+            PowerBankInfo powerBankInfo = new PowerBankInfo();
+            powerBankInfo.setPowerBankId("PB-1");
+            powerBankInfo.setPowerLevel((short) 4);
+            powerBankInfo.setLastTakeAt(new Date());
+            powerBankInfo.setSlotNumber((short) 1);
+            return powerBankInfo;
+        }
         ChargingStationInventory chargingStationInventory = getStationInventory(stationId);
 
         if (chargingStationInventory.getPowerBankList().isEmpty()) {

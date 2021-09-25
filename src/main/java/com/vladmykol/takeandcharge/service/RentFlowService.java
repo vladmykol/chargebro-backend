@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -35,6 +36,8 @@ public class RentFlowService {
     private final UserWalletService userWalletService;
     private final PowerBankService powerBankService;
     private final TelegramNotifierService telegramNotifierService;
+    @Value("${TEST_STATION:false}")
+    private boolean isEmulateTestStation;
 
     public RentConfirmationDto getBeforeRentInfo(String stationId) {
 //        final var powerBankInfo = stationService.findMaxChargedPowerBank(stationId);
@@ -56,6 +59,12 @@ public class RentFlowService {
     public void syncRentStart(String stationId) {
         if (rentService.isUserHasActiveRent()) {
             throw new RentAlreadyInProgress();
+        }
+
+        if (isEmulateTestStation) {
+            webSocketServer.sendMoneyHoldConfirmationMessage("ok");
+            webSocketServer.sendRentStartMessage("STW-0101010101010");
+            return;
         }
 
         Rent rent = rentRepository.save(
