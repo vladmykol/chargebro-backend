@@ -11,7 +11,6 @@ import com.vladmykol.takeandcharge.service.UserWalletService;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -28,6 +27,10 @@ public class AuthController1 {
     @PostMapping("/init")
     public SmsRegistrationTokenInfo resetUserPass(@RequestParam String phone) {
         SmsRegistrationTokenInfo result = registerUserService.initUserUpdate(phone, true);
+        //AppStore Demo account
+        if (phone.equals("380931231212")) {
+            result.setCode("1234");
+        }
         jwtProvider.generateSmsToken(result);
 
         return result;
