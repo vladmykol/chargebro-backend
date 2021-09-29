@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 import java.net.Socket;
@@ -21,7 +20,8 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.*;
 
-import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.*;
+import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.RESTART;
+import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.SOFTWARE_VERSION;
 
 
 @Slf4j
@@ -88,22 +88,17 @@ public class StationSocketClient {
 
     public void check() {
         log.debug("Send check command to not responsive station {}", clientInfo);
-//        if (StringUtils.isEmpty(getClientInfo().getCabinetId())) {
-//            internalCommunicate(new ProtocolEntity<>(SOFTWARE_VERSION), 5000);
-//            throw new CabinetIsOffline();
-//        } else {
-            try {
-                internalCommunicate(new ProtocolEntity<>(SOFTWARE_VERSION), 10000);
-            } catch (NoResponseFromWithinTimeout e) {
-                internalCommunicate(new ProtocolEntity<>(RESTART), 30000);
-                throw new CabinetIsOffline();
-            }
-            log.debug("Success check command to not responsive station {}", clientInfo);
-//        }
+        try {
+            internalCommunicate(new ProtocolEntity<>(SOFTWARE_VERSION), 15000);
+        } catch (NoResponseFromWithinTimeout e) {
+            internalCommunicate(new ProtocolEntity<>(RESTART), 30000);
+            throw new CabinetIsOffline();
+        }
+        log.debug("Success check command to not responsive station {}", clientInfo);
     }
 
     public ProtocolEntity<RawMessage> communicate(ProtocolEntity<?> request) {
-        return internalCommunicate(request, 10000);
+        return internalCommunicate(request, 15000);
     }
 
     @SneakyThrows

@@ -1,9 +1,12 @@
 package com.vladmykol.takeandcharge.service;
 
+import com.vladmykol.takeandcharge.config.AsyncConfiguration;
 import com.vladmykol.takeandcharge.conts.PaymentType;
 import com.vladmykol.takeandcharge.conts.RentStage;
+import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.dto.HoldDetails;
 import com.vladmykol.takeandcharge.dto.RentConfirmationDto;
+import com.vladmykol.takeandcharge.dto.StationInfoDto;
 import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.entity.Rent;
 import com.vladmykol.takeandcharge.entity.RentError;
@@ -19,9 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -99,7 +105,6 @@ public class RentFlowService {
         }, optionalRent.get(), false);
     }
 
-    //    @Async(AsyncConfiguration.RETURN_POWER_BANK_TASK_EXECUTOR)
     public void returnPowerBankAction(String rentId, String stationId) {
         Optional<Rent> optionalRent = rentRepository.findById(rentId);
 
@@ -254,4 +259,28 @@ public class RentFlowService {
         }
     }
 
+    @Async(AsyncConfiguration.RENT_REFRESH_TASK_EXECUTOR)
+    public void refreshRentStatus(String userId) {
+        List<Rent> activeRents = rentService.getActiveRentWithNotReturnedPowerBank(userId);
+        var onlineStations = stationService.getAuthenticatedStations().stream().filter(AuthenticatedStationsDto::isOnline).collect(Collectors.toList());
+        activeRents.forEach(rent -> {
+            stationService.findAll().stream()
+                    .filter(station -> isInOnlineStationList(onlineStations, station))
+                    .forEach(station -> {
+                        try {
+                            if (stationService.isPowerBankPresent(rent.getPowerBankId(), station.getId())) {
+                                returnPowerBankAction(rent.getId(), station.getId());
+                                log.warn("return powerbank after user rent refresh status. RentId = " + rent.getId());
+                            }
+                        } catch (Exception e) {
+                            log.warn("Filed to refresh rent status for station " + station.getId(), e);
+                        }
+                    });
+        });
+        log.warn("rent refresh");
+    }
+
+    private boolean isInOnlineStationList(List<AuthenticatedStationsDto> onlineStations, StationInfoDto station) {
+        return onlineStations.stream().anyMatch(onlineStation -> onlineStation.getStationId().equals(station.getId()));
+    }
 }

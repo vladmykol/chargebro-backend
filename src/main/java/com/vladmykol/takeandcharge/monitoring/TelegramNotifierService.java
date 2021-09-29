@@ -90,4 +90,8 @@ public class TelegramNotifierService {
                 "\n<code>User:</code> " + userPhone;
         messageToAdmin(msg);
     }
+
+    public void errorFromMobileApp(String exception) {
+// TODO: 28/09/2021 implement resending errors to Telegram and update mobile app
+    }
 }

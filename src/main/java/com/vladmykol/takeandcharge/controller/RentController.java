@@ -5,6 +5,7 @@ import com.vladmykol.takeandcharge.dto.RentHistoryDto;
 import com.vladmykol.takeandcharge.service.RentFlowService;
 import com.vladmykol.takeandcharge.service.RentService;
 import com.vladmykol.takeandcharge.service.StationService;
+import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +39,11 @@ public class RentController {
         if (rentHistory.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no rent history");
         return rentHistory;
+    }
+
+    @PostMapping("/refresh")
+    public void refreshRentStatus() {
+        rentFlowService.refreshRentStatus(SecurityUtil.getUser());
     }
 
 }

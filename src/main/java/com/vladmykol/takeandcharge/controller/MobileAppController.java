@@ -1,6 +1,7 @@
 package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.conts.EndpointConst;
+import com.vladmykol.takeandcharge.monitoring.TelegramNotifierService;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(EndpointConst.API_APP)
 @RequiredArgsConstructor
 public class MobileAppController {
+    private final TelegramNotifierService telegramNotifierService;
 
     @GetMapping("/version")
     public ResponseEntity<String> checkVersion(@RequestParam float currentVersion,
@@ -37,5 +39,10 @@ public class MobileAppController {
         final String baseUrl = "https://chargebro.app.link/";
         httpServletResponse.setHeader("Location", baseUrl + id);
         httpServletResponse.setStatus(302);
+    }
+
+    @PostMapping("/exception")
+    public void exceptionInMobileApp(@RequestParam String exception) {
+        telegramNotifierService.errorFromMobileApp(exception);
     }
 }

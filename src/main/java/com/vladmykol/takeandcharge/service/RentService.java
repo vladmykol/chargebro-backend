@@ -22,9 +22,13 @@ public class RentService {
     private final StationServiceHelper stationServiceHelper;
     private final UserService userService;
 
-    public List<Rent> getActiveRentWithNotReturnedPowerBank() {
-        return rentRepository.findByUserIdAndStageIn(SecurityUtil.getUser()
+    public List<Rent> getActiveRentWithNotReturnedPowerBank(String userId) {
+        return rentRepository.findByUserIdAndStageIn(userId
                 , RentStatus.ACTIVE.getStages());
+    }
+
+    public List<Rent> getActiveRentWithNotReturnedPowerBank() {
+        return getActiveRentWithNotReturnedPowerBank(SecurityUtil.getUser());
     }
 
     public boolean isUserHasActiveRent() {

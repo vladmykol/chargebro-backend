@@ -16,6 +16,7 @@ import java.util.concurrent.Executor;
 @EnableScheduling
 @Slf4j
 public class AsyncConfiguration {
+    public static final String RENT_REFRESH_TASK_EXECUTOR = "rentRefreshTaskExecutor";
     public static final String STATION_LISTENER_TASK_EXECUTOR = "stationListenerTaskExecutor";
     public static final String STATION_SERVER_TASK_EXECUTOR = "stationServerTaskExecutor";
 
@@ -24,7 +25,7 @@ public class AsyncConfiguration {
         log.debug("Creating Async Task Executor for Station server");
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(2);
+        executor.setMaxPoolSize(4);
         executor.setQueueCapacity(2);
         executor.setThreadNamePrefix("server-");
         executor.initialize();
@@ -39,6 +40,18 @@ public class AsyncConfiguration {
         executor.setMaxPoolSize(50);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("station-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean(name = RENT_REFRESH_TASK_EXECUTOR)
+    public Executor refreshTaskExecutor() {
+        log.debug("Creating Async Task Executor for Rent refresh action");
+        final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(0);
+        executor.setThreadNamePrefix("rentRefresh-");
         executor.initialize();
         return executor;
     }

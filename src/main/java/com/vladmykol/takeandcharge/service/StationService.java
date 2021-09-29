@@ -87,7 +87,7 @@ public class StationService {
         log.debug("Rent response {} and {}", messageFromClient.getHeader(), takePowerBankResponse);
 
         if (takePowerBankResponse.getResult() != 1) {
-            if (!isPowerReallyTaken(powerBankSlot, cabinetId)) {
+            if (isPowerBankPresentInSlot(powerBankSlot, cabinetId)) {
                 throw new NotSuccessesRent();
             }
         }
@@ -95,7 +95,18 @@ public class StationService {
         return takePowerBankResponse.getPowerBankId();
     }
 
-    public boolean isPowerReallyTaken(short powerBankSlot, String cabinetId) {
+    public boolean isPowerBankPresentInSlot(short powerBankSlot, String cabinetId) {
+        ChargingStationInventory chargingStationInventory = getStationInventory(cabinetId);
+
+        var powerBankInfoOptional = chargingStationInventory.getPowerBankList()
+                .stream()
+                .filter(powerBankInfo -> powerBankSlot == powerBankInfo.getSlotNumber())
+                .findFirst();
+
+        return powerBankInfoOptional.isPresent();
+    }
+
+    public boolean isPowerBankPresent(String powerBankId, String cabinetId) {
         ChargingStationInventory chargingStationInventory = getStationInventory(cabinetId);
 
         if (chargingStationInventory.getPowerBankList().isEmpty()) {
@@ -104,7 +115,7 @@ public class StationService {
 
         var powerBankInfoOptional = chargingStationInventory.getPowerBankList()
                 .stream()
-                .filter(powerBankInfo -> powerBankSlot == powerBankInfo.getSlotNumber())
+                .filter(powerBankInfo -> powerBankId.equals(powerBankInfo.getPowerBankId()))
                 .findFirst();
 
         return powerBankInfoOptional.isPresent();
