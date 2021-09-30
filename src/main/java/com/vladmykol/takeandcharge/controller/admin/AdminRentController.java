@@ -39,8 +39,12 @@ public class AdminRentController {
     }
 
     @DeleteMapping("/clear")
-    public void rentClear() {
-        rentService.clearRent();
+    public void rentClear(@RequestParam String orderId) {
+        if (orderId == null || orderId.isEmpty()) {
+//            rentService.clearRent();
+        } else {
+            rentService.clearRentRow(orderId);
+        }
     }
 
     @PutMapping("/hold")

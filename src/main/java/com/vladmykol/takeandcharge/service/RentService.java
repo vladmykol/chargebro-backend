@@ -1,5 +1,6 @@
 package com.vladmykol.takeandcharge.service;
 
+import com.vladmykol.takeandcharge.conts.RentStage;
 import com.vladmykol.takeandcharge.conts.RentStatus;
 import com.vladmykol.takeandcharge.dto.RentHistoryDto;
 import com.vladmykol.takeandcharge.dto.RentReportDto;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -97,4 +99,11 @@ public class RentService {
         rentRepository.deleteAll();
     }
 
+    public void clearRentRow(String rentId) {
+        Optional<Rent> rent = rentRepository.findById(rentId);
+        if (rent.isPresent()) {
+            rent.get().setStage(RentStage.SUCCESSFULLY_FINISHED);
+            rentRepository.save(rent.get());
+        }
+    }
 }
