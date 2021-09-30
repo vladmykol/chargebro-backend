@@ -1,7 +1,6 @@
 package com.vladmykol.takeandcharge.conts;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public enum RentStatus {
@@ -17,7 +16,7 @@ public enum RentStatus {
     },
     FINISHED {
         public List<RentStage> getStages() {
-            return Collections.singletonList(RentStage.SUCCESSFULLY_FINISHED);
+            return Arrays.asList(RentStage.SUCCESSFULLY_FINISHED, RentStage.TERMINATED);
         }
     };
 

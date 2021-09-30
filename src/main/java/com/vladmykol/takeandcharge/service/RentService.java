@@ -24,6 +24,10 @@ public class RentService {
     private final StationServiceHelper stationServiceHelper;
     private final UserService userService;
 
+    public List<Rent> getAllActiveRentWithNotReturnedPowerBank() {
+        return rentRepository.findByStageIn(RentStatus.ACTIVE.getStages());
+    }
+
     public List<Rent> getActiveRentWithNotReturnedPowerBank(String userId) {
         return rentRepository.findByUserIdAndStageIn(userId
                 , RentStatus.ACTIVE.getStages());
@@ -73,8 +77,10 @@ public class RentService {
                     final var returnedToStation = stationServiceHelper.getByIdOrNew(rent.getTakenInStationId());
                     return RentReportDto.builder()
                             .orderId(rent.getId())
+                            .takeStation(takeInStation.getShortId())
                             .takePlace(takeInStation.getPlaceName())
                             .takeAddress(takeInStation.getAddress())
+                            .returnStation(returnedToStation.getShortId())
                             .returnPlace(returnedToStation.getPlaceName())
                             .returnAddress(returnedToStation.getAddress())
                             .lastModifiedDate(rent.getLastModifiedDate())
@@ -95,14 +101,10 @@ public class RentService {
     }
 
 
-    public void clearRent() {
-        rentRepository.deleteAll();
-    }
-
     public void clearRentRow(String rentId) {
         Optional<Rent> rent = rentRepository.findById(rentId);
         if (rent.isPresent()) {
-            rent.get().setStage(RentStage.SUCCESSFULLY_FINISHED);
+            rent.get().setStage(RentStage.TERMINATED);
             rentRepository.save(rent.get());
         }
     }

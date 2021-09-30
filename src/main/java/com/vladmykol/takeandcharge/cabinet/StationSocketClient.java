@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.*;
 
@@ -47,10 +46,6 @@ public class StationSocketClient {
         this.inputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
         this.outputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream(), 10 * 1024));
         log.debug("New station socket client {}", clientInfo);
-    }
-
-    public static void putUnsignedShort(ByteBuffer bb, int value) {
-        bb.putShort((short) (value & 0xffff));
     }
 
     public void setActive() {

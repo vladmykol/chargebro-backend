@@ -15,10 +15,12 @@ import java.util.Date;
 public class RentReportDto {
     private String orderId;
 
+    private String takeStation;
     private String takePlace;
 
     private String takeAddress;
 
+    private String returnStation;
     private String returnPlace;
 
     private String returnAddress;

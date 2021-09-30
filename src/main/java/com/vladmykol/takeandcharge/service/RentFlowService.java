@@ -23,6 +23,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -262,6 +263,17 @@ public class RentFlowService {
     @Async(AsyncConfiguration.RENT_REFRESH_TASK_EXECUTOR)
     public void refreshRentStatus(String userId) {
         List<Rent> activeRents = rentService.getActiveRentWithNotReturnedPowerBank(userId);
+        refreshRents(activeRents);
+    }
+
+    @Async(AsyncConfiguration.RENT_REFRESH_TASK_EXECUTOR)
+    @Scheduled(cron = "0 0 11 * * ?", zone = "GMT+3:00")
+    public void refreshAllRents() {
+        List<Rent> activeRents = rentService.getAllActiveRentWithNotReturnedPowerBank();
+        refreshRents(activeRents);
+    }
+
+    private void refreshRents(List<Rent> activeRents) {
         var onlineStations = stationService.getAuthenticatedStations().stream().filter(AuthenticatedStationsDto::isOnline).collect(Collectors.toList());
         activeRents.forEach(rent -> {
             stationService.findAll().stream()
@@ -270,14 +282,13 @@ public class RentFlowService {
                         try {
                             if (stationService.isPowerBankPresent(rent.getPowerBankId(), station.getId())) {
                                 returnPowerBankAction(rent.getId(), station.getId());
-                                log.warn("return powerbank after user rent refresh status. RentId = " + rent.getId());
+                                log.warn("Manual rent refresh for rentId = " + rent.getId());
                             }
                         } catch (Exception e) {
                             log.warn("Filed to refresh rent status for station " + station.getId(), e);
                         }
                     });
         });
-        log.warn("rent refresh");
     }
 
     private boolean isInOnlineStationList(List<AuthenticatedStationsDto> onlineStations, StationInfoDto station) {

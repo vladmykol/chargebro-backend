@@ -4,6 +4,7 @@ import com.vladmykol.takeandcharge.dto.HoldDetails;
 import com.vladmykol.takeandcharge.dto.RentReportDto;
 import com.vladmykol.takeandcharge.entity.Payment;
 import com.vladmykol.takeandcharge.service.PaymentService;
+import com.vladmykol.takeandcharge.service.RentFlowService;
 import com.vladmykol.takeandcharge.service.RentService;
 import com.vladmykol.takeandcharge.service.UserService;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
@@ -21,6 +22,7 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.API_RENT;
 public class AdminRentController {
     private final PaymentService paymentService;
     private final RentService rentService;
+    private final RentFlowService rentFlowService;
     private final UserService userService;
 
     @GetMapping("/payment")
@@ -30,21 +32,12 @@ public class AdminRentController {
 
     @GetMapping("/report")
     public List<RentReportDto> getRentReport() {
-//        HttpServletRequest request
-//        Locale clientLocale = request.getLocale();
-//        Calendar calendar = Calendar.getInstance(clientLocale);
-//        TimeZone clientTimeZone = calendar.getTimeZone();
-//        System.out.println(clientTimeZone);
         return rentService.getRentReport();
     }
 
-    @DeleteMapping("/clear")
-    public void rentClear(@RequestParam String orderId) {
-        if (orderId == null || orderId.isEmpty()) {
-//            rentService.clearRent();
-        } else {
+    @DeleteMapping("/terminate")
+    public void stopRent(@RequestParam String orderId) {
             rentService.clearRentRow(orderId);
-        }
     }
 
     @PutMapping("/hold")
@@ -59,5 +52,10 @@ public class AdminRentController {
                 .isPreAuth(true)
                 .build();
         return paymentService.holdMoney(holdDetails);
+    }
+
+    @PostMapping("/refresh")
+    public void refreshRentStatus() {
+        rentFlowService.refreshAllRents();
     }
 }
