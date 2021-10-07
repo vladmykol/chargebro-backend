@@ -15,14 +15,12 @@ public class StationConnectionMonitor {
     private final TelegramNotifierService telegramNotifierService;
     private final StationRepository stationRepository;
 
-    @Scheduled(fixedRate = 5 * MILLIS_PER_MINUTE, initialDelay = 3 * MILLIS_PER_MINUTE)
+    @Scheduled(fixedRate = 6 * MILLIS_PER_MINUTE, initialDelay = 3 * MILLIS_PER_MINUTE)
     public void monitorClients() {
         final var disconnectedStations = stationRegister.getDisconnectedStations();
         if (!disconnectedStations.isEmpty()) {
             final var stationEntityList = stationRepository.findAllById(disconnectedStations);
-            stationEntityList.forEach(station -> {
-                telegramNotifierService.wentOffline(station);
-            });
+            stationEntityList.forEach(telegramNotifierService::wentOffline);
         }
     }
 
