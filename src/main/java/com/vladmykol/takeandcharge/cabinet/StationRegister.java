@@ -3,6 +3,7 @@ package com.vladmykol.takeandcharge.cabinet;
 import com.vladmykol.takeandcharge.cabinet.dto.ProtocolEntity;
 import com.vladmykol.takeandcharge.cabinet.dto.RawMessage;
 import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
+import com.vladmykol.takeandcharge.dto.DisconnectedStationsDto;
 import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.NoResponseFromWithinTimeout;
 import com.vladmykol.takeandcharge.monitoring.TelegramNotifierService;
@@ -31,14 +32,15 @@ public class StationRegister {
     private final WebSocketServer webSocketServer;
     private final TelegramNotifierService telegramNotifierService;
 
-    public List<String> getDisconnectedStations() {
-        List<String> disconnectedStations = new ArrayList<>();
+    public List<DisconnectedStationsDto> getDisconnectedStations() {
+        List<DisconnectedStationsDto> disconnectedStations = new ArrayList<>();
         connections.forEach((stationId, stationSocketClientWrapper) -> {
             if (!stationSocketClientWrapper.getSocketClient().isActive()
                     && stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen().isBefore(Instant.now().minusSeconds(6 * 60))
                     && !stationSocketClientWrapper.isReportedInactive) {
                 stationSocketClientWrapper.setReportedInactive(true);
-                disconnectedStations.add(stationId);
+                var timeSince = TimeUtils.timeBetweenWords(stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen());
+                disconnectedStations.add(new DisconnectedStationsDto(stationId, timeSince));
             }
         });
 

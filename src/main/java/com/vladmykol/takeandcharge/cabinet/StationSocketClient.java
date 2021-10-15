@@ -19,8 +19,7 @@ import java.net.Socket;
 import java.time.Instant;
 import java.util.*;
 
-import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.RESTART;
-import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.SOFTWARE_VERSION;
+import static com.vladmykol.takeandcharge.cabinet.dto.MessageHeader.MessageCommand.*;
 
 
 @Slf4j
@@ -84,7 +83,7 @@ public class StationSocketClient {
     public void check() {
         log.debug("Send check command to not responsive station {}", clientInfo);
         try {
-            internalCommunicate(new ProtocolEntity<>(SOFTWARE_VERSION), 30000);
+            internalCommunicate(new ProtocolEntity<>(HEART_BEAT), 30000);
         } catch (NoResponseFromWithinTimeout e) {
             internalCommunicate(new ProtocolEntity<>(RESTART), 30000);
             throw new CabinetIsOffline();

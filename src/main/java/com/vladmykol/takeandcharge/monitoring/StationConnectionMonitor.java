@@ -19,8 +19,10 @@ public class StationConnectionMonitor {
     public void monitorClients() {
         final var disconnectedStations = stationRegister.getDisconnectedStations();
         if (!disconnectedStations.isEmpty()) {
-            final var stationEntityList = stationRepository.findAllById(disconnectedStations);
-            stationEntityList.forEach(telegramNotifierService::wentOffline);
+            disconnectedStations.forEach(disconnectedStationsDto -> {
+                var station = stationRepository.findById(disconnectedStationsDto.getStationId());
+                telegramNotifierService.wentOffline(station, disconnectedStationsDto.getTimeSinceDisconnected());
+            });
         }
     }
 

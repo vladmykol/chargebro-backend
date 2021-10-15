@@ -16,5 +16,9 @@ public class TimeUtils {
         return DurationFormatUtils.formatDurationHMS(Duration.between(start, end).toMillis());
     }
 
+    public static String timeBetweenWords(Instant start) {
+        return DurationFormatUtils.formatDurationWords(Duration.between(start, Instant.now()).toMillis(), true, true);
+    }
+
 }
 

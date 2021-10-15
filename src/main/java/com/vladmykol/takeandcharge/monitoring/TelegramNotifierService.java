@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -58,9 +60,11 @@ public class TelegramNotifierService {
         messageToAdmin(msg);
     }
 
-    public void wentOffline(Station station) {
-        String msg = "\uD83D\uDE14 " + stationName(station) + "went offline" + stationInfo(station);
-        messageToAdmin(msg);
+    public void wentOffline(Optional<Station> optionalStation, String timeSinceDisconnected) {
+        optionalStation.ifPresent(station -> {
+            String msg = "\uD83D\uDE14 " + stationName(station) + "went offline " + timeSinceDisconnected + " ago" + stationInfo(station);
+            messageToAdmin(msg);
+        });
     }
 
 
