@@ -36,7 +36,7 @@ public class StationRegister {
         List<DisconnectedStationsDto> disconnectedStations = new ArrayList<>();
         connections.forEach((stationId, stationSocketClientWrapper) -> {
             if (!stationSocketClientWrapper.getSocketClient().isActive()
-                    && stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen().isBefore(Instant.now().minusSeconds(6 * 60))
+                    && stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen().isBefore(Instant.now().minusSeconds(5 * 60))
                     && !stationSocketClientWrapper.isReportedInactive) {
                 stationSocketClientWrapper.setReportedInactive(true);
                 var timeSince = TimeUtils.timeBetweenWords(stationSocketClientWrapper.getSocketClient().getClientInfo().getLastSeen());
@@ -161,7 +161,7 @@ public class StationRegister {
         private StationSocketClient socketClient;
         private Instant logInTime;
         private boolean isReportedInactive;
-        private CircularFifoQueue<String> lastSessions = new CircularFifoQueue<>(5);
+        private CircularFifoQueue<String> lastSessions = new CircularFifoQueue<>(10);
 
         public StationSocketClientWrapper(StationSocketClient socketClient) {
             this.socketClient = socketClient;

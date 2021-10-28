@@ -63,7 +63,7 @@ public class StationSocketClient {
     public synchronized void shutdown(Exception reason) {
         isActive = false;
         if (clientInfo.getShutdownTime() == null) {
-            log.debug("Shutdown socket client {}", clientInfo, reason);
+            log.error("Shutting down socket client {}: {}", clientInfo, reason.getMessage());
             clientInfo.setShutdownTime(Instant.now());
         }
         try {

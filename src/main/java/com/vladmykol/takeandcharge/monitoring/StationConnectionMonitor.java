@@ -15,7 +15,7 @@ public class StationConnectionMonitor {
     private final TelegramNotifierService telegramNotifierService;
     private final StationRepository stationRepository;
 
-    @Scheduled(fixedRate = 15 * MILLIS_PER_MINUTE, initialDelay = 3 * MILLIS_PER_MINUTE)
+    @Scheduled(fixedRate = 5 * MILLIS_PER_MINUTE, initialDelay = 3 * MILLIS_PER_MINUTE)
     public void monitorClients() {
         final var disconnectedStations = stationRegister.getDisconnectedStations();
         if (!disconnectedStations.isEmpty()) {
