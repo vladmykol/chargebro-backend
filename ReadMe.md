@@ -56,7 +56,7 @@ dokku config:set server DOKKU_LETSENCRYPT_EMAIL='info@chargebro.com'
 1. Push the latest changes to GitHub
 1. Login with SSH to your server and run
 ```
-dokku git:sync --build server https://github.com/mykovolod/take-and-charge-server.git
+dokku git:sync --build server https://github.com/mykovolod/chargebro-backend.git
 ```
 3. Check logs
    `dokku logs bot -t`
@@ -82,11 +82,11 @@ rm -rf server
 
 
 ##Expose MongoDB
-1. `dokku mongo:expose take-and-charge-db 27017 27018 27019 28017`
+1. `dokku mongo:expose cragebro-db 27017 27018 27019 28017`
 2. `ufw disable`
 3. Remove droplet from Firewall rules in digitalOcean
 
 ###un-expose MongoDB
-1. `dokku mongo:unexpose take-and-charge-db`
+1. `dokku mongo:unexpose cragebro-db`
 1. `ufw enable`
 1. Add droplet to Firewall rules in digitalOcean
