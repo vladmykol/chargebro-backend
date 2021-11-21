@@ -34,6 +34,7 @@ dokku mongo:link chargebro-db chargebro
 dokku docker-options:add chargebro deploy "-p 10382:10382/tcp"
 dokku resource:limit --memory 500m chargebro
 dokku domains:add chargebro api.chargebro.com
+dokku checks:disable chargebro
 dokku config:set server DOKKU_LETSENCRYPT_EMAIL='info@chargebro.com'
    AUTH_TOKEN='???'
    CALLBACK_URI='https://api.chargebro.com' JAVA_OPTS='-Xmx200m'
@@ -45,27 +46,27 @@ dokku config:set server DOKKU_LETSENCRYPT_EMAIL='info@chargebro.com'
    TELEGRAM_BOT_KEY='???'
    TELEGRAM_ADMIN_CHAT_ID='???'
 ```
-4. `dokku docker-options:add chargebro build,deploy "--cpus='0.7' -m='300m'"` - to not use all resources during deploy
 4. Create personal [access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-token) in GitHub account
 4. Add that toke to dokku  
    `dokku git:auth github.com ?username? ?personal-access-token?`
-4. Enable SSL certificate once applicatio is deployed
+4. Enable SSL certificate once application is deployed
    `dokku letsencrypt:enable chargebro`
 
 ###Deploy steps
 1. Push the latest changes to GitHub
+1. Stop app to free up memory for a build, otherwise deploy will fail if you have less than 2GB RAM `dokku ps:stop chargebro`
 1. Login with SSH to your server and run
 ```
-dokku git:sync --build server https://github.com/mykovolod/chargebro-backend.git
+dokku git:sync --build chargebro https://github.com/mykovolod/chargebro-backend.git
 ```
 3. Check logs
    `dokku logs bot -t`
 
 ### How to destroy env
 ```
-dokku apps:destroy server
+dokku apps:destroy chargebro
 cd /home/dokku
-rm -rf server
+rm -rf chargebro
 ```
 
 ###Other console commands
