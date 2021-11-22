@@ -43,7 +43,7 @@ public class AdminStationController {
     @PostMapping("/{shortId}/option")
     @ApiOperation(value = "Set parameters for charging station if it is connected and restart. localhost - is a debug server")
     public MessageHeader setStationOptions(@PathVariable(name = "shortId") String shortId,
-                                           @ApiParam(allowableValues = "localhost, REDACTED_SERVER_IP", required = true) @RequestParam(defaultValue = "localhost") String serverAddress,
+                                           @ApiParam(required = true) @RequestParam(defaultValue = "localhost") String serverAddress,
                                            @RequestParam(defaultValue = "10382") String serverPort,
                                            @RequestParam(defaultValue = "30") short interval
     ) {
