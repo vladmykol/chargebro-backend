@@ -85,7 +85,7 @@ public class RentFlowService {
             checkAvailablePowerBanks(rent);
             holdMoneyBeforeRent(rent);
 
-        }, rent, true);
+        }, "rentStart",rent, true);
     }
 
 
@@ -103,7 +103,7 @@ public class RentFlowService {
             webSocketServer.sendMoneyHoldConfirmationMessage(payment.getOrderStatus());
             processRentPayment(payment.getType(), payment.getOrderStatus(), optionalRent.get());
 
-        }, optionalRent.get(), false);
+        }, "payment", optionalRent.get(), false);
     }
 
     public void returnPowerBankAction(String rentId, String stationId) {
@@ -115,7 +115,7 @@ public class RentFlowService {
 
             executeRentStep(() -> {
                 finalizeRent(rent);
-            }, rent, false);
+            }, "rentEnd", rent, false);
         });
     }
 
@@ -127,6 +127,7 @@ public class RentFlowService {
         rent.setPrice(rentPriceAmount);
 
         if (rentPriceAmount > 0) {
+            reversePayment(rent);
             chargeMoneyAfterRent(rent);
         } else {
             finishRent(rent);
@@ -153,7 +154,7 @@ public class RentFlowService {
         rent.markRentFinished();
         rentRepository.save(rent);
         webSocketServer.sendRentEndMessage(rent.getPowerBankId());
-        reversePayment(rent);
+//        reversePayment(rent);
 
         notifyAdminRentFinish(rent);
     }
@@ -209,7 +210,15 @@ public class RentFlowService {
     }
 
     private void reversePayment(Rent rent) {
-        final var payment = paymentService.reversePayment(rent.getDepositPaymentId());
+        try {
+            paymentService.reversePayment(rent.getDepositPaymentId());
+        } catch (Exception e) {
+            var rentException = ExceptionUtil.convertToHttpException(e);
+            rent.setLastError(new RentError(rentException));
+            rentRepository.save(rent);
+            final var userPhone = userService.getUserPhone(rent.getUserId());
+            telegramNotifierService.rentError("returnDeposit",rent, userPhone);
+        }
 //        rentRepository.save(rent);
 //        paymentService.throwErrorIfUnsuccessful(payment);
     }
@@ -241,7 +250,7 @@ public class RentFlowService {
     }
 
 
-    public void executeRentStep(Runnable r, Rent rent, boolean isNeedToThrow) {
+    public void executeRentStep(Runnable r, String stage, Rent rent, boolean isNeedToThrow) {
         HttpException rentException = null;
         try {
             r.run();
@@ -253,7 +262,7 @@ public class RentFlowService {
             rent.setLastError(new RentError(rentException));
             rentRepository.save(rent);
             final var userPhone = userService.getUserPhone(rent.getUserId());
-            telegramNotifierService.rentError(rent, userPhone);
+            telegramNotifierService.rentError(stage, rent, userPhone);
 
             if (isNeedToThrow) {
                 throw rentException;

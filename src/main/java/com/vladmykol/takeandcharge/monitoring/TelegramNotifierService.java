@@ -86,9 +86,9 @@ public class TelegramNotifierService {
         messageToAdmin(msg);
     }
 
-    public void rentError(Rent rent, String userPhone) {
+    public void rentError(String stage, Rent rent, String userPhone) {
         var station = stationServiceHelper.getByIdOrNew(rent.getTakenInStationId());
-        String msg = "❌ Rent Error occurred: " + rent.getLastErrorMessage() +
+        String msg = "❌ Error on " + stage + ": " + rent.getLastErrorMessage() +
                 "\n--\n<code>Station:</code> " + station.getShortId() +
                 "\n<code>Place</code>: " + station.getPlaceName() +
                 "\n<code>User:</code> " + userPhone;

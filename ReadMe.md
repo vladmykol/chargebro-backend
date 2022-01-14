@@ -83,11 +83,11 @@ rm -rf chargebro
 
 
 ##Expose MongoDB
-1. `dokku mongo:expose cragebro-db 27017 27018 27019 28017`
+1. `dokku mongo:expose chargebro-db 27017 27018 27019 28017`
 2. `ufw disable`
-3. Remove droplet from Firewall rules in digitalOcean
+3. Disable server Firewall rules if any
 
 ###un-expose MongoDB
-1. `dokku mongo:unexpose cragebro-db`
+1. `dokku mongo:unexpose chargebro-db`
 1. `ufw enable`
-1. Add droplet to Firewall rules in digitalOcean
+1. Enable server firewall rules if any
