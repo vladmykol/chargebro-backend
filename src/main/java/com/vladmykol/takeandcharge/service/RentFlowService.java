@@ -120,7 +120,10 @@ public class RentFlowService {
     }
 
     private void finalizeRent(Rent rent) {
-        final var rentPriceAmount = paymentService.getRentPriceAmount(rent.getRentTime());
+        var rentPriceAmount = rent.getPrice();
+        if (rentPriceAmount == 0) {
+            rentPriceAmount = paymentService.getRentPriceAmount(rent.getRentTime());
+        }
         rent.setPrice(rentPriceAmount);
 
         if (rentPriceAmount > 0) {
