@@ -1,6 +1,9 @@
 plugins {
-    id 'org.springframework.boot' version '2.3.4.RELEASE'
-    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id 'org.springframework.boot' version '2.6.2'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'se.patrikerdes.use-latest-versions' version '0.2.18'
+    id 'com.github.ben-manes.versions' version '0.41.0'
+    id "org.owasp.dependencycheck" version "6.5.3"
     id 'java'
 }
 
@@ -40,16 +43,17 @@ dependencies {
 //    liqpay from maven
     implementation 'com.liqpay:liqpay-sdk:0.7-SNAPSHOT'
 // string and collection utils
-    implementation 'org.apache.commons:commons-lang3:3.10'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'org.apache.commons:commons-collections4:4.4'
 //    for swagger UI
-    implementation 'io.springfox:springfox-boot-starter:3.0.0'
-    implementation 'org.modelmapper:modelmapper:2.3.8'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.4'
+    implementation 'org.springdoc:springdoc-openapi-data-rest:1.6.4'
+    implementation 'org.modelmapper:modelmapper:3.0.0'
 //    custom security token generation
     implementation 'io.jsonwebtoken:jjwt:0.9.1'
-    implementation 'javax.xml.bind:jaxb-api:2.3.0'
+    implementation 'javax.xml.bind:jaxb-api:2.4.0-b180830.0359'
 //    telegram notifications
-    implementation 'com.github.pengrad:java-telegram-bot-api:5.0.1'
+    implementation 'com.github.pengrad:java-telegram-bot-api:5.6.0'
 
 //    developmentOnly 'org.springframework.boot:spring-boot-devtools'
 //    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
@@ -66,6 +70,15 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+configurations.all {
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
+}
+
+// OWASP Dependency Check settings
+dependencyCheck {
+    failBuildOnCVSS = 6f
 }
 
 //compileJava.dependsOn(processResources)

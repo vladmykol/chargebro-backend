@@ -19,8 +19,8 @@ import com.vladmykol.takeandcharge.utils.ExceptionUtil;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -85,7 +85,7 @@ public class RentFlowService {
             checkAvailablePowerBanks(rent);
             holdMoneyBeforeRent(rent);
 
-        }, "rentStart",rent, true);
+        }, "rentStart", rent, true);
     }
 
 
@@ -217,7 +217,7 @@ public class RentFlowService {
             rent.setLastError(new RentError(rentException));
             rentRepository.save(rent);
             final var userPhone = userService.getUserPhone(rent.getUserId());
-            telegramNotifierService.rentError("returnDeposit",rent, userPhone);
+            telegramNotifierService.rentError("returnDeposit", rent, userPhone);
         }
 //        rentRepository.save(rent);
 //        paymentService.throwErrorIfUnsuccessful(payment);
@@ -236,7 +236,7 @@ public class RentFlowService {
 
         String rentedPowerBankId = stationService.unlockPowerBank(rent.getPowerBankSlot(),
                 rent.getTakenInStationId());
-        if (Strings.isNotEmpty(rentedPowerBankId)) {
+        if (!StringUtils.isEmpty(rentedPowerBankId)) {
             rent.setPowerBankId(rentedPowerBankId);
         }
 
