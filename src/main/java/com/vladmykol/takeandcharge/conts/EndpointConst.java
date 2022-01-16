@@ -19,5 +19,6 @@ public class EndpointConst {
     public static final String API_SMS = "/sms";
     public static final String API_SMS_CALLBACK = "/callback";
     public static final String API_USER = "/user";
+    public static final String API_INFR = "/infr";
     public static final String API_ADMIN = "/admin";
 }
