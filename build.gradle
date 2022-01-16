@@ -17,6 +17,14 @@ configurations {
     }
 }
 
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'com.vladmykol.takeandcharge.ChargeBroApplication'
+        )
+    }
+}
+
 repositories {
     mavenCentral()
     maven {
@@ -53,9 +61,7 @@ dependencies {
     implementation 'com.github.apavlidi:restfulQueries:0.0.1'
 
 //testing
-    testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-    }
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testCompileOnly 'org.projectlombok:lombok'
