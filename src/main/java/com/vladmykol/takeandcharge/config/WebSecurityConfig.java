@@ -1,7 +1,6 @@
 package com.vladmykol.takeandcharge.config;
 
 import com.vladmykol.takeandcharge.conts.RoleEnum;
-import com.vladmykol.takeandcharge.repository.RequestLogRepository;
 import com.vladmykol.takeandcharge.security.JwtAuthorizationFilter;
 import com.vladmykol.takeandcharge.security.JwtProvider;
 import com.vladmykol.takeandcharge.service.CustomUserDetailsService;
@@ -25,7 +24,6 @@ import static com.vladmykol.takeandcharge.conts.EndpointConst.*;
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtProvider jwtProvider;
-    private final RequestLogRepository requestLogRepository;
 
     @Override
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
@@ -47,7 +45,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .csrf().disable()
-                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtProvider, customUserDetailsService, requestLogRepository))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtProvider, customUserDetailsService))
 //                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -70,7 +68,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         API_SOCKET_RENT).permitAll()
                 .antMatchers("/actuator/**").hasRole(RoleEnum.ADMIN.name())
                 .antMatchers("/swagger-ui/**").hasRole(RoleEnum.ADMIN.name())
-                .antMatchers("/swgr/**").hasRole(RoleEnum.ADMIN.name())
                 .antMatchers(API_ADMIN + "/**").hasRole(RoleEnum.ADMIN.name())
                 .anyRequest().authenticated()
                 .and().httpBasic()

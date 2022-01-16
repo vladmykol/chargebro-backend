@@ -1,10 +1,7 @@
 package com.vladmykol.takeandcharge.security;
 
-import com.vladmykol.takeandcharge.entity.IncomingRequest;
-import com.vladmykol.takeandcharge.repository.RequestLogRepository;
 import com.vladmykol.takeandcharge.service.CustomUserDetailsService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,9 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -40,25 +34,18 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     };
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService customUserDetailsService;
-    private final RequestLogRepository requestLogRepository;
 
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtProvider jwtProvider, CustomUserDetailsService customUserDetailsService, RequestLogRepository requestLogRepository) {
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtProvider jwtProvider, CustomUserDetailsService customUserDetailsService) {
         super(authenticationManager);
         this.customUserDetailsService = customUserDetailsService;
         this.jwtProvider = jwtProvider;
-        this.requestLogRepository = requestLogRepository;
     }
 
-    private HttpHeaders getHeaders(HttpServletRequest request) {
-        return Collections.list(request.getHeaderNames())
-                .stream()
-                .collect(Collectors.toMap(
-                        Function.identity(),
-                        h -> Collections.list(request.getHeaders(h)),
-                        (oldValue, newValue) -> newValue,
-                        HttpHeaders::new
-                ));
-    }
+//    public JwtAuthorizationFilter(TokenService tokenService, CustomUserDetailsService customUserDetailsService, AuthenticationManager authenticationManager) {
+//        super(authenticationManager);
+//        this.tokenService = tokenService;
+//        this.customUserDetailsService =customUserDetailsService;
+//    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -67,17 +54,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             authenticate(request);
             chain.doFilter(request, response);
         } finally {
-            var requestUrl = request.getRequestURL().toString();
-            if (!requestLogRepository.existsByRequest(requestUrl)) {
-                var incomingRequest = new IncomingRequest();
-                incomingRequest.setMethod(request.getMethod());
-                incomingRequest.setIpAddress(ipAddress);
-                incomingRequest.setRequest(request.getRequestURL().toString());
-                incomingRequest.setRequestParams(request.getQueryString());
-                incomingRequest.setRequestHeaders(getHeaders(request));
-                incomingRequest.setResponseStatus(response.getStatus());
-                requestLogRepository.save(incomingRequest);
-            }
             log.debug("Incoming {} from {} to {} and status {}",
                     request.getMethod(),
                     ipAddress,

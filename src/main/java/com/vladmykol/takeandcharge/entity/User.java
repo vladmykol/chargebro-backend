@@ -1,12 +1,12 @@
 package com.vladmykol.takeandcharge.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -46,7 +46,10 @@ public class User {
 
     @CreatedDate
     private Date createDate;
-
+//
+//    @Version
+//    private Long version;
+//
     @LastModifiedDate
     private Date lastModifiedDate;
 
