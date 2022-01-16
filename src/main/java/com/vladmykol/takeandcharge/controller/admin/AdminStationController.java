@@ -4,9 +4,8 @@ import com.vladmykol.takeandcharge.cabinet.dto.MessageHeader;
 import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.dto.StationInfoDto;
 import com.vladmykol.takeandcharge.service.StationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,9 +41,9 @@ public class AdminStationController {
     }
 
     @PostMapping("/{shortId}/option")
-    @Operation(description = "Set parameters for charging station if it is connected and restart. localhost - is a debug server")
+    @ApiOperation(value = "Set parameters for charging station if it is connected and restart. localhost - is a debug server")
     public MessageHeader setStationOptions(@PathVariable(name = "shortId") String shortId,
-                                           @Parameter(required = true) @RequestParam(defaultValue = "localhost") String serverAddress,
+                                           @ApiParam(required = true) @RequestParam(defaultValue = "localhost") String serverAddress,
                                            @RequestParam(defaultValue = "10382") String serverPort,
                                            @RequestParam(defaultValue = "30") short interval
     ) {
@@ -52,15 +51,15 @@ public class AdminStationController {
     }
 
     @PostMapping("/{shortId}/reboot")
-    @Operation(description = "Restart selected station")
+    @ApiOperation(value = "Restart selected station")
     public MessageHeader setStationOptions(@PathVariable(name = "shortId") String shortId) {
         return stationService.restart(shortId);
     }
 
     @PostMapping("/{shortId}/unlock-all")
-    @Operation(description = "unlock all power-bank for maintenance")
+    @ApiOperation(value = "unlock all power-bank for maintenance")
     public void unlockAll(@PathVariable(name = "shortId") String shortId,
-                          @Parameter(schema = @Schema(type = "string", allowableValues = {"Yes, No"})) @RequestParam(defaultValue = "No") String force) {
+                          @ApiParam(allowableValues = "Yes, No") @RequestParam(defaultValue = "No") String force) {
         if (force.equalsIgnoreCase("Yes")) {
             stationService.unlockAllPowerBanks(shortId);
         }

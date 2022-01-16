@@ -2,8 +2,7 @@ package com.vladmykol.takeandcharge.controller;
 
 import com.vladmykol.takeandcharge.conts.EndpointConst;
 import com.vladmykol.takeandcharge.monitoring.TelegramNotifierService;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +35,7 @@ public class MobileAppController {
 
     @GetMapping("/{id}")
     public void redirectToAppSuccess(HttpServletResponse httpServletResponse,
-                                     @Parameter(schema = @Schema(type = "string", allowableValues = {"k05, k13, k15, k20, k14"}, required = true)) @PathVariable String id) {
+                                     @ApiParam(allowableValues = "k05, k13, k15, k20, k14", required = true) @PathVariable String id) {
         final String baseUrl = "https://chargebro.app.link/";
         httpServletResponse.setHeader("Location", baseUrl + id);
         httpServletResponse.setStatus(302);

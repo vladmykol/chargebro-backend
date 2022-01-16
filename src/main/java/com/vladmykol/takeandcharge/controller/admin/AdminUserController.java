@@ -4,7 +4,7 @@ import com.vladmykol.takeandcharge.entity.User;
 import com.vladmykol.takeandcharge.service.RegisterUserService;
 import com.vladmykol.takeandcharge.service.SmsService;
 import com.vladmykol.takeandcharge.service.WebSocketServer;
-import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +44,7 @@ public class AdminUserController {
     }
 
     @PostMapping("/notify")
-    @Operation(description = "For manual SMS sending to user")
+    @ApiOperation(value = "For manual SMS sending to user")
     public void sendSms(@RequestParam String phone,
                         @RequestParam(defaultValue = "Ми помітили, що Ви вчора не змогли скористатися нашим сервісом. Вибачте за незручності, ми все полагодили! До нових зарядів!") String text) {
         smsService.sendSMS(text, phone);

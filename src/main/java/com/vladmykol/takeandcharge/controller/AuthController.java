@@ -19,7 +19,6 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping(EndpointConst.API_AUTH)
 @RequiredArgsConstructor
-@Deprecated(since = "app version 1.2")
 public class AuthController {
     private final JwtProvider jwtProvider;
     private final AuthenticationManager authenticationManager;
