@@ -9,11 +9,17 @@ plugins {
 
 group = 'com.vladmykol'
 version = '1.1.29-SNAPSHOT'
-sourceCompatibility = '17'
+sourceCompatibility = '11'
 
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
+    }
+}
+
+bootJar {
+    manifest {
+        attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
     }
 }
 
@@ -50,7 +56,7 @@ dependencies {
     implementation 'com.github.pengrad:java-telegram-bot-api:5.6.0'
 
 //    auto rest query filters
-    implementation 'com.github.apavlidi:restfulQueries:0.0.1'
+   implementation 'com.github.apavlidi:restfulQueries:0.0.1'
 
 //testing
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
