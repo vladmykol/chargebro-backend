@@ -8,6 +8,7 @@ import com.vladmykol.takeandcharge.service.RentFlowService;
 import com.vladmykol.takeandcharge.service.RentService;
 import com.vladmykol.takeandcharge.service.UserService;
 import com.vladmykol.takeandcharge.utils.SecurityUtil;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,6 +56,7 @@ public class AdminRentController {
     }
 
     @PostMapping("/refresh")
+    @Operation(description = "refresh rent, check rent progress for all current rents in progress")
     public void refreshRentStatus() {
         rentFlowService.refreshAllRents();
     }
