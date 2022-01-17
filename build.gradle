@@ -9,7 +9,8 @@ plugins {
 
 group = 'com.vladmykol'
 version = '1.2.1'
-sourceCompatibility = '17'
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
 configurations {
     compileOnly {
