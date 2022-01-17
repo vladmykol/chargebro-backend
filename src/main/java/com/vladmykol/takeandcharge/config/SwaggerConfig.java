@@ -1,62 +1,27 @@
 package com.vladmykol.takeandcharge.config;
 
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
+import org.springdoc.core.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Predicate;
 
 @Configuration
-@EnableSwagger2
+@OpenAPIDefinition(info = @Info(title = "ChargeBro API", version = "2.0", description = "PowerBank renting solution"))
 public class SwaggerConfig {
-    public static final Contact DEFAULT_CONTACT = new Contact(
-            "ChargeBro Team", null, "info@chargebro.com");
-
-    public static final ApiInfo BUSINESS_API_INFO = new ApiInfo(
-            "ChargeBro API", "PowerBank renting solution", "1.0",
-            "https://chargebro.com/policy", DEFAULT_CONTACT,
-            null, null, Arrays.asList());
-
-    public static final ApiInfo SERVICE_API_INFO = new ApiInfo(
-            "ChargeBro service API", "Service control", "1.0",
-            null, DEFAULT_CONTACT,
-            null, null, Arrays.asList());
-
-    private static final Set<String> DEFAULT_PRODUCES_AND_CONSUMES =
-            new HashSet<String>(Arrays.asList("application/json",
-                    "application/xml"));
-
     @Bean
-    public Docket businessApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .apiInfo(BUSINESS_API_INFO)
-                .produces(DEFAULT_PRODUCES_AND_CONSUMES)
-                .consumes(DEFAULT_PRODUCES_AND_CONSUMES)
-                .groupName("business")
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("com.vladmykol.takeandcharge.controller"))
-                .build();
+    GroupedOpenApi mobileApis() {
+        return GroupedOpenApi.builder().group("mobile").pathsToMatch("/**/a/**").build();
     }
 
     @Bean
-    public Docket serviceApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .apiInfo(SERVICE_API_INFO)
-                .produces(DEFAULT_PRODUCES_AND_CONSUMES)
-                .consumes(DEFAULT_PRODUCES_AND_CONSUMES)
-                .groupName("service")
-                .select()
-                .apis(Predicate.not(RequestHandlerSelectors.basePackage("com.vladmykol.takeandcharge.controller")))
-                .build();
+    GroupedOpenApi adminApis() {
+        return GroupedOpenApi.builder().group("admin").pathsToMatch("/**/admin/**").build();
     }
 
+    @Bean
+    GroupedOpenApi allApis() {
+        return GroupedOpenApi.builder().group("all").pathsToMatch("/**").build();
+    }
 }
