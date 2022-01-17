@@ -12,6 +12,11 @@ version = '1.2.1'
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
+jar {
+    enabled = false
+    classifier = ''
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
