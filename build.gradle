@@ -16,6 +16,11 @@ jar {
     enabled = false
     classifier = ''
 }
+bootJar {
+    manifest {
+        attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
+    }
+}
 
 configurations {
     compileOnly {
