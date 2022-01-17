@@ -8,20 +8,12 @@ plugins {
 }
 
 group = 'com.vladmykol'
-version = '1.1.29-SNAPSHOT'
+version = '1.2.1'
 sourceCompatibility = '17'
 
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
-    }
-}
-
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'com.vladmykol.takeandcharge.ChargeBroApplication'
-        )
     }
 }
 

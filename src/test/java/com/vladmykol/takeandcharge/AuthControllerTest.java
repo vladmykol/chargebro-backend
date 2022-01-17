@@ -1,6 +1,7 @@
 package com.vladmykol.takeandcharge;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vladmykol.takeandcharge.conts.EndpointConst;
 import com.vladmykol.takeandcharge.conts.RoleEnum;
 import com.vladmykol.takeandcharge.dto.LoginRequest;
 import com.vladmykol.takeandcharge.dto.SingUpDto;
@@ -31,10 +32,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 //@RestClientTest
 class AuthControllerTest {
-    @Autowired
-    private RegisterUserService registerUserService;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+//    @Autowired
+//    private RegisterUserService registerUserService;
+//    @Autowired
+//    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -53,27 +54,26 @@ class AuthControllerTest {
 
 
     @Test
-    void logIn() throws Exception {
+    void notExistingUser() throws Exception {
         LoginRequest loginRequest = LoginRequest.builder()
                 .username("Admin")
                 .password("Admin").build();
 
-        mvc.perform(post(API_AUTH + "/login")
+        mvc.perform(post(EndpointConst.API_AUTH + "/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isNotEmpty());
+                .andExpect(status().isForbidden());
 
     }
 
 
     @Test
     void twoStepSingUp() throws Exception {
-        var registerInit = mvc.perform(post(API_AUTH + "/init")
+        var registerInit = mvc.perform(post(EndpointConst.API_VERSION_1 + EndpointConst.API_AUTH + "/init")
                 .contentType(MediaType.APPLICATION_JSON)
-                .param("phone", "380939008021"))
+                .param("phone", "3809312312345"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.validForMin").value(10))
+                .andExpect(jsonPath("$.validForMin").value(2))
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andReturn();
 
@@ -87,7 +87,7 @@ class AuthControllerTest {
                 .password("1111")
                 .build();
 
-        mvc.perform(post(API_AUTH + "/register")
+        mvc.perform(post(EndpointConst.API_VERSION_1 + EndpointConst.API_AUTH + "/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body(singUpDto)))
                 .andExpect(status().isOk())
