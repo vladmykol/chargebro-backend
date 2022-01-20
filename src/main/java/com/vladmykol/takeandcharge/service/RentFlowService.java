@@ -127,8 +127,14 @@ public class RentFlowService {
         rent.setPrice(rentPriceAmount);
 
         if (rentPriceAmount > 0) {
-            reversePayment(rent);
-            chargeMoneyAfterRent(rent);
+            try {
+                chargeMoneyAfterRent(rent);
+            } catch (PaymentException e) {
+                if (e.getMessage().contains("not sufficient funds")) {
+                    reversePayment(rent);
+                    chargeMoneyAfterRent(rent);
+                }
+            }
         } else {
             finishRent(rent);
         }
@@ -154,7 +160,7 @@ public class RentFlowService {
         rent.markRentFinished();
         rentRepository.save(rent);
         webSocketServer.sendRentEndMessage(rent.getPowerBankId());
-//        reversePayment(rent);
+        reversePayment(rent);
 
         notifyAdminRentFinish(rent);
     }
