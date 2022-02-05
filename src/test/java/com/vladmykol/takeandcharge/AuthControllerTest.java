@@ -98,10 +98,15 @@ class AuthControllerTest {
 //    public void newUser() throws Exception {
 //        var role = new Role();
 //        role.setRole(RoleEnum.ADMIN);
-//
+//        existing user
+//        var userDto = SingUpDto.builder()
+//                .name("Vlad")
+//                .password("REDACTED_TEST_PASSWORD")
+//                .build();
+       //new user
 //        var userDto = User.builder()
 //                .userName("Vlad")
-//                .password(passwordEncoder.encode("1234"))
+//                .password(passwordEncoder.encode("REDACTED_TEST_PASSWORD"))
 //                .roles(Collections.singleton(role))
 //                .bonusAmount(0)
 //                .userStatus(REGISTERED)

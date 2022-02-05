@@ -51,7 +51,7 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'org.apache.commons:commons-collections4:4.4'
 //    for swagger UI
-    implementation 'org.springdoc:springdoc-openapi-ui:1.6.4'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.5'
     implementation 'org.springdoc:springdoc-openapi-data-rest:1.6.4'
     implementation 'org.modelmapper:modelmapper:3.0.0'
 //    custom security token generation
