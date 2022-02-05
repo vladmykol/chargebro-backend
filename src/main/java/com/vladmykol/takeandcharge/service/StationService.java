@@ -15,6 +15,7 @@ import com.vladmykol.takeandcharge.conts.PowerBankStatus;
 import com.vladmykol.takeandcharge.dto.AuthenticatedStationsDto;
 import com.vladmykol.takeandcharge.dto.StationInfoDto;
 import com.vladmykol.takeandcharge.entity.Station;
+import com.vladmykol.takeandcharge.exceptions.CabinetIsOffline;
 import com.vladmykol.takeandcharge.exceptions.NoPowerBanksLeft;
 import com.vladmykol.takeandcharge.exceptions.NotSuccessesRent;
 import com.vladmykol.takeandcharge.repository.PowerBankRepository;
@@ -249,6 +250,10 @@ public class StationService {
         return id.contains("STW");
     }
 
+    private boolean isLinkStationId(String id) {
+        return id.contains("/k");
+    }
+
     public String extractStationId(String url) {
         if (isHardWareStationId(url)) {
             var starIndex = url.indexOf("=");
@@ -257,7 +262,7 @@ public class StationService {
             } else {
                 return url;
             }
-        } else {
+        } else if (isLinkStationId(url)) {
             var starIndex = url.indexOf("/k");
             String shortId;
             if (starIndex > 0) {
@@ -271,6 +276,9 @@ public class StationService {
             } else {
                 return shortId;
             }
+        } else {
+            log.error("Not recognised stationId =" + url);
+            throw new CabinetIsOffline();
         }
     }
 

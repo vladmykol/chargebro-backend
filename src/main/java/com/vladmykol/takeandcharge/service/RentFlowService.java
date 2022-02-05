@@ -266,7 +266,7 @@ public class RentFlowService {
         }
         if (rentException != null) {
             RentError lastError = new RentError(rentException);
-            if (!lastError.getMessage().equals(rent.getLastErrorMessage())) {
+            if (lastError.getMessage() != null && !lastError.getMessage().equals(rent.getLastErrorMessage())) {
                 rent.setLastError(lastError);
                 rentRepository.save(rent);
                 final var userPhone = userService.getUserPhone(rent.getUserId());
