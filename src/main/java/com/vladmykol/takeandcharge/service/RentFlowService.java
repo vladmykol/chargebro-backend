@@ -288,7 +288,7 @@ public class RentFlowService {
     }
 
     @Async(AsyncConfiguration.RENT_REFRESH_TASK_EXECUTOR)
-    @Scheduled(cron = "0 10-50 11 * * ?", zone = "GMT+3:00")
+    @Scheduled(cron = "0 0 11 * * ?", zone = "GMT+3:00")
     public void refreshAllRents() {
         List<Rent> activeRents = rentService.getAllActiveRentWithNotReturnedPowerBank();
         refreshRents(activeRents);
