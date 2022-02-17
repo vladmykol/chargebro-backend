@@ -215,8 +215,8 @@ public class StationService {
 
         var blackList = Set.of("STWA02010047", "STWA02010046", "STWA08100029");
 
-        Comparator<PowerBankInfo> compareByChargingLevelAndLastTakenDate = comparing(PowerBankInfo::getPowerLevel);
-//                .thenComparing(comparing(PowerBankInfo::getLastTakeAt).reversed());
+        Comparator<PowerBankInfo> compareByChargingLevelAndLastTakenDate = comparing(PowerBankInfo::getPowerLevel)
+                .thenComparing(comparing(PowerBankInfo::getLastTakeAt).reversed());
 
         var bestPowerBankToTake = chargingStationInventory.getPowerBankList()
                 .stream()
