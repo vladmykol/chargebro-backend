@@ -95,6 +95,15 @@ public class TelegramNotifierService {
         messageToAdmin(msg);
     }
 
+    public void rentWarning(String message, Rent rent, String userPhone) {
+        var station = stationServiceHelper.getByIdOrNew(rent.getTakenInStationId());
+        String msg = "⚠️ Rent Warning: " + message +
+                "\n--\n<code>Station:</code> " + station.getShortId() +
+                "\n<code>Place</code>: " + station.getPlaceName() +
+                "\n<code>User:</code> " + userPhone;
+        messageToAdmin(msg);
+    }
+
     public void errorFromMobileApp(String exception) {
 // TODO: 28/09/2021 implement resending errors to Telegram and update mobile app
     }

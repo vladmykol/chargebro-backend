@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -304,12 +305,20 @@ public class RentFlowService {
                             if (stationService.isPowerBankPresent(rent.getPowerBankId(), station.getId())) {
                                 returnPowerBankAction(rent.getId(), station.getId());
                                 log.warn("Manual rent refresh for rentId = " + rent.getId());
+                            } else if (getHoursPowerBankInRent(rent.getRentTime()) > 24) {
+                                final var userPhone = userService.getUserPhone(rent.getUserId());
+                                telegramNotifierService.rentWarning("PowerBank is not returned for " + getHoursPowerBankInRent(rent.getRentTime()) + " hour(s)", rent, userPhone);
                             }
                         } catch (Exception e) {
                             log.warn("Filed to refresh rent status for station " + station.getId(), e);
                         }
                     });
         });
+    }
+
+
+    public long getHoursPowerBankInRent(long rentTimeMs) {
+        return TimeUnit.MILLISECONDS.toHours(rentTimeMs);
     }
 
     private boolean isInOnlineStationList(List<AuthenticatedStationsDto> onlineStations, StationInfoDto station) {
