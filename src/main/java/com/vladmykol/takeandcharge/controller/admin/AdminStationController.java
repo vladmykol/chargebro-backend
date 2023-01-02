@@ -59,11 +59,8 @@ public class AdminStationController {
 
     @PostMapping("/{shortId}/unlock-all")
     @Operation(description = "unlock all power-bank for maintenance")
-    public void unlockAll(@PathVariable(name = "shortId") String shortId,
-                          @Parameter(schema = @Schema(type = "string", allowableValues = {"Yes, No"})) @RequestParam(defaultValue = "No") String force) {
-        if (force.equalsIgnoreCase("Yes")) {
-            stationService.unlockAllPowerBanks(shortId);
-        }
+    public void unlockAll(@PathVariable(name = "shortId") String shortId) {
+        stationService.unlockAllPowerBanks(shortId);
     }
 
 }
