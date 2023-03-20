@@ -43,12 +43,6 @@ public class StationSocketServer {
         inactiveStationSocketClients.forEach(this::tryToWakeUpInactive);
     }
 
-//    @Scheduled(fixedRate = 15000, initialDelay = 20000)
-//    public void checkClients() {
-//        List<StationSocketClient> activeClients = stationRegister.getInactiveClients(idleTimeoutSeconds / 2);
-//        activeClients.forEach(this::checkActiveClient);
-//    }
-
     public void tryToWakeUpInactive(StationSocketClient stationSocketClient) {
         stationSocketClient.setInactive();
         try {

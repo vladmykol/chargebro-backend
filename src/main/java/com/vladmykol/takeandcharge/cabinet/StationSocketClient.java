@@ -44,7 +44,7 @@ public class StationSocketClient {
         this.clientInfo = new ClientInfo(socket.getInetAddress(), idleTimeoutSeconds);
         this.inputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
         this.outputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream(), 10 * 1024));
-        log.debug("New station socket client {}", clientInfo);
+        log.info("New station socket client {}", clientInfo);
     }
 
     public void setActive() {
