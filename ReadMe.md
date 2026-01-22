@@ -1,87 +1,175 @@
-# ChargeBro backend
+# ChargeBro Backend
 
-It is Spring boot based backed application for maneging charging stations and providing API for mobile app
+Spring Boot backend for a powerbank sharing service, handling station management, user authentication, rentals, and payments.
 
-## Run locally
+> **Note:** This project was developed in 2019-2020 as part of a startup that is no longer active. The code is shared for educational purposes and as a portfolio piece.
+
+## Features
+
+- **Station Communication** - Custom TCP socket protocol for charging station hardware
+- **REST API** - Mobile app backend with JWT authentication
+- **WebSocket Updates** - Real-time station status updates for mobile clients
+- **SMS Authentication** - Phone number verification via SMS gateway
+- **Payment Processing** - Integration with Fondy payment provider
+- **Telegram Notifications** - Admin alerts via Telegram bot
+- **Swagger Documentation** - Auto-generated API docs
+
+## Tech Stack
+
+- **Framework:** Spring Boot 2.x
+- **Database:** MongoDB
+- **Security:** Spring Security + JWT
+- **Real-time:** WebSockets, Netty (for station sockets)
+- **Build:** Gradle
+- **Deployment:** Dokku
+
+## Architecture
+
+```
+src/main/java/com/mykovolod/takeandcharge/
+├── ChargeBroApplication.java       # Main entry point
+├── cabinet/                         # Station communication
+│   ├── StationSocketServer.java    # TCP server for stations
+│   ├── StationSocketHandler.java   # Message handling
+│   ├── dto/                        # Station protocol DTOs
+│   └── serialization/              # Binary protocol serialization
+├── controller/                      # REST API
+│   ├── AuthController.java         # Login/registration
+│   ├── RentController.java         # Rental operations
+│   ├── PaymentController.java      # Payment callbacks
+│   └── admin/                      # Admin endpoints
+├── service/                         # Business logic
+│   ├── RentService.java            # Rental management
+│   ├── FondyService.java           # Payment integration
+│   ├── SmsService.java             # SMS sending
+│   └── WebSocketServer.java        # Mobile real-time updates
+├── entity/                          # MongoDB documents
+├── repository/                      # Data access
+├── security/                        # JWT authentication
+└── config/                          # Spring configuration
+```
+
+## Setup
+
+### Prerequisites
+
+- Java 11+
+- MongoDB
+- Gradle
+
+### Local Development
 
 1. Install [MongoDB](https://docs.mongodb.com/manual/administration/install-community/)
-2. Add `application-default.properties` [here](./src/main/resources) with following properties:
-> SMS_GATEWAY=localhost  
-> PAY_USER=?  
-> PAY_PASS=test  
-> PAY_LINK=?  
-> SMS_GATEWAY_TOKEN=?  
-> TELEGRAM_BOT_KEY=?  
-> TELEGRAM_ADMIN_CHAT_ID=?  
-2. Run [TakeAndChargeApplication](./src/main/java/com/mykovolod/takeandcharge/TakeAndChargeApplication.java)
 
-###Charging stations connection
-We need to forward external requests from charging stations to our local machine IP
-1. Set static IP for MacAddress with [static DHCP reservations](http://networkingforintegrators.com/2012/08/dhcp-reservations/)
-2. Forward ports 10382 and 10381 to you local IP with [port forwarding](http://www.icafemenu.com/how-to-port-forward-in-mikrotik-router.htm)
+2. Create `src/main/resources/application-default.properties`:
 
-###Maintenance
-1. To check for project dependency vulnerabilities run:
-   `./gradlew dependencyCheckAnalyze`
-1. To update project dependencies automatically to latest versions run: `./gradlew useLatestVersions`
-
-## Deploy with dokku in [Hetzner Clound](https://console.hetzner.cloud/)
-
-### Setup new sever
-1. Create [new server and access it via SSH](https://www.banjocode.com/post/hosting/setup-server-hetzner/)
-1. Install [dokku](https://dokku.com/docs/getting-started/installation/#1-install-dokku) on you newly created server 
-1. Run following command to setup new application on dokku
+```properties
+SMS_GATEWAY=https://your-sms-gateway.com
+SMS_GATEWAY_TOKEN=your-sms-token
+SMS_TOKEN=your-sms-secret
+PAY_USER=your-fondy-merchant-id
+PAY_PASS=your-fondy-password
+PAY_LINK=https://pay.fondy.eu/api
+TELEGRAM_BOT_KEY=your-telegram-bot-token
+TELEGRAM_ADMIN_CHAT_ID=your-chat-id
+AUTH_TOKEN=your-jwt-secret
+CALLBACK_URI=http://localhost:10381
+MONGO_URL=mongodb://localhost:27017/chargebro
 ```
+
+3. Run the application:
+
+```bash
+./gradlew bootRun
+```
+
+4. Access Swagger UI: http://localhost:10381/swgr.html
+
+### Station Connection (for hardware testing)
+
+The backend listens on port 10382 for charging station connections. For local testing with real hardware:
+
+1. Set up port forwarding on your router (ports 10381, 10382)
+2. Configure static DHCP for your machine
+3. Update station firmware with your server IP
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/init` | Start phone verification |
+| POST | `/auth/login` | Complete login with SMS code |
+| GET | `/station/all` | List all stations |
+| GET | `/station/{id}` | Get station details |
+| POST | `/rent/start` | Start a rental |
+| POST | `/rent/stop` | End a rental |
+| GET | `/user/me` | Current user info |
+
+## Deployment (Dokku)
+
+<details>
+<summary>Click to expand deployment instructions</summary>
+
+### Setup new server
+
+1. Create [new server and access it via SSH](https://www.banjocode.com/post/hosting/setup-server-hetzner/)
+2. Install [dokku](https://dokku.com/docs/getting-started/installation/#1-install-dokku)
+3. Run the following commands:
+
+```bash
 dokku git:allow-host github.com
 dokku mongo:create chargebro-db
 dokku apps:create chargebro
 dokku mongo:link chargebro-db chargebro
 dokku docker-options:add chargebro deploy "-p 10382:10382/tcp"
 dokku resource:limit --memory 500m chargebro
-dokku domains:add chargebro api.chargebro.com
+dokku domains:add chargebro your-domain.com
 dokku checks:disable chargebro
-dokku config:set server DOKKU_LETSENCRYPT_EMAIL='info@chargebro.com'
-   AUTH_TOKEN='???'
-   CALLBACK_URI='https://api.chargebro.com' JAVA_OPTS='-Xmx200m'
-   PAY_LINK='???'
-   PAY_PASS='???' PAY_USER='???'
-   SMS_GATEWAY='???'
-   SMS_GATEWAY_TOKEN='???'
-   SMS_TOKEN='???'
-   TELEGRAM_BOT_KEY='???'
-   TELEGRAM_ADMIN_CHAT_ID='???'
-```
-4. Create personal [access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-token) in GitHub account
-4. Add that toke to dokku:
-   `dokku git:auth github.com ?username? ?personal-access-token?`
-4. Enable SSL certificate once application is deployed:
-   `dokku letsencrypt:enable chargebro`
-
-###Deploy steps
-1. Push the latest changes to GitHub
-1. Stop app to free up memory for a build, otherwise deploy will fail if you have less than 2GB RAM: `dokku ps:stop chargebro`
-1. Login with SSH to your server and run
-```
-dokku git:sync --build chargebro https://github.com/mykovolod/chargebro-backend.git
-```
-4. Make sure you set up system firewall. Otherwise, to completely disable it by:
-   `ufw disable`
-4. Check last 1000 lines of logs:
-   `dokku logs chargebro -n 1000`
-
-### How to destroy env
-```
-dokku apps:destroy chargebro
-cd /home/dokku
-rm -rf chargebro
+dokku config:set chargebro \
+   DOKKU_LETSENCRYPT_EMAIL='your-email@example.com' \
+   AUTH_TOKEN='your-jwt-secret' \
+   CALLBACK_URI='https://your-domain.com' \
+   JAVA_OPTS='-Xmx200m' \
+   PAY_LINK='https://pay.fondy.eu/api' \
+   PAY_PASS='your-fondy-password' \
+   PAY_USER='your-fondy-merchant-id' \
+   SMS_GATEWAY='your-sms-gateway' \
+   SMS_GATEWAY_TOKEN='your-sms-token' \
+   SMS_TOKEN='your-sms-secret' \
+   TELEGRAM_BOT_KEY='your-telegram-bot-key' \
+   TELEGRAM_ADMIN_CHAT_ID='your-chat-id'
 ```
 
-##Connect to DB from outside
-###expose MongoDB
-1. `dokku mongo:expose chargebro-db 27017 27018 27019 28017`
-1. Disable server Firewall rules if any
-1. See connection string `dokku config:show chargebro` and replace host by actual server IP
+4. Set up GitHub authentication for dokku
+5. Enable SSL: `dokku letsencrypt:enable chargebro`
 
-###un-expose MongoDB
-1. `dokku mongo:unexpose chargebro-db`
-1. Enable server firewall rules if any
+### Deploy
+
+```bash
+dokku ps:stop chargebro  # Free memory for build
+dokku git:sync --build chargebro https://github.com/your-username/chargebro-backend.git
+```
+
+</details>
+
+## Maintenance
+
+```bash
+# Check for dependency vulnerabilities
+./gradlew dependencyCheckAnalyze
+
+# Update dependencies to latest versions
+./gradlew useLatestVersions
+```
+
+## Mobile App
+
+This backend is designed to work with the [ChargeBro Mobile App](https://github.com/vladmykol/chargebro-mobile).
+
+## License
+
+This project is provided as-is for educational purposes. Feel free to use it as a reference for building similar applications.
+
+## Author
+
+Developed by [Vlad Mykol](https://github.com/vladmykol) in 2019-2020.
