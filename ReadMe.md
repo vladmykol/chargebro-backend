@@ -172,4 +172,4 @@ This project is provided as-is for educational purposes. Feel free to use it as 
 
 ## Author
 
-Developed by [Vlad Mykol](https://github.com/vladmykol) in 2019-2020.
+Developed by [Vlad Mykol](https://vladmykol.com/) ([GitHub](https://github.com/vladmykol)) in 2019-2020.
