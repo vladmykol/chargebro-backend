@@ -194,6 +194,87 @@ dokku git:sync --build chargebro https://github.com/your-username/chargebro-back
 ./gradlew useLatestVersions
 ```
 
+## Technical Challenges & Solutions
+
+<details>
+<summary>Click to expand engineering deep-dive</summary>
+
+This project involved solving several non-trivial engineering problems:
+
+### 🔌 Custom Binary Protocol for Hardware Communication
+
+**Challenge:** The charging stations used a proprietary binary protocol over TCP sockets. No documentation existed—only a Chinese hardware manual and packet captures.
+
+**Solution:** Built a custom serialization framework using Java reflection and annotations:
+- Created `@ProtocolField` annotation to map Java objects to binary wire format
+- Implemented `ProtocolSerializationUtils` for bidirectional serialization
+- Handled unsigned integers (Java's signed types don't natively support this)
+- Built connection pooling with heartbeat monitoring and automatic reconnection
+
+```java
+// Example: Declarative binary protocol mapping
+public class HeartbeatMessage {
+    @ProtocolField(position = 0, dataType = DataType.BYTE)
+    private short command;
+    
+    @ProtocolField(position = 1, dataType = DataType.BYTE8STRING)
+    private String stationId;
+}
+```
+
+### 💳 Two-Phase Payment Flow
+
+**Challenge:** Implementing a deposit-hold-charge pattern where money is held before rental and charged based on actual usage time.
+
+**Solution:** Designed a state machine for rent lifecycle:
+1. `CHECK` → Verify powerbank availability
+2. `HOLD_DEPOSIT` → Pre-authorize deposit amount
+3. `POWERBANK_UNLOCKED` → Hardware releases powerbank
+4. `POWERBANK_TAKEN` → User has the device
+5. `CHARGE_MONEY` → Calculate and charge actual rental fee
+6. `FINISHED` → Release remaining deposit
+
+Handled edge cases: insufficient funds on return, payment gateway timeouts, partial refunds.
+
+### 🔄 Real-Time State Synchronization
+
+**Challenge:** Mobile app needed instant updates when powerbank is taken/returned, but stations communicate via TCP (not HTTP).
+
+**Solution:** Bridged TCP socket events to WebSocket clients:
+- Station sends binary message → `StationSocketHandler` processes
+- State change triggers → `WebSocketServer.sendRentStartMessage()`
+- Mobile app receives instant notification
+
+### 🛡️ Stateless JWT with Phone-Based Auth
+
+**Challenge:** No passwords—users authenticate via SMS verification codes (common in Ukraine/Eastern Europe).
+
+**Solution:** Two-token system:
+- Short-lived SMS token (2 min) for verification flow
+- Long-lived auth token (200 hours) for API access
+- Separate secrets for each token type to limit blast radius
+
+### 📊 Operational Monitoring
+
+**Challenge:** Needed visibility into station health and rental issues without building a full admin dashboard.
+
+**Solution:** Telegram bot integration for real-time alerts:
+- Station went offline/online notifications
+- Rental start/end confirmations
+- Payment failures and error conditions
+- Scheduled job to detect "stuck" rentals (powerbank not returned >24h)
+
+---
+
+## Lessons Learned
+
+- **Hardware integration is unpredictable** — Built extensive logging and error recovery because stations would randomly disconnect
+- **Payment edge cases are endless** — "Not sufficient funds" on return required reversing deposit first, then charging
+- **MongoDB flexibility helped** — Schema evolved rapidly during development without migrations
+- **Telegram > Email for alerts** — Instant notifications on phone were crucial for a two-person startup
+
+</details>
+
 ## Mobile App
 
 This backend is designed to work with the [ChargeBro Mobile App](https://github.com/vladmykol/chargebro-mobile).
