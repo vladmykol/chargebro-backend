@@ -2,6 +2,10 @@
 
 Spring Boot backend for a powerbank sharing service, handling station management, user authentication, rentals, and payments.
 
+<p align="center">
+  <img src="docs/hero-banner.png" alt="ChargeBro - Charging Station and App" width="600"/>
+</p>
+
 > **Note:** This project was developed in 2019-2020 as part of a startup that is no longer active. The code is shared for educational purposes and as a portfolio piece.
 
 ## Features
@@ -25,28 +29,56 @@ Spring Boot backend for a powerbank sharing service, handling station management
 
 ## Architecture
 
+```mermaid
+graph TB
+    subgraph Mobile App
+        APP[📱 ChargeBro App]
+    end
+
+    subgraph Backend Server
+        REST[REST API<br/>JWT Auth]
+        WS[WebSocket Server<br/>Real-time Updates]
+        SOCKET[TCP Socket Server<br/>Port 10382]
+    end
+
+    subgraph External Services
+        SMS[SMS Gateway]
+        PAY[Fondy Payments]
+        TG[Telegram Bot]
+    end
+
+    subgraph Hardware
+        STATION[🔌 Charging Stations]
+    end
+
+    subgraph Database
+        MONGO[(MongoDB)]
+    end
+
+    APP <-->|HTTPS| REST
+    APP <-->|WSS| WS
+    STATION <-->|TCP Binary Protocol| SOCKET
+
+    REST --> MONGO
+    REST --> SMS
+    REST --> PAY
+    REST --> TG
+
+    SOCKET --> MONGO
+    WS --> MONGO
+```
+
+### Code Structure
+
 ```
 src/main/java/com/mykovolod/takeandcharge/
-├── ChargeBroApplication.java       # Main entry point
-├── cabinet/                         # Station communication
-│   ├── StationSocketServer.java    # TCP server for stations
-│   ├── StationSocketHandler.java   # Message handling
-│   ├── dto/                        # Station protocol DTOs
-│   └── serialization/              # Binary protocol serialization
-├── controller/                      # REST API
-│   ├── AuthController.java         # Login/registration
-│   ├── RentController.java         # Rental operations
-│   ├── PaymentController.java      # Payment callbacks
-│   └── admin/                      # Admin endpoints
-├── service/                         # Business logic
-│   ├── RentService.java            # Rental management
-│   ├── FondyService.java           # Payment integration
-│   ├── SmsService.java             # SMS sending
-│   └── WebSocketServer.java        # Mobile real-time updates
-├── entity/                          # MongoDB documents
-├── repository/                      # Data access
-├── security/                        # JWT authentication
-└── config/                          # Spring configuration
+├── cabinet/                    # Station communication (TCP sockets)
+├── controller/                 # REST API endpoints
+├── service/                    # Business logic
+├── entity/                     # MongoDB documents
+├── repository/                 # Data access layer
+├── security/                   # JWT authentication
+└── config/                     # Spring configuration
 ```
 
 ## Setup
