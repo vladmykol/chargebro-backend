@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = "classpath:application-test.properties")
 @AutoConfigureMockMvc
-class AuthControllerTest {
+class AuthControllerIT {
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -28,13 +28,8 @@ class AuthControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    public static String body(final Object obj) {
-        try {
-            final ObjectMapper mapper = new ObjectMapper();
-            return mapper.writeValueAsString(obj);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private String toJson(Object obj) throws Exception {
+        return objectMapper.writeValueAsString(obj);
     }
 
     @Test
@@ -45,7 +40,7 @@ class AuthControllerTest {
 
         mvc.perform(post(EndpointConst.API_AUTH + "/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body(loginRequest)))
+                .content(toJson(loginRequest)))
                 .andExpect(status().isForbidden());
     }
 
@@ -71,7 +66,7 @@ class AuthControllerTest {
 
         mvc.perform(post(EndpointConst.API_VERSION_1 + EndpointConst.API_AUTH + "/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body(singUpDto)))
+                .content(toJson(singUpDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty());
     }

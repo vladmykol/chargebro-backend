@@ -34,7 +34,7 @@ public class ByteSerializationTest {
                 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x74, 0x20, 0x74, 0x65, 0x78, 0x74, 0x00};
         //when
         byte[] serializedTestMessage = ProtocolSerializationUtils.serialize(originTestMessage);
-        //than
+        //then
         assertThat(serializedTestMessage, is(expectedByteArray));
     }
 
@@ -50,7 +50,7 @@ public class ByteSerializationTest {
         byte[] expectedByteArray = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
         //when
         byte[] serializedTestMessage = ProtocolSerializationUtils.serialize(header, body);
-        //than
+        //then
         assertThat(serializedTestMessage, is(expectedByteArray));
     }
 
@@ -71,7 +71,7 @@ public class ByteSerializationTest {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(originByteArrayTestMessage);
         CustomDataInputStream dataInputStream = new CustomDataInputStream(byteArrayInputStream);
         TestMessage deserializeTestMessage = ProtocolSerializationUtils.readObject(dataInputStream, new TestMessage());
-        //than
+        //then
         assertThat(deserializeTestMessage, is(expectedTestMessage));
     }
 
@@ -87,8 +87,7 @@ public class ByteSerializationTest {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(serializedMessage);
         CustomDataInputStream dataInputStream = new CustomDataInputStream(byteArrayInputStream);
         ReturnPowerBankRequest deserializeMessage = ProtocolSerializationUtils.readObject(dataInputStream, new ReturnPowerBankRequest());
-        //than
-//        assertThat(deserializeMessage, is(originMessage));
+        //then
         assertThat(deserializeMessage.getSlotNumber(), is(originMessage.getSlotNumber()));
     }
 
