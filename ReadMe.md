@@ -6,7 +6,9 @@ Spring Boot backend for a powerbank sharing service, handling station management
   <img src="docs/hero-banner.png" alt="ChargeBro - Charging Station and App" width="600"/>
 </p>
 
-> **Note:** This project was developed in 2020–2021 as part of a startup that is no longer active. It is not actively maintained. The code is shared for educational purposes and as a portfolio piece.
+> **Note:** This project was developed in 2020–2021 as part of a startup that is no longer active. The code is shared for educational purposes and as a portfolio piece.
+
+> **Production Status:** ChargeBro was a real shipped product, not a personal experiment. The apps were published on Google Play and the App Store, and ran a pilot at three charging stations in a Kyiv gym (December 2020), serving ~1–2 rentals per day. Both store listings have since been delisted. Read the full postmortem: [I Built a Powerbank-Sharing Startup Alone — and Today I'm Shutting It Down](https://vladmykol.com/blog/chargebro-startup/).
 
 ## Features
 
